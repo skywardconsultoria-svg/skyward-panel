@@ -10192,7 +10192,7 @@ function AsistenteIA({ API, aH, jH, plan, rango, nombre, activeTab }) {
   );
 }
 
-export default function EdgePanel({ token, user, onLogout }) {
+function EdgePanel({ token, user, onLogout }) {
   React.useEffect(() => {
     if (document.getElementById('edge-push-style')) return;
     const st = document.createElement('style');

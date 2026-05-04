@@ -401,13 +401,13 @@ RECUPERACIÓN CONFIRMACIÓN (Utilidad):
     pasos: [
       {
         id: "bot_nombre", label: "Configurar nombre y tono del bot",
-        desc: "Cliente → Config → Bot → nombre del bot, tono de comunicación, descripción de la clínica.",
-        detalle: "Nombre del bot: puede ser el nombre de una persona (ej: 'Sofía') o genérico ('Asistente de [Clínica]')\nTono: profesional y cálido / cercano / formal\nDescripción: 2-3 líneas sobre qué hace la clínica, qué tratamientos ofrece, a quién ayuda"
+        desc: "Cliente → Config → Bot → nombre del bot, tono de comunicación, descripción de la agencia.",
+        detalle: "Nombre del bot: puede ser el nombre de una persona (ej: \"Martina\") o genérico (\"Asistente de Skyward\")\nTono: profesional y cálido / cercano / formal\nDescripción: 2-3 líneas sobre qué hace la agencia, qué servicios ofrece, a quién ayuda"
       },
       {
         id: "bot_horarios", label: "Configurar horarios de atención",
         desc: "Cliente → Config → Horarios → agregar los días y horarios en que el bot está activo.",
-        detalle: "Fuera de los horarios configurados, el bot responde con el mensaje de fuera de horario.\n\nRecomendación: configurar horarios amplios (ej: Lunes a Sábado 8:00-22:00) para que el bot capture prospectos incluso fuera del horario de la clínica."
+        detalle: "Fuera de los horarios configurados, el bot responde con el mensaje de fuera de horario.\n\nRecomendación: configurar horarios amplios (ej: Lunes a Sábado 8:00-22:00) para que el bot capture prospectos incluso fuera del horario de la agencia."
       },
       {
         id: "bot_fuera_horario", label: "Configurar mensaje fuera de horario",
@@ -430,14 +430,14 @@ RECUPERACIÓN CONFIRMACIÓN (Utilidad):
         detalle: "Cada profesional puede tener sus propios horarios de disponibilidad si configurás Google."
       },
       {
-        id: "tratamientos", label: "Cargar tratamientos",
-        desc: "Cliente → Config → Tratamientos → agregar los servicios que ofrece la clínica con nombre y precio.",
-        detalle: "Los tratamientos se usan para:\n• Segmentar prospectos por interés\n• Filtrar en difusión\n• Registrar en el turno confirmado"
+        id: "tratamientos", label: "Cargar servicios",
+        desc: "Cliente → Config → Servicios → agregar los servicios que ofrece la agencia con nombre y precio.",
+        detalle: "Los servicios se usan para:\n• Segmentar prospectos por interés\n• Filtrar en difusión\n• Registrar en la reunión confirmada"
       },
       {
         id: "campos_agenda", label: "Configurar campos de agenda",
-        desc: "Cliente → Config → Agenda → activar los campos que el bot debe recolectar (nombre, teléfono, seguro médico, etc.).",
-        detalle: "Campos disponibles:\n• Nombre ✓ (siempre activo)\n• Teléfono de contacto\n• Documento\n• Email\n• Seguro médico\n• Modalidad (presencial/virtual)\n• Notas adicionales\n\nSolo activar los que realmente necesita la clínica — menos campos = más conversiones."
+        desc: "Cliente → Config → Agenda → activar los campos que el bot debe recolectar (nombre, teléfono, información adicional, etc.).",
+        detalle: "Campos disponibles:\n• Nombre ✓ (siempre activo)\n• Teléfono de contacto\n• Documento\n• Email\n• Información adicional\n• Modalidad (presencial/virtual)\n• Notas adicionales\n\nSolo activar los que realmente necesita la agencia — menos campos = más conversiones."
       },
       {
         id: "google_calendar", label: "Conectar Google (opcional)",
@@ -467,7 +467,7 @@ RECUPERACIÓN CONFIRMACIÓN (Utilidad):
       {
         id: "lanzar", label: "¡Lanzar! 🚀",
         desc: "El cliente está listo. Activar el bot y empezar a recibir prospectos.",
-        detalle: "Checklist final:\n✅ Bot configurado y respondiendo\n✅ Plantillas aprobadas\n✅ Equipo capacitado\n✅ Google conectado\n✅ Tratamientos y profesionales cargados\n\n🎉 ¡El sistema está listo para funcionar!"
+        detalle: "Checklist final:\n✅ Bot configurado y respondiendo\n✅ Plantillas aprobadas\n✅ Equipo capacitado\n✅ Google conectado\n✅ Servicios y profesionales cargados\n\n🎉 ¡El sistema está listo para funcionar!"
       },
     ]
   },
@@ -772,7 +772,7 @@ function PropuestasComerciales() {
         <span style={{fontWeight:600,fontSize:14}}>{sel ? 'Editar propuesta' : 'Nueva propuesta'}</span>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
-        <Field label="Empresa / Clínica" value={form.empresa} onChange={v=>setForm({...form,empresa:v})} placeholder="FH Extensiones"/>
+        <Field label="Agencia / Empresa" value={form.empresa} onChange={v=>setForm({...form,empresa:v})} placeholder="FH Extensiones"/>
         <Field label="Nombre del contacto" value={form.contacto} onChange={v=>setForm({...form,contacto:v})} placeholder="Federico"/>
       </div>
       <div style={{marginBottom:16}}>
@@ -883,7 +883,7 @@ function AdminView({ stats, clientes, onSelectClient, onRefresh, onCrearUsuario,
   };
 
   const crear = async () => {
-    if (!form.nombre || !form.numero_whatsapp) return setErr("Nombre y número son obligatorios");
+    if (!form.nombre) return setErr("El nombre es obligatorio");
     setSaving(true); setErr(null);
     try {
       const r = await fetch(`${API}/api/clientes`, { method:"POST", headers:jH(), body:JSON.stringify(form) });
@@ -1008,8 +1008,8 @@ function AdminView({ stats, clientes, onSelectClient, onRefresh, onCrearUsuario,
         <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}}>
           <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:32,width:420,maxWidth:"92vw"}}>
             <div style={{fontSize:16,fontWeight:700,marginBottom:20}}>Nuevo cliente</div>
-            <Field label="Nombre de la clínica *" value={form.nombre} onChange={v=>setForm({...form,nombre:v})} placeholder="Clínica Estética Lumina"/>
-            <Field label="Número de WhatsApp *" value={form.numero_whatsapp} onChange={v=>setForm({...form,numero_whatsapp:v})} placeholder="+54 11 4523-8901"/>
+            <Field label="Nombre de la agencia *" value={form.nombre} onChange={v=>setForm({...form,nombre:v})} placeholder="Skyward Consultoría Jurídica"/>
+            <Field label="Número de WhatsApp (opcional)" value={form.numero_whatsapp} onChange={v=>setForm({...form,numero_whatsapp:v})} placeholder="+54 11 4523-8901"/>
             <Field label="Phone Number ID (Meta)" value={form.phone_number_id} onChange={v=>setForm({...form,phone_number_id:v})} placeholder="1234567890"/>
             <div style={{marginBottom:16}}>
               <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>WhatsApp Token (Meta)</label>
@@ -1042,13 +1042,13 @@ function AdminView({ stats, clientes, onSelectClient, onRefresh, onCrearUsuario,
 // ============================================================
 function OnboardingWizard({ client, onComplete, onSkip, calStatus, plan }) {
   const PASOS = [
-    { id:'whatsapp',      icon:'📱', titulo:'Conectar WhatsApp',        desc:'El número de WhatsApp desde donde el bot va a hablar con tus pacientes.', opcional: plan !== 'pro' },
-    { id:'bot',           icon:'🤖', titulo:'Configurar el bot',         desc:'Dale personalidad al asistente. Nombre, tono y descripción de tu clínica.', opcional: false },
-    { id:'profesionales', icon:'👨‍⚕️', titulo:'Agregar profesionales',    desc:'Los médicos o esteticistas que atienden. Necesitamos su email para invitarlos a los turnos.', opcional: false },
-    { id:'tratamientos',  icon:'💉', titulo:'Agregar tratamientos',       desc:'Los servicios que ofrecés. El bot los usa para entender qué busca cada paciente.', opcional: false },
+    { id:'whatsapp',      icon:'📱', titulo:'Conectar WhatsApp',        desc:'El número de WhatsApp desde donde el bot va a hablar con tus prospectos.', opcional: plan !== 'pro' },
+    { id:'bot',           icon:'🤖', titulo:'Configurar el bot',         desc:'Dale personalidad al asistente. Nombre, tono y descripción de tu agencia.', opcional: false },
+    { id:'profesionales', icon:'👨‍⚕️', titulo:'Agregar profesionales',    desc:'Los asesores del equipo. Necesitamos su email para invitarlos a las reuniones.', opcional: false },
+    { id:'tratamientos',  icon:'💉', titulo:'Agregar servicios',       desc:'Los servicios que ofrecés. El bot los usa para entender qué busca cada prospecto.', opcional: false },
     { id:'horarios',      icon:'🕐', titulo:'Horarios de atención',       desc:'Los dias y franjas horarias en que podés recibir turnos.', opcional: false },
     { id:'calendar',      icon:'📅', titulo:'Conectar Google',   desc:'Los turnos aparecerán en tu calendario, se enviará invitación a profesionales y podrás enviar emails desde tu cuenta.', opcional: true },
-    { id:'activar',       icon:'🚀', titulo:'¡Activar el bot!',           desc:'Revisá todo y activá el bot para que empiece a atender pacientes por WhatsApp.', opcional: false },
+    { id:'activar',       icon:'🚀', titulo:'¡Activar el bot!',           desc:'Revisá todo y activá el bot para que empiece a atender prospectos por WhatsApp.', opcional: false },
   ];
 
   const [paso, setPaso] = useState(0);
@@ -1059,7 +1059,7 @@ function OnboardingWizard({ client, onComplete, onSkip, calStatus, plan }) {
   const [savingWa, setSavingWa] = useState(false);
   const [waGuardado, setWaGuardado] = useState(!!(client?.phone_number_id));
 
-  const [bot, setBot] = useState({ bot_nombre:'', descripcion_clinica:'', tono:'profesional_calido', instrucciones_libres:'', bot_activo:false, modalidad:'presencial', nombre_consulta:'valoración', seguimiento_activo:false, seguimiento_7dias:true, seguimiento_post:true, seguimiento_post_horas:24, seguimiento_msg_7dias:'', seguimiento_msg_post:'' });
+  const [bot, setBot] = useState({ bot_nombre:'', descripcion_clinica:'', tono:'profesional_calido', instrucciones_libres:'', bot_activo:false, modalidad:'presencial', nombre_consulta:'Demo Call', seguimiento_activo:false, seguimiento_7dias:true, seguimiento_post:true, seguimiento_post_horas:24, seguimiento_msg_7dias:'', seguimiento_msg_post:'' });
   const [savingBot, setSavingBot] = useState(false);
   const [botGuardado, setBotGuardado] = useState(false);
 
@@ -1268,7 +1268,7 @@ function OnboardingWizard({ client, onComplete, onSkip, calStatus, plan }) {
                 <input value={bot.bot_nombre} onChange={e=>setBot({...bot,bot_nombre:e.target.value})}
                   placeholder="Ej: Sofi, Luna, Valeria..."
                   style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box",marginBottom:14}}/>
-                <label style={{fontSize:12,color:C.muted,display:"block",marginBottom:6}}>Descripción de la clínica</label>
+                <label style={{fontSize:12,color:C.muted,display:"block",marginBottom:6}}>Descripción de la agencia</label>
                 <textarea value={bot.descripcion_clinica} onChange={e=>setBot({...bot,descripcion_clinica:e.target.value})}
                   rows={3} placeholder="Quiénes son, qué hacen, a quién atienden..."
                   style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box",marginBottom:14}}/>
@@ -1337,12 +1337,12 @@ function OnboardingWizard({ client, onComplete, onSkip, calStatus, plan }) {
               ))}
               <div style={{display:"flex",gap:8,marginTop:trats.length>0?16:0,flexWrap:"wrap"}}>
                 <input value={formTrat.nombre} onChange={e=>setFormTrat({...formTrat,nombre:e.target.value})}
-                  placeholder="Nombre del tratamiento *" onKeyDown={e=>e.key==="Enter"&&agregarTrat()}
+                  placeholder="Nombre del servicio *" onKeyDown={e=>e.key==="Enter"&&agregarTrat()}
                   style={{flex:2,minWidth:140,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
                 <select value={formTrat.tipo||'tratamiento'} onChange={e=>setFormTrat({...formTrat,tipo:e.target.value})}
                   style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 10px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
-                  <option value="tratamiento">Tratamiento</option>
-                  <option value="valoracion">Valoración</option>
+                  <option value="tratamiento">Servicio</option>
+                  <option value="valoracion">Demo Call</option>
                 </select>
                 <input type="number" value={formTrat.duracion_minutos} onChange={e=>setFormTrat({...formTrat,duracion_minutos:parseInt(e.target.value)||60})}
                   placeholder="Min"
@@ -1422,7 +1422,7 @@ function OnboardingWizard({ client, onComplete, onSkip, calStatus, plan }) {
               ) : (
                 <div>
                   <div style={{fontSize:13,color:C.muted,marginBottom:20,lineHeight:1.6}}>
-                    Al conectar Google, cada turno va a crear un evento automáticamente e invitar a los profesionales y pacientes. También podrás enviar emails desde tu cuenta.
+                    Al conectar Google, cada turno va a crear un evento automáticamente e invitar a los profesionales y prospectos. También podrás enviar emails desde tu cuenta.
                   </div>
                   <button onClick={conectarCal}
                     style={{padding:"12px 28px",borderRadius:10,border:"none",background:"#4285f4",color:"white",fontSize:14,fontWeight:600,cursor:"pointer",marginBottom:12}}>
@@ -1442,7 +1442,7 @@ function OnboardingWizard({ client, onComplete, onSkip, calStatus, plan }) {
                 { icon:"📱", label:"WhatsApp", ok: waGuardado || !!(client?.phone_number_id) },
                 { icon:"🤖", label:"Bot configurado", ok: botGuardado },
                 { icon:"👨‍⚕️", label:"Profesionales", ok: profs.length > 0, extra: `${profs.length} cargados` },
-                { icon:"💉", label:"Tratamientos", ok: trats.length > 0, extra: `${trats.length} cargados` },
+                { icon:"💉", label:"Servicios", ok: trats.length > 0, extra: `${trats.length} cargados` },
                 { icon:"🕐", label:"Horarios", ok: horarios.length > 0, extra: horarios.length > 0 ? `${horarios.length} franjas` : "Usando default lun-vie 9-18" },
                 { icon:"📅", label:"Google", ok: calConectado, opcional: true },
               ].map((item,i)=>(
@@ -1570,7 +1570,7 @@ function FichaClinicaModal({ client, turno, paciente, onClose, onSaved }) {
         {/* Header */}
         <div style={{padding:'18px 22px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
           <div>
-            <div style={{fontSize:15,fontWeight:700}}>📋 Ficha clínica</div>
+            <div style={{fontSize:15,fontWeight:700}}>📋 Ficha del prospecto</div>
             <div style={{fontSize:12,color:C.muted,marginTop:2}}>
               {paciente?.nombre || turno?.paciente_nombre || '-'}
               {turno?.tratamiento && ` · ${turno.tratamiento}`}
@@ -1707,7 +1707,7 @@ function ConsentimientosConfig({ client }) {
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:16}}>
         <div>
           <div style={{fontSize:13,fontWeight:600,marginBottom:2}}>📝 Consentimientos informados</div>
-          <div style={{fontSize:12,color:C.muted}}>Plantillas para enviar a pacientes antes de procedimientos</div>
+          <div style={{fontSize:12,color:C.muted}}>Plantillas para enviar a prospectos</div>
         </div>
         <button onClick={()=>{setEditando('nueva');setForm({titulo:'',contenido:''}); }}
           style={{padding:'6px 14px',borderRadius:8,border:'none',background:C.accent,color:'white',fontSize:12,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>
@@ -1846,7 +1846,7 @@ function EnviarConsentimientoModal({ client, paciente, turno_id, onClose }) {
                 {resultado.enviado_wa ? 'Enviado por WhatsApp' : 'Link generado'}
               </div>
               <div style={{fontSize:13,color:C.muted,marginBottom:16}}>
-                {resultado.enviado_wa ? 'El paciente recibió el link por WhatsApp para firmar.' : 'Copiá el link y enviáselo al paciente.'}
+                {resultado.enviado_wa ? 'El prospecto recibió el link por WhatsApp para firmar.' : 'Copiá el link y enviáselo al prospecto.'}
               </div>
               <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:'10px 14px',fontSize:11,color:C.muted,wordBreak:'break-all',marginBottom:12}}>
                 {resultado.link}
@@ -1938,7 +1938,7 @@ function CamposFichaConfig({ client }) {
 
   return (
     <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
-      <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>📋 Campos de ficha clínica</div>
+      <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>📋 Campos del prospecto</div>
       <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Definí qué información se registra en cada sesión</div>
 
       {loading ? <div style={{color:C.muted,fontSize:12}}>Cargando...</div> : (
@@ -2045,7 +2045,7 @@ function DisponibilidadPanel({ client, profesionales, horariosClinica, setHorari
     {/* Horarios de atención */}
     <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
       <div style={{fontSize:13,fontWeight:600,marginBottom:2}}>🕐 Horarios de atención</div>
-      <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Días y franjas horarias en que la clínica recibe turnos</div>
+      <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Días y franjas horarias en que la agencia agenda reuniones</div>
 
       {/* Grilla de dias */}
       {Object.keys(horariosPorDia).length === 0 && (
@@ -2101,7 +2101,7 @@ function DisponibilidadPanel({ client, profesionales, horariosClinica, setHorari
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
         <div>
           <div style={{fontSize:13,fontWeight:600,marginBottom:2}}>🚫 Bloqueos y ausencias</div>
-          <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Días en que la clínica o un profesional no está disponible</div>
+          <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Días en que la agencia o un asesor no está disponible</div>
         </div>
         <Btn onClick={()=>setShowNewBloqueo(!showNewBloqueo)} small secondary>+ Nuevo</Btn>
       </div>
@@ -2122,7 +2122,7 @@ function DisponibilidadPanel({ client, profesionales, horariosClinica, setHorari
               <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Profesional (opcional)</label>
               <select value={formBloqueo.profesional_id} onChange={e=>setFormBloqueo({...formBloqueo,profesional_id:e.target.value})}
                 style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
-                <option value="">Toda la clínica</option>
+                <option value="">Toda la agencia</option>
                 {profesionales.map(p=><option key={p.id} value={p.id}>{p.nombre}</option>)}
               </select>
             </div>
@@ -2178,7 +2178,7 @@ function DisponibilidadPanel({ client, profesionales, horariosClinica, setHorari
             <span style={{fontSize:18}}>{b.tipo==="ausencia"?"🤒":b.tipo==="feriado"?"🏖":"🔧"}</span>
             <div>
               <div style={{fontSize:13,fontWeight:500}}>
-                {b.profesional_nombre ? b.profesional_nombre : "Toda la clínica"}
+                {b.profesional_nombre ? b.profesional_nombre : "Toda la agencia"}
               </div>
               <div style={{fontSize:11,color:C.muted}}>
                 {b.fecha_desde === b.fecha_hasta ? b.fecha_desde : `${b.fecha_desde} -> ${b.fecha_hasta}`}
@@ -2214,7 +2214,7 @@ function BotConfigPanel({ client, botConfig, setBotConfig }) {
     instrucciones_libres: botConfig?.instrucciones_libres || '',
     bot_activo: botConfig?.bot_activo || false,
     modalidad: botConfig?.modalidad || 'presencial',
-    nombre_consulta: botConfig?.nombre_consulta || 'valoración',
+    nombre_consulta: botConfig?.nombre_consulta || 'Demo Call',
     recordatorio_activo: botConfig?.recordatorio_activo ?? true,
     recordatorio_horas: botConfig?.recordatorio_horas ?? 24,
     recordatorio_horas_2: botConfig?.recordatorio_horas_2 ?? 0,
@@ -2246,10 +2246,10 @@ function BotConfigPanel({ client, botConfig, setBotConfig }) {
   };
 
   const previewText = `Nombre: ${form.bot_nombre||'(sin nombre)'}
-Primera cita: "${form.nombre_consulta||'valoración'}"
+Primera cita: "${form.nombre_consulta||'Demo Call'}"
 Modalidad: ${form.modalidad==='presencial'?'Solo presencial':form.modalidad==='virtual'?'Solo virtual':'Presencial y virtual'}
 Tono: ${tonoActivo.l} - ${tonoActivo.desc}
-${form.descripcion_clinica ? 'Clínica: '+form.descripcion_clinica : '(sin descripción de clínica)'}
+${form.descripcion_clinica ? 'Clínica: '+form.descripcion_clinica : '(sin descripción de agencia)'}
 ${form.instrucciones_libres ? 'Instrucciones extra:\n'+form.instrucciones_libres : '(sin instrucciones adicionales)'}`;
 
   return (
@@ -2274,31 +2274,31 @@ ${form.instrucciones_libres ? 'Instrucciones extra:\n'+form.instrucciones_libres
       {/* Nombre del bot */}
       <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20}}>
         <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>🤖 Nombre del bot</div>
-        <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Cómo se presenta el asistente al paciente</div>
+        <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Cómo se presenta el asistente al prospecto</div>
         <input value={form.bot_nombre} onChange={e=>setForm({...form,bot_nombre:e.target.value})}
           placeholder="Ej: Sofi, Luna, Valeria, Asistente..."
           style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
       </div>
 
-      {/* Descripción de la clínica */}
+      {/* Descripción de la agencia */}
       <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20}}>
-        <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>🏥 Descripción de la clínica</div>
+        <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>🏢 Descripción de la agencia</div>
         <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Qué hacen, a quién atienden, qué los diferencia. El bot usa esto para contextualizar las conversaciones.</div>
         <textarea value={form.descripcion_clinica} onChange={e=>setForm({...form,descripcion_clinica:e.target.value})}
           rows={4}
-          placeholder={"Ej: Somos una clínica de medicina estética en Palermo. Atendemos mujeres de 30 a 55 años que buscan resultados naturales. Nuestros tratamientos estrella son el relleno de pómulos y la hidratación profunda..."}
+          placeholder={"Ej: Somos una agencia de marketing jurídico. Ayudamos a abogados y estudios a triplicar sus honorarios. Nuestro diferencial es el sistema de captación de clientes automatizado..."}
           style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
       </div>
 
       {/* Modalidad */}
       <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20}}>
         <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>📍 Modalidad de atención</div>
-        <div style={{fontSize:12,color:C.muted,marginBottom:14}}>Cómo atiende la clínica. El bot solo ofrecerá la opción configurada.</div>
+        <div style={{fontSize:12,color:C.muted,marginBottom:14}}>Cómo atiende la agencia. El bot solo ofrecerá la opción configurada.</div>
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
           {[
-            { v:'presencial', l:'Solo presencial',     desc:'Los turnos son siempre en la clínica.' },
+            { v:'presencial', l:'Solo presencial',     desc:'Las reuniones son siempre en persona.' },
             { v:'virtual',    l:'Solo virtual',         desc:'Los turnos son siempre por videollamada.' },
-            { v:'ambas',      l:'Presencial y virtual', desc:'El paciente elige cuál prefiere al agendar.' },
+            { v:'ambas',      l:'Presencial y virtual', desc:'El prospecto elige cuál prefiere.' },
           ].map(op => (
             <div key={op.v} onClick={()=>setForm({...form,modalidad:op.v})}
               style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:10,border:`1.5px solid ${form.modalidad===op.v?C.accent:C.border}`,background:form.modalidad===op.v?C.accentGlow:C.bg,cursor:"pointer",transition:"all .15s"}}>
@@ -2315,9 +2315,9 @@ ${form.instrucciones_libres ? 'Instrucciones extra:\n'+form.instrucciones_libres
       {/* Nombre de la primera consulta */}
       <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20}}>
         <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>📋 Nombre de la primera cita</div>
-        <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Cómo llama la clínica a la primera consulta. El bot usará siempre este término.</div>
+        <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Cómo llama la agencia a la primera consulta. El bot usará siempre este término.</div>
         <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>
-          {['valoración','consulta inicial','evaluación','diagnóstico','primera visita','entrevista'].map(op=>(
+          {['Demo Call','consulta inicial','primera reunión','entrevista','evaluación','diagnóstico'].map(op=>(
             <div key={op} onClick={()=>setForm({...form,nombre_consulta:op})}
               style={{padding:"6px 14px",borderRadius:20,cursor:"pointer",fontSize:12,border:`1.5px solid ${form.nombre_consulta===op?C.accent:C.border}`,background:form.nombre_consulta===op?C.accentGlow:"transparent",color:form.nombre_consulta===op?C.accentLight:C.muted,transition:"all .15s",fontWeight:form.nombre_consulta===op?600:400}}>
               {op}
@@ -2353,7 +2353,7 @@ ${form.instrucciones_libres ? 'Instrucciones extra:\n'+form.instrucciones_libres
         <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Cualquier indicación extra para el bot. Se agrega tal cual al prompt.</div>
         <textarea value={form.instrucciones_libres} onChange={e=>setForm({...form,instrucciones_libres:e.target.value})}
           rows={5}
-          placeholder={"Ej: Cuando pregunten por precio decí 'los valores los conversamos en la consulta'.\nNo menciones competidores.\nSi alguien pregunta por la Dra. García, decí que está martes y jueves.\nSiempre preguntá si ya vinieron antes a la clínica."}
+          placeholder={"Ej: Cuando pregunten por precio decí 'los valores los conversamos en la Demo Call'.\nNo menciones competidores.\nSi alguien pregunta por Tomas, decí que está disponible martes y jueves.\nSiempre preguntá qué tipo de abogado es y cuántos clientes tiene por mes."}
           style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
       </div>
 
@@ -2431,8 +2431,8 @@ ${form.instrucciones_libres ? 'Instrucciones extra:\n'+form.instrucciones_libres
 
       {/* Mensaje cuando paciente quiere agendar estando ya agendado */}
       <div style={{background:"rgba(99,102,241,0.06)",border:`1px solid ${C.border}`,borderRadius:10,padding:16}}>
-        <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>💬 Mensaje al pedir turno (paciente ya agendado)</div>
-        <div style={{fontSize:12,color:C.muted,marginBottom:10}}>Qué responde el bot cuando un paciente ya agendado pide otro turno o agenda para un tercero</div>
+        <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>💬 Mensaje cuando el prospecto ya tiene reunión agendada</div>
+        <div style={{fontSize:12,color:C.muted,marginBottom:10}}>Qué responde el bot cuando un un prospecto ya ya agendado pide otro turno o agenda para un tercero</div>
         <input value={form.msg_horarios_pendientes}
           onChange={e=>setForm({...form,msg_horarios_pendientes:e.target.value})}
           placeholder="¡Perfecto! Ya te confirmo los horarios disponibles 😊"
@@ -2506,7 +2506,7 @@ function WAConfigPanel({ client }) {
   return (
     <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
       <div style={{fontSize:13,fontWeight:600,marginBottom:2}}>📱 Número de WhatsApp</div>
-      <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Credenciales del número de esta clínica en Meta</div>
+      <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Credenciales del número de WhatsApp en Meta</div>
       <div style={{marginBottom:16}}>
         <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>País del negocio</label>
         <select value={wform.pais_codigo} onChange={e=>setWform({...wform,pais_codigo:e.target.value})}
@@ -2515,7 +2515,7 @@ function WAConfigPanel({ client }) {
             <option key={p.codigo} value={p.codigo}>{p.nombre}</option>
           ))}
         </select>
-        <div style={{fontSize:10,color:C.muted,marginTop:4}}>Se usa para normalizar los teléfonos de pacientes al enviar mensajes.</div>
+        <div style={{fontSize:10,color:C.muted,marginTop:4}}>Se usa para normalizar los teléfonos de prospectos al enviar mensajes.</div>
       </div>
       <Field label="Número de WhatsApp" value={wform.numero_whatsapp} onChange={v=>setWform({...wform,numero_whatsapp:v})} placeholder="+54 11 4523-8901"/>
       <Field label="Phone Number ID (Meta)" value={wform.phone_number_id} onChange={v=>setWform({...wform,phone_number_id:v})} placeholder="1234567890"/>
@@ -2667,7 +2667,7 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
   return (
     <div>
       <div style={{fontSize:16,fontWeight:700,marginBottom:4}}>📣 Difusión</div>
-      <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Enviá mensajes segmentados a tus pacientes</div>
+      <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Enviá mensajes segmentados a tus prospectos</div>
 
       {/* Tabs */}
       <div style={{display:"flex",gap:8,marginBottom:20}}>
@@ -2769,10 +2769,10 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
           <div style={{fontSize:13,fontWeight:600,marginBottom:16}}>🎯 Segmentación</div>
 
           <div style={{marginBottom:14}}>
-            <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:6}}>Tratamiento</label>
+            <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:6}}>Servicio</label>
             <select value={tratFiltro} onChange={e=>setTratFiltro(e.target.value)}
               style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
-              <option value="">Todos los tratamientos</option>
+              <option value="">Todos los servicios</option>
               {(tratamientos||[]).map(t=><option key={t.id} value={t.nombre}>{t.nombre}</option>)}
             </select>
           </div>
@@ -2786,7 +2786,7 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
               <option value="OFRECER_AGENDA">Quiere cita</option>
               <option value="CONFIRMAR_AGENDA">Confirmando agenda</option>
               <option value="SEGUIMIENTO_PENDIENTE">Seguimiento pendiente</option>
-              <option value="PACIENTE_ACTIVO">Paciente activo</option>
+              <option value="PACIENTE_ACTIVO">Prospecto activo</option>
             </select>
           </div>
 
@@ -2832,26 +2832,26 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
           </div>
 
           <div style={{marginBottom:20}}>
-            <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:6}}>Tipo de paciente</label>
+            <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:6}}>Tipo de prospecto</label>
             <select value={tipoPacienteFiltro||''} onChange={e=>setTipoPacienteFiltro(e.target.value)}
               style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
               <option value="">Todos</option>
-              <option value="sin_tratamiento">Sin tratamiento nunca</option>
-              <option value="con_tratamiento">Con al menos 1 tratamiento</option>
+              <option value="sin_tratamiento">Sin servicio nunca</option>
+              <option value="con_tratamiento">Con al menos 1 servicio</option>
               <option value="inactivos">Inactivos (tuvieron turno pero no vuelven)</option>
             </select>
           </div>
 
           <button onClick={buscarPacientes} disabled={cargando}
             style={{width:"100%",padding:"11px 0",borderRadius:8,border:"none",background:C.accent,color:"white",fontSize:13,fontWeight:600,cursor:"pointer"}}>
-            {cargando?"Buscando...":"🔍 Ver pacientes"}
+            {cargando?"Buscando...":"🔍 Ver prospectos"}
           </button>
         </div>
       </>) : (<>
         {/* Preview */}
         <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:16,marginBottom:16}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-            <div style={{fontSize:13,fontWeight:600}}>{seleccionados.size} de {pacientes.length} pacientes seleccionados</div>
+            <div style={{fontSize:13,fontWeight:600}}>{seleccionados.size} de {pacientes.length} prospectos seleccionados</div>
             <div style={{display:"flex",gap:8}}>
               <button onClick={toggleTodos} style={{padding:"4px 10px",borderRadius:6,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:11,cursor:"pointer"}}>
                 {seleccionados.size===pacientes.length?"Deseleccionar todos":"Seleccionar todos"}
@@ -2904,10 +2904,10 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
           </div>
           {modoEnvio === 'texto' ? (<>
             <div style={{fontSize:11,color:"#f59e0b",marginBottom:8,padding:"6px 10px",background:"rgba(245,158,11,0.08)",borderRadius:6,border:"1px solid rgba(245,158,11,0.2)"}}>
-              ⚠️ Solo funciona si el paciente escribió en las últimas 24hs. Para reactivar inactivos usá Plantilla Meta.
+              ⚠️ Solo funciona si el prospecto escribió en las últimas 24hs. Para reactivar inactivos usá Plantilla Meta.
             </div>
             <textarea value={mensaje} onChange={e=>setMensaje(e.target.value)}
-              placeholder="Escribí el mensaje que van a recibir los pacientes..."
+              placeholder="Escribí el mensaje que van a recibir los prospectos..."
               rows={5}
               style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 12px",color:C.text,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box",marginBottom:8}}/>
             {mensaje && (
@@ -2918,7 +2918,7 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
             )}
           </>) : (<>
             <div style={{fontSize:11,color:"#4ade80",marginBottom:8,padding:"6px 10px",background:"rgba(74,222,128,0.08)",borderRadius:6,border:"1px solid rgba(74,222,128,0.2)"}}>
-              ✅ Las plantillas llegan aunque el paciente no haya escrito recientemente.
+              ✅ Las plantillas llegan aunque el prospecto no haya escrito recientemente.
             </div>
             <select value={plantillaElegida} onChange={e=>setPlantillaElegida(e.target.value)}
               style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,marginBottom:10}}>
@@ -2939,7 +2939,7 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
           </>)}
           {modoEnvio === 'email' && (<>
             <div style={{fontSize:11,color:"#67e8f9",marginBottom:8,padding:"6px 10px",background:"rgba(6,182,212,0.08)",borderRadius:6,border:"1px solid rgba(6,182,212,0.2)"}}>
-              📧 Se envía por Gmail de la clínica. Solo llega a pacientes con email registrado.
+              📧 Se envía por Gmail de la agencia. Solo llega a prospectos con email registrado.
             </div>
             <div style={{marginBottom:10}}>
               <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:4}}>Asunto</label>
@@ -2950,12 +2950,12 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
             <div style={{marginBottom:10}}>
               <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:4}}>Cuerpo del email</label>
               <textarea value={emailCuerpo} onChange={e=>setEmailCuerpo(e.target.value)}
-                placeholder={"Hola [Nombre]!\n\nEscribí acá el mensaje...\n\nSaludos,\nLa clínica"}
+                placeholder={"Hola [Nombre]!\n\nEscribí acá el mensaje...\n\nSaludos,\nSkyward"}
                 rows={6}
                 style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 12px",color:C.text,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
             </div>
             <div style={{fontSize:11,color:C.muted,marginBottom:8}}>
-              💡 Usá [Nombre] para personalizar con el nombre del paciente.
+              💡 Usá [Nombre] para personalizar con el nombre del prospecto.
             </div>
             {emailAsunto && emailCuerpo && (
               <div style={{background:"rgba(6,182,212,0.06)",border:"1px solid rgba(6,182,212,0.2)",borderRadius:8,padding:"8px 12px",marginBottom:10}}>
@@ -2970,7 +2970,7 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
           </>)}
           {modoEnvio !== 'email' && (
             <div style={{fontSize:11,color:C.muted,marginBottom:12}}>
-              ⏱️ 3 segundos de delay entre mensajes. Para {seleccionados.size} pacientes tardará ~{Math.ceil(seleccionados.size*3/60)} minutos.
+              ⏱️ 3 segundos de delay entre mensajes. Para {seleccionados.size} prospectos tardará ~{Math.ceil(seleccionados.size*3/60)} minutos.
             </div>
           )}
           <button onClick={enviar}
@@ -2978,7 +2978,7 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
             style={{width:"100%",padding:"11px 0",borderRadius:8,border:"none",
               background:modoEnvio==='email'?"#0891b2":seleccionados.size===0?"#374151":"#ef4444",
               color:"white",fontSize:13,fontWeight:600,cursor:"pointer"}}>
-            {enviando?(modoEnvio==='email'?'Enviando emails...':'Enviando...'):(modoEnvio==='email'?`📧 Enviar email a ${pacientes.filter(p=>seleccionados.has(p.id)&&p.email).length} pacientes`:`📣 Enviar a ${seleccionados.size} paciente${seleccionados.size!=1?"s":""}`)}
+            {enviando?(modoEnvio==='email'?'Enviando emails...':'Enviando...'):(modoEnvio==='email'?`📧 Enviar email a ${pacientes.filter(p=>seleccionados.has(p.id)&&p.email).length} pacientes`:`📣 Enviar a ${seleccionados.size} prospecto${seleccionados.size!=1?"s":""}`)}
           </button>
         </div>
       </>)}
@@ -3283,7 +3283,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
   const [savingEditTurno, setSavingEditTurno] = useState(false);
   const [errEditTurno, setErrEditTurno] = useState(null);
   const FORM_TURNO_INIT = { tratamiento_id:"", tratamiento_libre:"", profesional_id:"", fecha:"", hora_inicio:"", hora_fin:"", monto:"", moneda:"", forma_pago:(campos?.metodos_pago||"efectivo").split(",")[0]||"efectivo", cuotas:1, estado_pago:"pendiente", notas_pago:"", tipo_turno:"tratamiento" };
-  const FORM_PAC_INIT = { nombre:"", telefono:"", documento:"", email:"", obra_social:"", notas:"", fecha_nacimiento:"" };
+  const FORM_PAC_INIT = { nombre:"", telefono:"", documento:"", email:"", notas:"", notas:"", fecha_nacimiento:"" };
   const [formTurno, setFormTurno] = useState(FORM_TURNO_INIT);
   const [savingTurno, setSavingTurno] = useState(false);
   const [errTurno, setErrTurno] = useState(null);
@@ -3675,7 +3675,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
     telefono:    ["telefono","teléfono","tel","celular","phone","movil","móvil","whatsapp","cel"],
     email:       ["email","mail","correo","e-mail","correo electronico"],
     fecha_nacimiento: ["fecha_nacimiento","fecha nacimiento","nacimiento","fecha nac","birthday","fec_nac","fnac","f.nac","f nacimiento"],
-    obra_social: ["obra_social","obra social","os","prepaga","mutual","seguro"],
+    notas: ["notas","obra social","os","prepaga","mutual","seguro"],
     notas:       ["notas","nota","observaciones","observacion","comentarios","comentario"],
   };
 
@@ -3779,7 +3779,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
         }
         return null;
       })(),
-      obra_social: (row[importCols.obra_social]||"").trim(),
+      notas: (row[importCols.notas]||"").trim(),
       notas:       (row[importCols.notas]||"").trim(),
     }));
 
@@ -4160,7 +4160,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
       if (!r.ok) throw new Error("Error");
       const pac = await r.json();
       setTurnoPaciente(pac);
-      setFormNuevoPac({ nombre:"", telefono:"", documento:"", email:"", obra_social:"", notas:"" });
+      setFormNuevoPac({ nombre:"", telefono:"", documento:"", email:"", notas:"", notas:"" });
       setTurnoStep("turno");
       fetchPacientes();
     } catch(e) { console.error(e); }
@@ -4235,7 +4235,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
           {key:"inicio",     icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></>, label:"Inicio",       rangos:["admin","dueno"],         planes:["base","plus","pro"]},
           {key:"calendario", icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></>, label:"Agenda",       rangos:["admin","dueno","staff","profesional"], planes:["base","plus","pro"]},
           {key:"conversations",icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></>,label:"Conversación",rangos:["admin","dueno","staff"], planes:["plus","pro"], badge: solicitudesPendientes + (prospectos||[]).filter(p=>p.insistencia_notificada&&p.modo_humano).length + (prospectos||[]).filter(p=>p.listo_para_cierre&&!p.horario_elegido).length, badgeUrgente: (prospectos||[]).filter(p=>p.listo_para_cierre&&!p.horario_elegido).length > 0},
-          {key:"pacientes",  icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></>, label:"Pacientes",    rangos:["admin","dueno","staff","profesional"], planes:["base","plus","pro"]},
+          {key:"prospectos",  icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></>, label:"Prospectos",    rangos:["admin","dueno","staff","profesional"], planes:["base","plus","pro"]},
           {key:"resultados", icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></>, label:"Resultados",   rangos:["admin","dueno","staff","profesional"], planes:["base","plus","pro"]},
           {key:"recordatorios",icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></>,label:"Recordatorios",rangos:["admin","dueno","staff"],planes:["base","plus","pro"]},
           {key:"difusion",    icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8 19.79 19.79 0 01.1 2.18 2 2 0 012.07 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.91a16 16 0 006.14 6.14l1.27-.85a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 15.92"/></svg></>, label:"Difusión",      rangos:["admin","dueno"],         planes:["base","plus","pro"]},
@@ -4367,12 +4367,12 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                           style={{background:C.bg,border:`1px solid ${filtroEtapa?C.accent:C.border}`,borderRadius:6,padding:"5px 8px",color:filtroEtapa?C.accentLight:C.muted,fontSize:11,fontFamily:"inherit"}}>
                           <option value="">Todas las etapas</option>
                           {Object.entries(STAGES).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
-                          <option value="PACIENTE_ACTIVO">Paciente activo</option>
+                          <option value="PACIENTE_ACTIVO">Prospecto activo</option>
                           <option value="NO_SHOW">No show</option>
                         </select>
                         <select value={filtroTratamientoChat} onChange={e=>setFiltroTratamientoChat(e.target.value)}
                           style={{background:C.bg,border:`1px solid ${filtroTratamientoChat?C.accent:C.border}`,borderRadius:6,padding:"5px 8px",color:filtroTratamientoChat?C.accentLight:C.muted,fontSize:11,fontFamily:"inherit"}}>
-                          <option value="">Todos los tratamientos</option>
+                          <option value="">Todos los servicios</option>
                           {[...new Set((prospectos||[]).map(p=>p.tratamiento).filter(Boolean))].map(t=><option key={t} value={t}>{t}</option>)}
                         </select>
                       </div>
@@ -4853,13 +4853,13 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                               setTurnoPaciente(pacienteEncontrado || null);
                               setTurnoStep(pacienteEncontrado ? 'turno' : 'nuevo_pac');
                               if (!pacienteEncontrado) {
-                                setFormNuevoPac({nombre:nombreFinal, telefono:telefonoFinal, documento:datosChat.documento||'', email:datosChat.email||'', obra_social:datosChat.obra_social||'', notas:datosChat.notas||''});
+                                setFormNuevoPac({nombre:nombreFinal, telefono:telefonoFinal, documento:datosChat.documento||'', email:datosChat.email||'', notas:datosChat.notas||'', notas:datosChat.notas||''});
                               }
                               setShowNuevoTurno(true);
                             } catch(e) {
                               console.error('Error confirmar turno:', e);
                               setTurnoStep('nuevo_pac');
-                              setFormNuevoPac({nombre:selectedProspect.nombre||'', telefono:'', documento:'', email:'', obra_social:'', notas:''});
+                              setFormNuevoPac({nombre:selectedProspect.nombre||'', telefono:'', documento:'', email:'', notas:'', notas:''});
                               setShowNuevoTurno(true);
                             }
                             setEnviandoConfirm(false);
@@ -4872,7 +4872,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                             if (c.documento_activo) lista.push(`- ${c.documento_label||'DNI'}:`);
                             if (c.telefono_activo) lista.push('- WhatsApp:');
                             if (c.email_activo) lista.push('- Email:');
-                            if (c.obra_social_activo) lista.push(`- ${c.obra_social_label||'Obra social'}:`);
+                            if (c.notas_activo) lista.push(`- ${c.notas_label||'Obra social'}:`);
                             if (c.modalidad_activo) lista.push('- Modalidad (presencial/virtual):');
                             if (c.notas_activo) lista.push('- Algo a tener en cuenta:');
                             if (lista.length>0) { setMsgManual(`para completar el registro necesito estos datos:\n\n${lista.join('\n')}`); }
@@ -4887,7 +4887,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                             setSelectedProspect({...selectedProspect, reagenda_pendiente:true, listo_para_cierre:false, horario_elegido:null});
                             setReagendaMode(true); setModalCalendario(true);
                           } },
-                          { icon:"❌", label:"Cancelar turno", desc:"Cancela el turno y avisa al paciente", action: async ()=>{ setShowAcciones(false);
+                          { icon:"❌", label:"Cancelar turno", desc:"Cancela el turno y avisa al prospecto", action: async ()=>{ setShowAcciones(false);
                             if (!window.confirm('¿Confirmar cancelación del turno?')) return;
                             try {
                               const rT = await fetch(`${API}/api/turnos?cliente_id=${client.id}&paciente_tel=${selectedProspect.telefono}`, {headers:aH()});
@@ -4899,7 +4899,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                               setSelectedProspect({...selectedProspect,cancelacion_pendiente:false,etapa:'SEGUIMIENTO_PENDIENTE'});
                             } catch(e){console.error(e);}
                           }},
-                          { icon:"🚫", label:"Marcar no show", desc:"El paciente no se presentó", action: async ()=>{ setShowAcciones(false);
+                          { icon:"🚫", label:"Marcar no show", desc:"El prospecto no se presentó", action: async ()=>{ setShowAcciones(false);
                             setMarcandoNoShow(true);
                             await fetch(`${API}/api/prospectos/${selectedProspect.id}`, {method:'PUT',headers:jH(),body:JSON.stringify({etapa:'NO_SHOW',cliente_id:client.id})}).catch(()=>{});
                             setSelectedProspect({...selectedProspect,etapa:'NO_SHOW'});
@@ -4977,7 +4977,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       return (
                         <div style={{background:"rgba(34,197,94,0.08)",border:"1px solid rgba(34,197,94,0.4)",borderRadius:10,padding:"10px 12px",marginBottom:6,display:"flex",alignItems:"center",gap:10}}>
                           <div style={{flex:1}}>
-                            <div style={{fontSize:12,color:"#4ade80",fontWeight:700,marginBottom:2}}>✅ Horario elegido por el paciente</div>
+                            <div style={{fontSize:12,color:"#4ade80",fontWeight:700,marginBottom:2}}>✅ Horario elegido por el prospecto</div>
                             <div style={{fontSize:13,color:"#e9edef",fontWeight:600}}>{slot.label} a las {hora}</div>
                             <div style={{fontSize:11,color:"#8696a0",marginTop:2}}>{selectedProspect.nombre||selectedProspect.telefono} - {selectedProspect.tratamiento||'Consulta'}</div>
                           </div>
@@ -5044,7 +5044,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                                   telefono: telefonoFinal || '',
                                   documento: datosChat.documento || '',
                                   email: datosChat.email || '',
-                                  obra_social: datosChat.obra_social || '',
+                                  notas: datosChat.notas || '',
                                   notas: datosChat.notas || '',
                                 });
                               }
@@ -5053,7 +5053,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                             } catch(e) {
                               console.error('Error confirmar turno verde:', e);
                               setTurnoStep('nuevo_pac');
-                              setFormNuevoPac({nombre: selectedProspect.nombre||'', telefono:'', documento:'', email:'', obra_social:'', notas:''});
+                              setFormNuevoPac({nombre: selectedProspect.nombre||'', telefono:'', documento:'', email:'', notas:'', notas:''});
                               setShowNuevoTurno(true);
                               setEnviandoConfirm(false);
                             }
@@ -5208,7 +5208,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   <button onClick={()=>setShowDetalle(false)} style={{background:"transparent",border:"none",color:C.muted,cursor:"pointer",fontSize:16,lineHeight:1,padding:0}}>×</button>
                 </div>
                 {[
-                  { label:"Tratamiento", value:selectedProspect.tratamiento||"-" },
+                  { label:"Servicio", value:selectedProspect.tratamiento||"-" },
                   { label:"Etapa", value:(STAGES[selectedProspect.etapa]||STAGES.RAPPORT).label },
                   { label:"Mensajes", value:selectedProspect.mensajes_count||0 },
                   { label:"Último contacto", value:timeAgo(selectedProspect.actualizado_en) },
@@ -5235,7 +5235,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       { label:"Nombre", value:datosAgenda.nombre },
                       { label:camposGlobal?.documento_label||"Documento", value:datosAgenda.documento },
                       { label:"Email", value:datosAgenda.email },
-                      { label:camposGlobal?.obra_social_label||"Obra social", value:datosAgenda.obra_social },
+                      { label:camposGlobal?.notas_label||"Obra social", value:datosAgenda.notas },
                       { label:"Modalidad", value:datosAgenda.modalidad },
                       { label:"Notas", value:datosAgenda.notas },
                     ].filter(x=>x.value).map((item,i) => (
@@ -5278,7 +5278,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   <div style={{fontSize:15,fontWeight:700}}>{selectedProspect.nombre||selectedProspect.telefono}</div>
                 </div>
                 {[
-                  { label:"Tratamiento", value:selectedProspect.tratamiento||"-" },
+                  { label:"Servicio", value:selectedProspect.tratamiento||"-" },
                   { label:"Etapa", value:(STAGES[selectedProspect.etapa]||STAGES.RAPPORT).label },
                   { label:"Mensajes", value:selectedProspect.mensajes_count||0 },
                   { label:"Último contacto", value:timeAgo(selectedProspect.actualizado_en) },
@@ -5341,7 +5341,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       {label:"Rapport",       value:funnelNuevo.etapas.rapport,     color:"#3b82f6", icon:"🗣", desc:"≥2 mensajes"},
                       {label:"Agendados",     value:funnelNuevo.etapas.agendados,   color:"#f59e0b", icon:"📅", desc:"Todos los turnos"},
                       {label:"Se presentó",   value:funnelNuevo.etapas.presentados, color:"#10b981", icon:"✅", desc:"Showup"},
-                      {label:"Vendido",       value:funnelNuevo.etapas.vendidos,    color:"#8b5cf6", icon:"💰", desc:"Tratamiento real"},
+                      {label:"Vendido",       value:funnelNuevo.etapas.vendidos,    color:"#8b5cf6", icon:"💰", desc:"Servicio contratado"},
                     ].map((s,i)=>(
                       <div key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:"14px 16px"}}>
                         <div style={{fontSize:18,marginBottom:4}}>{s.icon}</div>
@@ -5434,7 +5434,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   {/* Tratamientos este mes */}
                   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:10,marginBottom:16}}>
                     {[
-                      {label:"Pacientes totales", value:pacientes.length, icon:"👥", color:C.accent},
+                      {label:"Prospectos totales", value:pacientes.length, icon:"👥", color:C.accent},
                       {label:"Turnos este mes",   value:tratCount.este_mes||0, icon:"📅", color:"#3b82f6"},
                       {label:"Realizados",         value:tratCount.realizados||0, icon:"✅", color:C.green},
                       {label:"No-shows",           value:tratCount.no_shows||0, icon:"🔴", color:"#ef4444"},
@@ -5460,7 +5460,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
         )}
 
         {/* Pacientes */}
-        {activeTab === "pacientes" && (
+        {activeTab === "prospectos" && (
           <div style={{flex:1,display:"flex",overflow:"hidden"}}>
             <div style={isMobile && selPac ? {display:"none"} : isMobile ? {flex:1,display:"flex",flexDirection:"column"} : {width:300,borderRight:`1px solid ${C.border}`,display:"flex",flexDirection:"column"}}>
               <div style={{padding:"12px 14px",borderBottom:`1px solid ${C.border}`,display:"flex",flexDirection:"column",gap:8}}>
@@ -5477,7 +5477,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               </div>
               <div style={{overflowY:"auto",flex:1}}>
                 {pacientes.length === 0 ? (
-                  <div style={{padding:24,textAlign:"center",color:C.muted,fontSize:13}}>Sin pacientes registrados</div>
+                  <div style={{padding:24,textAlign:"center",color:C.muted,fontSize:13}}>Sin prospectos registrados</div>
                 ) : pacientes.map(p => (
                   <div key={p.id} className="pi" onClick={()=>setSelPac(p)}
                     style={{padding:"12px 14px",borderBottom:`1px solid ${C.border}`,background:selPac?.id===p.id?C.accentGlow:"transparent",cursor:"pointer"}}>
@@ -5556,7 +5556,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   {pacDet.telefono && <span style={{fontSize:13,color:C.muted}}>📱 {pacDet.telefono}</span>}
                   {pacDet.documento && <span style={{fontSize:13,color:C.muted}}>🪪 {pacDet.documento}</span>}
                   {pacDet.email && <span style={{fontSize:13,color:C.muted}}>✉️ {pacDet.email}</span>}
-                  {pacDet.obra_social && <span style={{fontSize:13,color:C.muted}}>🏥 {pacDet.obra_social}</span>}
+                  {pacDet.notas && <span style={{fontSize:13,color:C.muted}}>🏥 {pacDet.notas}</span>}
                   {pacDet.fecha_nacimiento && (() => {
                     const nac = new Date(pacDet.fecha_nacimiento+'T12:00:00');
                     const hoy = new Date();
@@ -5658,7 +5658,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                           <div key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:12}}>
                             <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
                               <div>
-                                <div style={{fontSize:12,fontWeight:600}}>{res.tratamiento||"Tratamiento"}</div>
+                                <div style={{fontSize:12,fontWeight:600}}>{res.tratamiento||"Servicio"}</div>
                                 <div style={{fontSize:11,color:C.muted}}>{res.fecha && new Date(res.fecha+'T12:00:00').toLocaleDateString("es-AR",{day:"numeric",month:"long",year:"numeric"})}</div>
                               </div>
                               <button onClick={async()=>{await fetch(`${API}/api/resultados/${res.id}`,{method:"DELETE",headers:aH()});fetchResultados();const upd=await fetch(`${API}/api/pacientes/${pacDet.id}`,{headers:aH()}).then(r=>r.json());setPacDet(upd);}}
@@ -5741,7 +5741,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 })()}
               </div>
             ) : (
-              <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",color:C.muted,fontSize:13}}>Seleccioná un paciente</div>
+              <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",color:C.muted,fontSize:13}}>Seleccioná un prospecto</div>
             )}
 
 
@@ -6065,7 +6065,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                               <div style={{fontWeight:700,fontSize:10,color,lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
                                 {t.hora?.slice(0,5)}{t.hora_fin?` - ${t.hora_fin.slice(0,5)}`:""} 
                               </div>
-                              {height >= 30 && <div style={{fontWeight:600,fontSize:11,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.paciente_nombre||"Paciente"}</div>}
+                              {height >= 30 && <div style={{fontWeight:600,fontSize:11,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.paciente_nombre||"Prospecto"}</div>}
                               {height >= 52 && <div style={{fontSize:10,color:C.muted,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.tratamiento}</div>}
                             </div>
                           );
@@ -6293,7 +6293,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     return (
                       <div key={i} style={{background:C.bg,border:`1px solid ${C.border}`,borderLeft:`3px solid ${color}`,borderRadius:10,padding:"12px 14px",marginBottom:10}}>
                         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-                          <div style={{fontWeight:600,fontSize:13}}>{t.paciente_nombre||"Paciente"}</div>
+                          <div style={{fontWeight:600,fontSize:13}}>{t.paciente_nombre||"Prospecto"}</div>
                           <div style={{display:"flex",gap:5}}>
                             <button onClick={()=>setFichaModal({turno:t, paciente:{id:t.paciente_id, nombre:t.paciente_nombre}})}
                               style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,borderRadius:6,padding:"2px 8px",fontSize:11,cursor:"pointer"}}>📋</button>
@@ -6390,7 +6390,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
             {/* Buscador */}
             <input value={recBuscar} onChange={e=>{setRecBuscar(e.target.value);fetchRecordatorios(e.target.value,recFiltroCategoria);}}
-              placeholder="Buscar por paciente, título, descripción..."
+              placeholder="Buscar por prospecto, título, descripción..."
               style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",marginBottom:12}}/>
 
             {/* Filtros unificados: tipos fijos + categorías personalizadas */}
@@ -6551,7 +6551,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Paciente (opcional)</label>
                     <select value={formRec.paciente_id} onChange={e=>setFormRec({...formRec,paciente_id:e.target.value})}
                       style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
-                      <option value="">Sin paciente</option>
+                      <option value="">Sin prospecto</option>
                       {pacientes.map(p=><option key={p.id} value={p.id}>{p.nombre}</option>)}
                     </select>
                   </div>
@@ -6581,11 +6581,11 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               {/* Buscador y filtros */}
               <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
                 <input value={resQ} onChange={e=>{setResQ(e.target.value);fetchResultados(e.target.value,resFiltroTrat);}}
-                  placeholder="Buscar por paciente, tratamiento..."
+                  placeholder="Buscar por prospecto, servicio..."
                   style={{flex:1,minWidth:200,background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
                 <select value={resFiltroTrat} onChange={e=>{setResFiltroTrat(e.target.value);fetchResultados(resQ,e.target.value);}}
                   style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 14px",color:resFiltroTrat?C.text:C.muted,fontSize:13,fontFamily:"inherit"}}>
-                  <option value="">Todos los tratamientos</option>
+                  <option value="">Todos los servicios</option>
                   {tratamientos.map(t=><option key={t.id} value={t.nombre}>{t.nombre}</option>)}
                 </select>
               </div>
@@ -6796,7 +6796,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                                       {lista.map((pg,i)=>(
                                         <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:`1px solid ${C.border}`}}>
                                           <div>
-                                            <div style={{fontSize:13,fontWeight:500}}>{pg.paciente_nombre||"Paciente"}</div>
+                                            <div style={{fontSize:13,fontWeight:500}}>{pg.paciente_nombre||"Prospecto"}</div>
                                             <div style={{fontSize:11,color:C.muted,marginTop:2}}>
                                               {pg.tratamiento||"-"} · {pg.forma_pago?.replace("_"," ")} · {new Date(pg.fecha).toLocaleDateString("es-AR")}
                                             </div>
@@ -7008,7 +7008,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               {/* Tabs internas */}
               <div style={{display:"flex",gap:4,marginBottom:24,background:C.surface,borderRadius:10,padding:4,border:`1px solid ${C.border}`}}>
                 {[
-                  {v:"clinica",  l:"🏥 Clínica"},
+                  {v:"clinica",  l:"🏢 Agencia"},
                   {v:"agenda",   l:"📅 Agenda"},
                   {v:"sistema",  l:"⚙️ Sistema"},
                   ...(plan !== 'base' ? [{v:"bot", l:"🤖 Bot"}] : []),
@@ -7028,9 +7028,9 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               {/* WhatsApp - credenciales del número — solo Plus y Pro */}
               {plan !== 'base' && <WAConfigPanel client={client} />}
 
-              {/* Logo de la clínica */}
+              {/* Logo de la agencia */}
               <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
-                <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>🖼️ Logo de la clínica</div>
+                <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>🖼️ Logo de la agencia</div>
                 <div style={{fontSize:12,color:C.muted,marginBottom:14}}>Se usa en propuestas y comunicaciones. PNG o JPG, máx 2MB.</div>
                 <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:14}}>
                   <div style={{width:64,height:64,borderRadius:10,background:C.bg,border:`1px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",flexShrink:0}}>
@@ -7066,7 +7066,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               {/* Protocolo de atención */}
               <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                 <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>Protocolo de atención</div>
-                <div style={{fontSize:12,color:C.muted,marginBottom:14}}>Sube un documento .doc o .docx con el protocolo de atención de la clínica.</div>
+                <div style={{fontSize:12,color:C.muted,marginBottom:14}}>Sube un documento .doc o .docx con el protocolo de atención de la agencia.</div>
                 {client?.protocolo_url && (
                   <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14,padding:"10px 14px",background:C.bg,borderRadius:8,border:`1px solid ${C.border}`}}>
                     <span style={{fontSize:18}}>📄</span>
@@ -7124,7 +7124,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
                   <div>
                     <div style={{fontSize:13,fontWeight:600,marginBottom:2}}>Tratamientos</div>
-                    <div style={{fontSize:12,color:C.muted}}>Servicios que ofrece la clínica</div>
+                    <div style={{fontSize:12,color:C.muted}}>Servicios que ofrece la agencia</div>
                   </div>
                   <Btn onClick={()=>setShowNewTrat(true)} small>+ Agregar</Btn>
                 </div>
@@ -7138,7 +7138,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         <span style={{fontSize:10,padding:"2px 7px",borderRadius:20,fontWeight:600,
                           background:t.tipo==="valoracion"?"rgba(59,130,246,0.12)":"rgba(139,92,246,0.12)",
                           color:t.tipo==="valoracion"?"#3b82f6":"#8b5cf6",border:`1px solid ${t.tipo==="valoracion"?"rgba(59,130,246,0.3)":"rgba(139,92,246,0.3)"}`}}>
-                          {t.tipo==="valoracion"?"Valoración":"Tratamiento"}
+                          {t.tipo==="valoracion"?"Demo Call":"Servicio"}
                         </span>
                       </div>
                       <div style={{fontSize:11,color:C.muted}}>{t.duracion_minutos} min{t.descripcion?` · ${t.descripcion}`:""}</div>
@@ -7178,7 +7178,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
                   <div>
                     <div style={{fontSize:13,fontWeight:600,marginBottom:2}}>Profesionales</div>
-                    <div style={{fontSize:12,color:C.muted}}>Equipo de la clínica</div>
+                    <div style={{fontSize:12,color:C.muted}}>Equipo de la agencia</div>
                   </div>
                   <Btn onClick={()=>setShowNewProf(true)} small>+ Agregar</Btn>
                 </div>
@@ -7190,7 +7190,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       <div style={{padding:14,background:C.bg,borderRadius:8,border:`1.5px solid ${C.accent}`}}>
                         <Field label="Nombre *" value={formEditProf.nombre} onChange={v=>setFormEditProf({...formEditProf,nombre:v})} placeholder="Dra. García"/>
                         <Field label="Rol" value={formEditProf.rol} onChange={v=>setFormEditProf({...formEditProf,rol:v})} placeholder="Médica estética..."/>
-                        <Field label="Email" value={formEditProf.email} onChange={v=>setFormEditProf({...formEditProf,email:v})} placeholder="dra@clinica.com"/>
+                        <Field label="Email" value={formEditProf.email} onChange={v=>setFormEditProf({...formEditProf,email:v})} placeholder="asesor@skyward.com"/>
                         <div style={{marginBottom:8}}>
                           <div style={{fontSize:11,color:C.muted,marginBottom:4}}>Color en calendario</div>
                           <div style={{display:"flex",gap:4}}>{PROF_COLORS.map(c=>(
@@ -7229,7 +7229,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   <div style={{marginTop:12,padding:16,background:C.bg,borderRadius:8,border:`1px solid ${C.border}`}}>
                     <Field label="Nombre *" value={formProf.nombre} onChange={v=>setFormProf({...formProf,nombre:v})} placeholder="Dra. García"/>
                     <Field label="Rol" value={formProf.rol} onChange={v=>setFormProf({...formProf,rol:v})} placeholder="Médica estética, Esteticista..."/>
-                    <Field label="Email (para invitar al turno)" value={formProf.email} onChange={v=>setFormProf({...formProf,email:v})} placeholder="dra.garcia@clinica.com"/>
+                    <Field label="Email (para invitar al turno)" value={formProf.email} onChange={v=>setFormProf({...formProf,email:v})} placeholder="martin@skyward.com"/>
                     <div style={{marginBottom:8}}>
                       <div style={{fontSize:11,color:C.muted,marginBottom:4}}>Color en calendario</div>
                       <div style={{display:"flex",gap:4}}>{PROF_COLORS.map(c=>(
@@ -7245,7 +7245,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 )}
               </div>
 
-              {/* Campos Ficha Clínica */}
+              {/* Campos del prospecto */}
               <CamposFichaConfig client={client} />
 
               {/* Usuarios del panel — solo admin y dueño */}
@@ -7282,7 +7282,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   {showNewUsuario && (
                     <div style={{marginTop:12,padding:16,background:C.bg,borderRadius:8,border:`1px solid ${C.border}`}}>
                       <Field label="Nombre *" value={formUsuario.nombre} onChange={v=>setFormUsuario({...formUsuario,nombre:v})} placeholder="Ana García"/>
-                      <Field label="Email *" value={formUsuario.email} onChange={v=>setFormUsuario({...formUsuario,email:v})} placeholder="ana@clinica.com" type="email"/>
+                      <Field label="Email *" value={formUsuario.email} onChange={v=>setFormUsuario({...formUsuario,email:v})} placeholder="ana@skyward.com" type="email"/>
                       <Field label="Contraseña *" value={formUsuario.password} onChange={v=>setFormUsuario({...formUsuario,password:v})} placeholder="••••••••" type="password"/>
                       <Field label="Cargo (opcional)" value={formUsuario.cargo||''} onChange={v=>setFormUsuario({...formUsuario,cargo:v})} placeholder="Dr., Esteticista, Recepcionista..."/>
                       <div style={{marginBottom:14}}>
@@ -7341,7 +7341,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
                     <div>
                       <div style={{fontSize:13,fontWeight:600,marginBottom:2}}>📱 Mensajes automáticos por WhatsApp</div>
-                      <div style={{fontSize:12,color:C.muted,marginBottom:14}}>El bot le escribe al paciente cuando se agenda o el dia anterior al turno</div>
+                      <div style={{fontSize:12,color:C.muted,marginBottom:14}}>El bot le escribe al prospecto cuando se agenda o el dia anterior al turno</div>
                     </div>
                     <div onClick={()=>setCampos({...campos,recordatorio_activo:!campos.recordatorio_activo})}
                       style={{width:36,height:20,borderRadius:10,background:campos.recordatorio_activo!==false?C.accent:C.border,cursor:"pointer",position:"relative",transition:"background .2s",flexShrink:0,marginTop:2}}>
@@ -7368,7 +7368,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                           .replace(/PROFESIONAL/gi,"Dra. Pérez")
                           .replace(/FECHA/gi,"viernes 21 de marzo")
                           .replace(/HORA/gi,"15:00")
-                          .replace(/CLINICA/gi, client?.nombre||"Clínica")}
+                          .replace(/CLINICA/gi, client?.nombre||"Skyward")}
                       </div>
                     )}
                   </div>
@@ -7388,7 +7388,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                           .replace(/PROFESIONAL/gi,"Dra. Pérez")
                           .replace(/FECHA/gi,"viernes 21 de marzo")
                           .replace(/HORA/gi,"15:00")
-                          .replace(/CLINICA/gi, client?.nombre||"Clínica")}
+                          .replace(/CLINICA/gi, client?.nombre||"Skyward")}
                       </div>
                     )}
                   </div>
@@ -7432,7 +7432,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         placeholder={"Dejá vacío para que Claude genere el mensaje según el contexto del chat\nVariables: {nombre} {fecha} {hora} {tratamiento}"}
                         rows={3}
                         style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
-                      <div style={{fontSize:10,color:C.muted,marginTop:4}}>Si está vacío, Claude genera el mensaje personalizado usando el historial del chat del paciente.</div>
+                      <div style={{fontSize:10,color:C.muted,marginTop:4}}>Si está vacío, Claude genera el mensaje personalizado usando el historial del chat del prospecto.</div>
                     </div>
 
                     {/* Post turno */}
@@ -7486,7 +7486,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               {campos && (
                 <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                   <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>Monedas aceptadas</div>
-                  <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Las monedas que usa la clínica para cobrar</div>
+                  <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Las monedas que usa la agencia para cobrar</div>
 
                   {/* Seleccionadas */}
                   {(campos.monedas||"").split(",").filter(Boolean).length > 0 && (
@@ -7514,7 +7514,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               {campos && (
                 <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                   <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>Métodos de pago</div>
-                  <div style={{fontSize:12,color:C.muted,marginBottom:14}}>Los métodos que acepta la clínica. Aparecen en todos los modales de pago.</div>
+                  <div style={{fontSize:12,color:C.muted,marginBottom:14}}>Los métodos que acepta la agencia. Aparecen en todos los modales de pago.</div>
                   {(() => {
                     const PREDEFINIDOS = [
                       {v:"efectivo",l:"💵 Efectivo"},{v:"transferencia",l:"🏦 Transferencia"},
@@ -7633,7 +7633,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     { key:"documento_activo", label:"Número de documento", lk:"documento_label", ld:"DNI" },
                     { key:"telefono_activo", label:"Teléfono / WhatsApp" },
                     { key:"email_activo", label:"Email" },
-                    { key:"obra_social_activo", label:"Obra social / Seguro", lk:"obra_social_label", ld:"Obra social" },
+                    { key:"notas_activo", label:"Obra social / Seguro", lk:"notas_label", ld:"Obra social" },
                     { key:"modalidad_activo", label:"Modalidad (presencial/virtual)" },
                     { key:"notas_activo", label:"Notas adicionales" },
                   ].map(f => (
@@ -7659,7 +7659,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               {campos && (
                 <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                   <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>Nombres de tipos de turno</div>
-                  <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Cómo llama la clínica a cada tipo. Aparece en el funnel y reportes.</div>
+                  <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Cómo llama la agencia a cada tipo. Aparece en el funnel y reportes.</div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
                     <div>
                       <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>🩺 Nombre para "valoración"</label>
@@ -7740,7 +7740,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
                   {Object.keys(FIELD_ALIASES).map(field => {
                     const headers = Object.keys(importRows[0]||{});
-                    const labels = {nombre:"Nombre *",telefono:"Teléfono",email:"Email",fecha_nacimiento:"Fecha nacimiento",obra_social:"Obra social",notas:"Notas"};
+                    const labels = {nombre:"Nombre *",telefono:"Teléfono",email:"Email",fecha_nacimiento:"Fecha nacimiento",notas:"Obra social",notas:"Notas"};
                     return (
                       <div key={field}>
                         <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:4}}>{labels[field]}</label>
@@ -7772,7 +7772,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                           <td style={{padding:"7px 10px"}}>{row[importCols.telefono]||<span style={{color:C.muted}}>-</span>}</td>
                           <td style={{padding:"7px 10px"}}>{row[importCols.email]||<span style={{color:C.muted}}>-</span>}</td>
                           <td style={{padding:"7px 10px"}}>{row[importCols.fecha_nacimiento]||<span style={{color:C.muted}}>-</span>}</td>
-                          <td style={{padding:"7px 10px"}}>{row[importCols.obra_social]||<span style={{color:C.muted}}>-</span>}</td>
+                          <td style={{padding:"7px 10px"}}>{row[importCols.notas]||<span style={{color:C.muted}}>-</span>}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -7922,7 +7922,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Paciente (opcional)</label>
                 <select value={formRes.paciente_id} onChange={e=>setFormRes({...formRes,paciente_id:e.target.value})}
                   style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
-                  <option value="">Sin paciente</option>
+                  <option value="">Sin prospecto</option>
                   {pacientes.map(p=><option key={p.id} value={p.id}>{p.nombre}</option>)}
                 </select>
               </div>
@@ -7930,7 +7930,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
             {/* Tratamiento */}
             <div style={{marginBottom:14}}>
-              <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Tratamiento</label>
+              <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Servicio</label>
               <select value={formRes.tratamiento_id} onChange={e=>setFormRes({...formRes,tratamiento_id:e.target.value,tratamiento_libre:""})}
                 style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
                 <option value="">Escribir manualmente...</option>
@@ -8026,7 +8026,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   <div style={{height:1,background:C.border,marginBottom:16}}/>
                   {/* Datos */}
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
-                    <Field label="Tratamiento" value={editTurnoData.tratamiento} onChange={v=>setEditTurnoData({...editTurnoData,tratamiento:v})}/>
+                    <Field label="Servicio" value={editTurnoData.tratamiento} onChange={v=>setEditTurnoData({...editTurnoData,tratamiento:v})}/>
                     <div>
                       <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Profesional</label>
                       <select value={editTurnoData.profesional||""} onChange={e=>setEditTurnoData({...editTurnoData,profesional:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
@@ -8152,7 +8152,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       <div style={{height:1,background:C.border,marginBottom:14}}/>
                       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
                         <div>
-                          <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Tratamiento</label>
+                          <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Servicio</label>
                           <select value={formTurno.tratamiento_id} onChange={e=>{
                             const trat = tratamientos.find(t=>t.id===parseInt(e.target.value));
                             setFormTurno({...formTurno,tratamiento_id:e.target.value,tratamiento_libre:"",tipo_turno:trat?.tipo||formTurno.tipo_turno||"tratamiento"});
@@ -9184,7 +9184,7 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
             <div style={{marginBottom:16}}>
               <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:6}}>{perfilEnt === "personalizado" ? "Contexto del paciente *" : "Contexto adicional (opcional)"}</label>
               <textarea value={contextoEnt} onChange={e=>setContextoEnt(e.target.value)}
-                placeholder={perfilEnt === 'personalizado' ? 'Describí al paciente y la situación. La IA va a actuar exactamente según este contexto, sin mezclar perfiles predefinidos.' : 'Ej: "El paciente ya fue a otra clínica y le salió más barato", "Viene recomendado por una amiga"...'}
+                placeholder={perfilEnt === 'personalizado' ? 'Describí al prospecto y la situación. La IA va a actuar exactamente según este contexto, sin mezclar perfiles predefinidos.' : 'Ej: "El prospecto ya habló con otra agencia y le salió más barato", "Viene recomendado por un colega"...'}
                 rows={3}
                 style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:12,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
               <div style={{fontSize:10,color:C.muted,marginTop:4}}>También podés pegar el texto de un chat real para que la IA lo tenga en cuenta</div>
@@ -9926,7 +9926,7 @@ function PropuestaPreview({ contenido: c, cliente }) {
       {/* Header */}
       <div style={{background:"linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 100%)",padding:"32px 24px",textAlign:"center"}}>
         {cliente?.logo_url && <img src={cliente.logo_url} style={{height:40,objectFit:"contain",marginBottom:12,display:"block",margin:"0 auto 12px"}} alt="Logo"/>}
-        <div style={{color:"#818cf8",fontSize:11,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>{cliente?.nombre||'Clínica'}</div>
+        <div style={{color:"#818cf8",fontSize:11,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>{cliente?.nombre||'Skyward'}</div>
         <h1 style={{color:"#fff",fontSize:20,margin:"0 0 6px",fontWeight:700}}>{c.titulo||'Propuesta'}</h1>
         {c.subtitulo && <p style={{color:"#94a3b8",fontSize:13,margin:0}}>{c.subtitulo}</p>}
       </div>
@@ -10592,15 +10592,15 @@ export default function EdgePanel({ token, user, onLogout }) {
                 <div style={{fontSize:16,fontWeight:700,marginBottom:4}}>Nuevo usuario</div>
                 <div style={{fontSize:12,color:C.muted,marginBottom:20}}>Para: {modalUsr.nombre}</div>
                 <Field label="Nombre *" value={formUsr.nombre} onChange={v=>setFormUsr({...formUsr,nombre:v})} placeholder="Ana García"/>
-                <Field label="Email *" value={formUsr.email} onChange={v=>setFormUsr({...formUsr,email:v})} placeholder="ana@clinica.com" type="email"/>
+                <Field label="Email *" value={formUsr.email} onChange={v=>setFormUsr({...formUsr,email:v})} placeholder="ana@skyward.com" type="email"/>
                 <Field label="Contraseña *" value={formUsr.password} onChange={v=>setFormUsr({...formUsr,password:v})} placeholder="••••••••" type="password"/>
                 <div style={{marginBottom:14}}>
                   <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Rango</label>
                   <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
                     {[
                       {v:"dueno",   label:"Dueño",    desc:"Todo + Config"},
-                      {v:"profesional", label:"Profesional", desc:"Pacientes, Resultados y Propuestas"},
-                      {v:"staff",   label:"Staff",     desc:"Pacientes y Turnos"},
+                      {v:"profesional", label:"Profesional", desc:"Prospectos, Resultados y Propuestas"},
+                      {v:"staff",   label:"Staff",     desc:"Prospectos y Agenda"},
                     ].map(r=>(
                       <div key={r.v} onClick={()=>setFormUsr({...formUsr,rango:r.v})}
                         style={{flex:1,minWidth:100,padding:"10px 14px",borderRadius:8,border:`1px solid ${(formUsr.rango||"staff")===r.v?C.accent:C.border}`,background:(formUsr.rango||"staff")===r.v?C.accentGlow:"transparent",cursor:"pointer",transition:"all .15s"}}>
@@ -10632,5 +10632,93 @@ export default function EdgePanel({ token, user, onLogout }) {
         />
       )}
     </>
+  );
+}
+
+function LoginForm({ onLogin }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState(null);
+
+  const login = async () => {
+    if (!email || !password) return setErr('Completá todos los campos');
+    setLoading(true); setErr(null);
+    try {
+      const r = await fetch(`${API}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Credenciales inválidas');
+      localStorage.setItem('edge_token', d.token);
+      onLogin(d.token, d.user);
+    } catch(e) { setErr(e.message); }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:C.bg}}>
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:40,width:380,maxWidth:'92vw'}}>
+        <div style={{textAlign:'center',marginBottom:32}}>
+          <div style={{fontSize:26,fontWeight:800,color:C.text,letterSpacing:-0.5}}>Skyward CRM</div>
+          <div style={{fontSize:13,color:C.muted,marginTop:6}}>Consultoría Jurídica</div>
+        </div>
+        <div style={{marginBottom:14}}>
+          <label style={{fontSize:11,color:C.muted,fontWeight:500,display:'block',marginBottom:5,letterSpacing:0.5}}>EMAIL</label>
+          <input value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==='Enter'&&login()}
+            type="email" placeholder="tu@email.com" autoFocus
+            style={{width:'100%',padding:'10px 12px',borderRadius:8,border:`1px solid ${C.border}`,background:C.bg,color:C.text,fontSize:14,outline:'none',fontFamily:'inherit',boxSizing:'border-box'}}/>
+        </div>
+        <div style={{marginBottom:20}}>
+          <label style={{fontSize:11,color:C.muted,fontWeight:500,display:'block',marginBottom:5,letterSpacing:0.5}}>CONTRASEÑA</label>
+          <input value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==='Enter'&&login()}
+            type="password" placeholder="••••••••"
+            style={{width:'100%',padding:'10px 12px',borderRadius:8,border:`1px solid ${C.border}`,background:C.bg,color:C.text,fontSize:14,outline:'none',fontFamily:'inherit',boxSizing:'border-box'}}/>
+        </div>
+        {err && <div style={{background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',borderRadius:8,padding:'8px 12px',fontSize:12,color:C.red,marginBottom:16}}>{err}</div>}
+        <button onClick={login} disabled={loading}
+          style={{width:'100%',padding:'12px',borderRadius:8,border:'none',background:C.accent,color:'white',fontSize:14,fontWeight:600,cursor:loading?'not-allowed':'pointer',opacity:loading?0.7:1,fontFamily:'inherit'}}>
+          {loading ? 'Ingresando...' : 'Ingresar'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function App() {
+  const [token, setToken] = useState(() => localStorage.getItem('edge_token') || '');
+  const [user, setUser] = useState(null);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    const t = localStorage.getItem('edge_token');
+    if (!t) { setChecking(false); return; }
+    fetch(`${API}/api/auth/me`, { headers: { Authorization: `Bearer ${t}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(u => {
+        if (u) { setToken(t); setUser(u); }
+        else { localStorage.removeItem('edge_token'); setToken(''); }
+      })
+      .catch(() => { localStorage.removeItem('edge_token'); setToken(''); })
+      .finally(() => setChecking(false));
+  }, []);
+
+  if (checking) return (
+    <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:C.bg}}>
+      <div style={{color:C.muted,fontSize:14}}>Cargando...</div>
+    </div>
+  );
+
+  if (!token || !user) return (
+    <LoginForm onLogin={(t, u) => { setToken(t); setUser(u); }} />
+  );
+
+  return (
+    <EdgePanel token={token} user={user} onLogout={() => {
+      localStorage.removeItem('edge_token');
+      setToken(''); setUser(null);
+    }} />
   );
 }

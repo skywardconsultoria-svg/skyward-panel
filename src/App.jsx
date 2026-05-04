@@ -1199,7 +1199,7 @@ function OnboardingWizard({ client, onComplete, onSkip, calStatus, plan }) {
       <div style={{background:C.surface,borderBottom:`1px solid ${C.border}`,padding:"16px 24px",flexShrink:0}}>
         <div style={{maxWidth:680,margin:"0 auto"}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-            <div style={{fontSize:13,fontWeight:700,color:C.accentLight}}>Edge Panel</div>
+            <div style={{fontSize:13,fontWeight:700,color:C.accentLight}}>Skyward CRM</div>
             <div style={{fontSize:12,color:C.muted}}>Paso {paso+1} de {PASOS.length}</div>
           </div>
           {/* Barra progreso */}
@@ -3324,9 +3324,9 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
             gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
             osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.4);
           } catch(e) {}
-          document.title = `(${pendientes}) Edge Panel`;
+          document.title = `(${pendientes}) Skyward CRM`;
         } else if (pendientes === 0) {
-          document.title = 'Edge Panel';
+          document.title = "Skyward CRM";
         }
         prevSolicitudesPendientes.current = pendientes;
       } catch(e) {}
@@ -10512,8 +10512,8 @@ export default function EdgePanel({ token, user, onLogout }) {
         )}
         <div style={{background:C.surface,borderBottom:`1px solid ${C.border}`,padding:"0 12px",display:"flex",alignItems:"center",justifyContent:"space-between",height:52,flexShrink:0,gap:8}}>
           <div style={{display:"flex",alignItems:"center",gap:8,minWidth:0}}>
-            <img src="https://res.cloudinary.com/dhtriaslp/image/upload/w_56,h_56,c_fit/v1774535056/edge_logo_favicon.png" alt="Edge" style={{width:28,height:28,borderRadius:8,objectFit:"contain",flexShrink:0}} />
-            <span style={{fontWeight:700,fontSize:14,whiteSpace:"nowrap"}}>Edge</span>
+            <img src="https://res.cloudinary.com/dhtriaslp/image/upload/w_56,h_56,c_fit/v1774535056/edge_logo_favicon.png" alt="Skyward" style={{width:28,height:28,borderRadius:8,objectFit:"contain",flexShrink:0}} />
+            <span style={{fontWeight:700,fontSize:14,whiteSpace:"nowrap"}}>Skyward</span>
             <span style={{color:C.muted,fontSize:13,flexShrink:0}}>/</span>
             <span style={{color:C.muted,fontSize:12,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{view==="admin"?"Admin":selClient?.nombre}</span>
           </div>

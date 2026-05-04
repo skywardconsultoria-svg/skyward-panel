@@ -71,12 +71,20 @@ function useIsMobile() {
   return mobile;
 }
 
-const C = {
-  bg: "#0c0a07", surface: "#141109", surfaceHover: "#1c1710",
-  border: "#2a2016", accent: "#E84E0F", accentLight: "#F39200",
-  accentGlow: "rgba(232,78,15,0.13)", green: "#10b981",
-  yellow: "#FBBA00", red: "#ef4444", text: "#f0ece4", muted: "#646464",
+const DARK_C = {
+  bg:"#0c0a07", surface:"#141109", surfaceHover:"#1c1710",
+  border:"#2a2016", accent:"#E84E0F", accentLight:"#F39200",
+  accentGlow:"rgba(232,78,15,0.13)", green:"#10b981",
+  yellow:"#FBBA00", red:"#ef4444", text:"#f0ece4", muted:"#646464",
 };
+const LIGHT_C = {
+  bg:"#f7f4ef", surface:"#ffffff", surfaceHover:"#f0ece6",
+  border:"#e8ddd0", accent:"#E84E0F", accentLight:"#d46a00",
+  accentGlow:"rgba(232,78,15,0.07)", green:"#059669",
+  yellow:"#b45309", red:"#dc2626", text:"#1c1710", muted:"#9a8a78",
+};
+const _storedTheme = typeof localStorage !== 'undefined' ? localStorage.getItem('skyward_theme') : 'dark';
+let C = _storedTheme === 'light' ? LIGHT_C : DARK_C;
 
 const STAGES = {
   RAPPORT: { color:"#F39200", bg:"rgba(243,146,0,0.12)", label:"Rapport" },
@@ -86,6 +94,7 @@ const STAGES = {
   CONFIRMAR_AGENDA: { color:"#10b981", bg:"rgba(16,185,129,0.1)", label:"Confirmando" },
   RECOLECTAR_DATOS: { color:"#FBBA00", bg:"rgba(251,186,0,0.1)", label:"Recolectando datos" },
   SEGUIMIENTO_PENDIENTE: { color:"#646464", bg:"rgba(100,100,100,0.12)", label:"Agendado ✓" },
+  HONORARIO_ENVIADO: { color:"#F39200", bg:"rgba(243,146,0,0.12)", label:"⚖️ Honorario enviado" },
   PENDIENTE_CONFIRMACION: { color:"#E84E0F", bg:"rgba(232,78,15,0.1)", label:"⏳ Espera confirm." },
 };
 
@@ -727,8 +736,8 @@ function PropuestasComerciales() {
   if (vista === 'lista') return (
     <div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-        <span style={{fontWeight:600,fontSize:14}}>Propuestas comerciales</span>
-        <Btn onClick={nuevaPropuesta} small>+ Nueva propuesta</Btn>
+        <span style={{fontWeight:600,fontSize:14}}>⚖️ Honorarios</span>
+        <Btn onClick={nuevaPropuesta} small>+ Nuevo honorario</Btn>
       </div>
       {loading ? <div style={{color:C.muted,fontSize:13,padding:20}}>Cargando...</div> :
        propuestas.length === 0 ? <div style={{color:C.muted,fontSize:13,padding:20,textAlign:"center"}}>No hay propuestas aún. Creá tu primera propuesta comercial.</div> :
@@ -899,7 +908,7 @@ function AdminView({ stats, clientes, onSelectClient, onRefresh, onCrearUsuario,
     <div style={{flex:1,overflowY:"auto",padding:"16px 12px",paddingBottom:80}}>
       {/* Admin tabs */}
       <div style={{display:"flex",gap:3,background:C.bg,borderRadius:8,padding:3,border:`1px solid ${C.border}`,marginBottom:16,width:"fit-content"}}>
-        {[{k:'clientes',l:'Clientes'},{k:'propuestas',l:'Propuestas'}].map(t=>(
+        {[{k:'clientes',l:'Clientes'},{k:'propuestas',l:'Honorarios'}].map(t=>(
           <button key={t.k} onClick={()=>setAdminTab(t.k)}
             style={{padding:"6px 14px",borderRadius:6,border:"none",cursor:"pointer",fontSize:12,fontWeight:500,background:adminTab===t.k?C.accent:"transparent",color:adminTab===t.k?"white":C.muted,transition:"all .2s",fontFamily:"inherit"}}>
             {t.l}
@@ -4235,12 +4244,10 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
           {key:"inicio",     icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></>, label:"Inicio",       rangos:["admin","dueno"],         planes:["base","plus","pro"]},
           {key:"calendario", icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></>, label:"Agenda",       rangos:["admin","dueno","staff","profesional"], planes:["base","plus","pro"]},
           {key:"conversations",icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></>,label:"Conversación",rangos:["admin","dueno","staff"], planes:["plus","pro"], badge: solicitudesPendientes + (prospectos||[]).filter(p=>p.insistencia_notificada&&p.modo_humano).length + (prospectos||[]).filter(p=>p.listo_para_cierre&&!p.horario_elegido).length, badgeUrgente: (prospectos||[]).filter(p=>p.listo_para_cierre&&!p.horario_elegido).length > 0},
-          {key:"prospectos",  icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></>, label:"Prospectos",    rangos:["admin","dueno","staff","profesional"], planes:["base","plus","pro"]},
-          {key:"resultados", icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></>, label:"Resultados",   rangos:["admin","dueno","staff","profesional"], planes:["base","plus","pro"]},
+          {key:"prospectos",  icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></>, label:"Clientes",    rangos:["admin","dueno","staff","profesional"], planes:["base","plus","pro"]},
           {key:"recordatorios",icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></>,label:"Recordatorios",rangos:["admin","dueno","staff"],planes:["base","plus","pro"]},
-          {key:"difusion",    icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8 19.79 19.79 0 01.1 2.18 2 2 0 012.07 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.91a16 16 0 006.14 6.14l1.27-.85a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 15.92"/></svg></>, label:"Difusión",      rangos:["admin","dueno"],         planes:["base","plus","pro"]},
-          {key:"propuestas",  icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></>, label:"Propuestas",    rangos:["admin","dueno","staff","profesional"],  planes:["base","plus","pro"], badge: notificaciones.filter(n=>n.referencia_tipo==='propuesta').length},
-          {key:"ventas",      icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></>, label:"Ventas",        rangos:["admin","dueno","staff"],  planes:["base","plus","pro"]},
+          {key:"honorarios",  icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></>, label:"Honorarios",    rangos:["admin","dueno","staff","profesional"],  planes:["base","plus","pro"], badge: notificaciones.filter(n=>n.referencia_tipo==='propuesta').length},
+          {key:"honorarios_dash", icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><path d="M18 20V4"/><path d="M6 20v-4"/><circle cx="12" cy="6" r="2"/></svg></>, label:"Balance", rangos:["admin","dueno","staff"], planes:["base","plus","pro"]},
           {key:"funnel",      icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></>, label:"Etapas",        rangos:["admin","dueno"],          planes:["base","plus","pro"]},
           {key:"facturacion",icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></>, label:"Facturación",  rangos:["admin","dueno"],         planes:["base","plus","pro"]},
           {key:"config",     icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></>, label:"Config",       rangos:["admin","dueno"],         planes:["base","plus","pro"]},
@@ -4307,6 +4314,14 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 style={{height:44,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:C.muted,fontSize:16,transition:"color .15s"}}
                 onMouseEnter={e=>e.currentTarget.style.color=C.text} onMouseLeave={e=>e.currentTarget.style.color=C.muted}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+              </div>
+              <div onClick={()=>{const next=localStorage.getItem('skyward_theme')==='light'?'dark':'light';localStorage.setItem('skyward_theme',next);window.location.reload();}} title={localStorage.getItem('skyward_theme')==='light'?"Modo oscuro":"Modo claro"}
+                style={{height:44,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:C.muted,fontSize:16,transition:"color .15s"}}
+                onMouseEnter={e=>e.currentTarget.style.color=C.text} onMouseLeave={e=>e.currentTarget.style.color=C.muted}>
+                {localStorage.getItem('skyward_theme')==='light'
+                  ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                  : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                }
               </div>
             </div>}
           </div>
@@ -6567,7 +6582,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
         )}
 
         {/* Resultados */}
-        {activeTab === "resultados" && (
+        {activeTab === "_resultados_disabled" && (
           <div style={{flex:1,overflowY:"auto",padding:24}}>
             <div style={{maxWidth:900,margin:"0 auto"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
@@ -6629,7 +6644,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
         )}
 
         {/* Difusión */}
-        {activeTab === "difusion" && (
+        {activeTab === "_difusion_disabled" && (
           <div style={{flex:1,overflowY:"auto",padding:24}}>
             <div style={{maxWidth:600,margin:"0 auto"}}>
               <DifusionPanel client={client} API={API} aH={aH} jH={jH} tratamientos={tratamientos} plan={plan}/>
@@ -6637,8 +6652,8 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
           </div>
         )}
 
-        {/* Propuestas */}
-        {activeTab === "propuestas" && (
+        {/* Honorarios */}
+        {activeTab === "honorarios" && (
           <div style={{flex:1,overflowY:"auto",padding:24}}>
             <div style={{maxWidth:900,margin:"0 auto"}}>
               <PropuestasPanel client={client} API={API} aH={aH} jH={jH} pacientes={pacientes}
@@ -6652,11 +6667,18 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
         )}
 
         {/* Ventas */}
-        {activeTab === "ventas" && (
+        {activeTab === "_ventas_disabled" && (
           <div style={{flex:1,overflowY:"auto",padding:24}}>
             <div style={{maxWidth:900,margin:"0 auto"}}>
               <VentasPanel client={client} API={API} aH={aH} jH={jH} user={user} rango={rango}/>
             </div>
+          </div>
+        )}
+
+        {/* Balance de Honorarios */}
+        {activeTab === "honorarios_dash" && (
+          <div style={{flex:1,overflowY:"auto",padding:24}}>
+            <HonorariosDashboard client={client} API={API} aH={aH} jH={jH} />
           </div>
         )}
 
@@ -9486,6 +9508,104 @@ function ValoracionesPaciente({ paciente, client, API, aH, jH, user }) {
   );
 }
 
+function HonorariosDashboard({ client, API, aH, jH }) {
+  const [data, setData] = useState([]);
+  const [mes, setMes] = useState(new Date().getMonth() + 1);
+  const [año, setAño] = useState(new Date().getFullYear());
+  const [loading, setLoading] = useState(false);
+  const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+
+  useEffect(() => {
+    if (!client?.id) return;
+    setLoading(true);
+    fetch(`${API}/api/propuestas?cliente_id=${client.id}&estado=enviada`, { headers: aH() })
+      .then(r => r.ok ? r.json() : [])
+      .then(d => { setData(Array.isArray(d) ? d : []); })
+      .catch(() => setData([]))
+      .finally(() => setLoading(false));
+  }, [client?.id, mes, año]);
+
+  const filtrados = data.filter(p => {
+    if (!p.actualizado_en && !p.creado_en) return true;
+    const fecha = new Date(p.actualizado_en || p.creado_en);
+    return fecha.getMonth() + 1 === mes && fecha.getFullYear() === año;
+  });
+
+  const totalEnviados = filtrados.length;
+  const totalMonto = filtrados.reduce((acc, p) => acc + (parseFloat(p.monto_total || p.monto || 0)), 0);
+  const aceptados = filtrados.filter(p => p.estado === 'aceptada' || p.estado === 'enviada');
+  const montoAceptado = aceptados.reduce((acc, p) => acc + (parseFloat(p.monto_total || p.monto || 0)), 0);
+
+  return (
+    <div style={{maxWidth:900,margin:"0 auto"}}>
+      {/* Header */}
+      <div style={{marginBottom:24}}>
+        <div style={{fontSize:18,fontWeight:800,color:C.text,marginBottom:4}}>⚖️ Balance de Honorarios</div>
+        <div style={{fontSize:12,color:C.muted}}>Honorarios enviados a clientes del estudio jurídico</div>
+      </div>
+
+      {/* Selector mes/año */}
+      <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap",alignItems:"center"}}>
+        <select value={mes} onChange={e=>setMes(Number(e.target.value))}
+          style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"7px 14px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
+          {meses.map((m,i)=><option key={i+1} value={i+1}>{m}</option>)}
+        </select>
+        <select value={año} onChange={e=>setAño(Number(e.target.value))}
+          style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"7px 14px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
+          {[2024,2025,2026,2027].map(y=><option key={y} value={y}>{y}</option>)}
+        </select>
+      </div>
+
+      {/* KPI Cards */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:12,marginBottom:24}}>
+        {[
+          {label:"Honorarios enviados",value:totalEnviados,icon:"📄",color:C.accent},
+          {label:"Monto total",value:`$${totalMonto.toLocaleString('es-AR')}`,icon:"💰",color:C.accentLight},
+          {label:"Tasa de cierre",value:totalEnviados>0?`${Math.round((aceptados.length/totalEnviados)*100)}%`:"—",icon:"🎯",color:C.green},
+          {label:"Monto cerrado",value:`$${montoAceptado.toLocaleString('es-AR')}`,icon:"✅",color:C.green},
+        ].map((kpi,i)=>(
+          <div key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:"16px 18px"}}>
+            <div style={{fontSize:20,marginBottom:6}}>{kpi.icon}</div>
+            <div style={{fontSize:22,fontWeight:800,color:kpi.color,marginBottom:2}}>{kpi.value}</div>
+            <div style={{fontSize:11,color:C.muted,letterSpacing:.3}}>{kpi.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Lista de honorarios */}
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,overflow:"hidden"}}>
+        <div style={{padding:"14px 18px",borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{fontSize:13,fontWeight:700,color:C.text}}>Honorarios del mes</div>
+          <div style={{fontSize:11,color:C.muted}}>{meses[mes-1]} {año}</div>
+        </div>
+        {loading ? (
+          <div style={{padding:40,textAlign:"center",color:C.muted}}>Cargando...</div>
+        ) : filtrados.length === 0 ? (
+          <div style={{padding:40,textAlign:"center",color:C.muted,fontSize:13}}>No hay honorarios enviados en este período</div>
+        ) : (
+          <div>
+            {filtrados.map((p,i)=>(
+              <div key={p.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 18px",borderBottom:i<filtrados.length-1?`1px solid ${C.border}`:"none"}}>
+                <div style={{width:34,height:34,borderRadius:8,background:C.accentGlow,border:`1px solid ${C.accent}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0}}>⚖️</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:13,fontWeight:600,color:C.text,marginBottom:1}}>{p.titulo||"Honorario sin título"}</div>
+                  <div style={{fontSize:11,color:C.muted}}>{p.paciente_nombre||"Cliente"} · {p.actualizado_en?new Date(p.actualizado_en).toLocaleDateString('es-AR',{day:'numeric',month:'short'}):"—"}</div>
+                </div>
+                {(p.monto_total||p.monto)>0 && (
+                  <div style={{fontSize:14,fontWeight:700,color:C.accentLight,flexShrink:0}}>${parseFloat(p.monto_total||p.monto||0).toLocaleString('es-AR')}</div>
+                )}
+                <div style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:p.estado==='aceptada'?"rgba(16,185,129,0.12)":C.accentGlow,color:p.estado==='aceptada'?C.green:C.accent,flexShrink:0}}>
+                  {p.estado==='aceptada'?"✅ Aceptado":"📤 Enviado"}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], onLeerNotificacion }) {
   const C = {bg:"#0a0a0f",surface:"#111827",border:"#1e2a38",text:"#e2e8f0",muted:"#64748b",accent:"#6366f1",accentLight:"#818cf8",accentGlow:"rgba(99,102,241,0.12)",green:"#10b981",red:"#ef4444"};
   const [vista, setVista] = useState('lista'); // lista | editor | preview
@@ -9857,7 +9977,7 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
 
       {/* Tabs */}
       <div style={{display:"flex",gap:8,marginBottom:20}}>
-        {[{v:'propuestas',l:`📄 Propuestas (${propuestas.length})`},{v:'plantillas',l:`📋 Plantillas (${plantillas.length})`}].map(t=>(
+        {[{v:'propuestas',l:`⚖️ Honorarios (${propuestas.length})`},{v:'plantillas',l:`📋 Plantillas (${plantillas.length})`}].map(t=>(
           <button key={t.v} onClick={()=>setFiltro(t.v)}
             style={{padding:"7px 16px",borderRadius:8,border:`1px solid ${filtro===t.v?C.accent:C.border}`,
               background:filtro===t.v?"rgba(99,102,241,0.15)":C.surface,

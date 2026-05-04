@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120">
+  <defs>
+    <linearGradient id="og" x1="0.85" y1="0" x2="0.15" y2="1">
+      <stop offset="0%" stop-color="#FBBA00"/>
+      <stop offset="55%" stop-color="#F39200"/>
+      <stop offset="100%" stop-color="#E84E0F"/>
+    </linearGradient>
+    <linearGradient id="gg" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0%" stop-color="#8a8a8a"/>
+      <stop offset="100%" stop-color="#4a4a4a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Full pin base: circle + downward triangle -->
+  <circle cx="50" cy="46" r="44" fill="url(#og)"/>
+  <polygon points="20,74 80,74 50,116" fill="url(#og)"/>
+
+  <!-- Gray gear overlay: upper-left quadrant -->
+  <path d="M50,2 A44,44 0 0,0 6,46 L50,46 Z" fill="url(#gg)"/>
+  <path d="M6,46 A44,44 0 0,0 21,70 L50,46 Z" fill="url(#gg)"/>
+
+  <!-- Gear teeth — left/top side -->
+  <rect x="-1" y="35" width="13" height="22" rx="3" fill="url(#gg)"/>
+  <rect x="10" y="12" width="13" height="22" rx="3" fill="url(#gg)" transform="rotate(-55 16 23)"/>
+  <rect x="30" y="0" width="13" height="22" rx="3" fill="url(#gg)" transform="rotate(-25 36 11)"/>
+  <rect x="4" y="62" width="13" height="22" rx="3" fill="url(#gg)" transform="rotate(48 10 73)"/>
+
+  <!-- White center bore -->
+  <circle cx="50" cy="46" r="17" fill="white"/>
+</svg>

@@ -72,27 +72,27 @@ function useIsMobile() {
 }
 
 const C = {
-  bg: "#0a0a0f", surface: "#111118", surfaceHover: "#16161f",
-  border: "#1e1e2e", accent: "#7c3aed", accentLight: "#9d5cf6",
-  accentGlow: "rgba(124,58,237,0.15)", green: "#10b981",
-  yellow: "#f59e0b", red: "#ef4444", text: "#e2e8f0", muted: "#64748b",
+  bg: "#0c0a07", surface: "#141109", surfaceHover: "#1c1710",
+  border: "#2a2016", accent: "#E84E0F", accentLight: "#F39200",
+  accentGlow: "rgba(232,78,15,0.13)", green: "#10b981",
+  yellow: "#FBBA00", red: "#ef4444", text: "#f0ece4", muted: "#646464",
 };
 
 const STAGES = {
-  RAPPORT: { color:"#3b82f6", bg:"rgba(59,130,246,0.1)", label:"Rapport" },
-  CIERRE_SUAVE: { color:"#f59e0b", bg:"rgba(245,158,11,0.1)", label:"Cierre Suave" },
-  LISTO_PARA_CIERRE: { color:"#f97316", bg:"rgba(249,115,22,0.15)", label:"🎯 Listo para cierre" },
-  OFRECER_AGENDA: { color:"#8b5cf6", bg:"rgba(139,92,246,0.1)", label:"Ofreciendo Turno" },
+  RAPPORT: { color:"#F39200", bg:"rgba(243,146,0,0.12)", label:"Rapport" },
+  CIERRE_SUAVE: { color:"#FBBA00", bg:"rgba(251,186,0,0.12)", label:"Cierre Suave" },
+  LISTO_PARA_CIERRE: { color:"#E84E0F", bg:"rgba(232,78,15,0.15)", label:"🎯 Listo para cierre" },
+  OFRECER_AGENDA: { color:"#F39200", bg:"rgba(243,146,0,0.1)", label:"Ofreciendo Reunión" },
   CONFIRMAR_AGENDA: { color:"#10b981", bg:"rgba(16,185,129,0.1)", label:"Confirmando" },
-  RECOLECTAR_DATOS: { color:"#f59e0b", bg:"rgba(245,158,11,0.1)", label:"Recolectando datos" },
-  SEGUIMIENTO_PENDIENTE: { color:"#64748b", bg:"rgba(100,116,139,0.1)", label:"Agendado ✓" },
-  PENDIENTE_CONFIRMACION: { color:"#f97316", bg:"rgba(249,115,22,0.1)", label:"⏳ Espera confirm." },
+  RECOLECTAR_DATOS: { color:"#FBBA00", bg:"rgba(251,186,0,0.1)", label:"Recolectando datos" },
+  SEGUIMIENTO_PENDIENTE: { color:"#646464", bg:"rgba(100,100,100,0.12)", label:"Agendado ✓" },
+  PENDIENTE_CONFIRMACION: { color:"#E84E0F", bg:"rgba(232,78,15,0.1)", label:"⏳ Espera confirm." },
 };
 
 const FUNNEL_ORDER = ["RAPPORT","CIERRE_SUAVE","OFRECER_AGENDA","CONFIRMAR_AGENDA","SEGUIMIENTO_PENDIENTE"];
 
 const PROF_COLORS = [
-  '#6366f1','#ec4899','#14b8a6','#f59e0b','#8b5cf6',
+  '#E84E0F','#F39200','#FBBA00','#646464','#10b981',
   '#06b6d4','#f97316','#84cc16','#e11d48','#0ea5e9',
 ];
 
@@ -1199,7 +1199,7 @@ function OnboardingWizard({ client, onComplete, onSkip, calStatus, plan }) {
       <div style={{background:C.surface,borderBottom:`1px solid ${C.border}`,padding:"16px 24px",flexShrink:0}}>
         <div style={{maxWidth:680,margin:"0 auto"}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-            <div style={{fontSize:13,fontWeight:700,color:C.accentLight}}>Skyward CRM</div>
+            <div style={{fontSize:13,fontWeight:700,color:C.accentLight}}>CRM Skyward</div>
             <div style={{fontSize:12,color:C.muted}}>Paso {paso+1} de {PASOS.length}</div>
           </div>
           {/* Barra progreso */}
@@ -3324,9 +3324,9 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
             gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
             osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.4);
           } catch(e) {}
-          document.title = `(${pendientes}) Skyward CRM`;
+          document.title = `(${pendientes}) CRM Skyward`;
         } else if (pendientes === 0) {
-          document.title = "Skyward CRM";
+          document.title = "CRM Skyward";
         }
         prevSolicitudesPendientes.current = pendientes;
       } catch(e) {}
@@ -10510,12 +10510,13 @@ export default function EdgePanel({ token, user, onLogout }) {
             </button>
           </div>
         )}
-        <div style={{background:C.surface,borderBottom:`1px solid ${C.border}`,padding:"0 12px",display:"flex",alignItems:"center",justifyContent:"space-between",height:52,flexShrink:0,gap:8}}>
-          <div style={{display:"flex",alignItems:"center",gap:8,minWidth:0}}>
-            <img src="https://res.cloudinary.com/dhtriaslp/image/upload/w_56,h_56,c_fit/v1774535056/edge_logo_favicon.png" alt="Skyward" style={{width:28,height:28,borderRadius:8,objectFit:"contain",flexShrink:0}} />
-            <span style={{fontWeight:700,fontSize:14,whiteSpace:"nowrap"}}>Skyward</span>
-            <span style={{color:C.muted,fontSize:13,flexShrink:0}}>/</span>
-            <span style={{color:C.muted,fontSize:12,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{view==="admin"?"Admin":selClient?.nombre}</span>
+        <div style={{background:C.surface,borderBottom:`1px solid ${C.border}`,padding:"0 16px",display:"flex",alignItems:"center",justifyContent:"space-between",height:56,flexShrink:0,gap:8}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,minWidth:0}}>
+            <img src="/logo.svg" alt="Skyward" style={{width:32,height:32,flexShrink:0,filter:"drop-shadow(0 1px 3px rgba(232,78,15,0.3))"}} />
+            <div style={{display:"flex",flexDirection:"column",lineHeight:1.15,minWidth:0}}>
+              <span style={{fontWeight:800,fontSize:13,color:C.text,letterSpacing:-0.3,whiteSpace:"nowrap"}}>Skyward Consultoría Jurídica</span>
+              <span style={{fontSize:10,color:C.accentLight,fontWeight:500,letterSpacing:0.5,textTransform:"uppercase"}}>{view==="admin"?"Panel Admin":selClient?.nombre||"CRM"}</span>
+            </div>
           </div>
           {user?.rol === 'admin' && (
           <div style={{display:"flex",gap:3,background:C.bg,borderRadius:8,padding:3,border:`1px solid ${C.border}`,flexShrink:0}}>
@@ -10659,28 +10660,34 @@ function LoginForm({ onLogin }) {
   };
 
   return (
-    <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:C.bg}}>
-      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:40,width:380,maxWidth:'92vw'}}>
-        <div style={{textAlign:'center',marginBottom:32}}>
-          <div style={{fontSize:26,fontWeight:800,color:C.text,letterSpacing:-0.5}}>Skyward CRM</div>
-          <div style={{fontSize:13,color:C.muted,marginTop:6}}>Consultoría Jurídica</div>
+    <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:C.bg,backgroundImage:'radial-gradient(ellipse at 60% 20%, rgba(232,78,15,0.06) 0%, transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(251,186,0,0.04) 0%, transparent 50%)'}}>
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:20,padding:'40px 44px',width:400,maxWidth:'94vw',boxShadow:'0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(232,78,15,0.08)'}}>
+        {/* Logo + Brand */}
+        <div style={{textAlign:'center',marginBottom:36}}>
+          <img src="/logo.svg" alt="Skyward" style={{width:60,height:60,marginBottom:16,filter:'drop-shadow(0 4px 12px rgba(232,78,15,0.35))'}}/>
+          <div style={{fontSize:22,fontWeight:800,color:C.text,letterSpacing:-0.5,lineHeight:1.1}}>Skyward</div>
+          <div style={{fontSize:12,color:C.accentLight,fontWeight:600,letterSpacing:2,textTransform:'uppercase',marginTop:4}}>Consultoría Jurídica</div>
+          <div style={{width:40,height:2,background:`linear-gradient(90deg, ${C.accent}, ${C.yellow})`,borderRadius:2,margin:'14px auto 0'}}/>
         </div>
-        <div style={{marginBottom:14}}>
-          <label style={{fontSize:11,color:C.muted,fontWeight:500,display:'block',marginBottom:5,letterSpacing:0.5}}>EMAIL</label>
+
+        <div style={{marginBottom:16}}>
+          <label style={{fontSize:10,color:C.muted,fontWeight:600,display:'block',marginBottom:6,letterSpacing:1.2,textTransform:'uppercase'}}>Email</label>
           <input value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==='Enter'&&login()}
             type="email" placeholder="tu@email.com" autoFocus
-            style={{width:'100%',padding:'10px 12px',borderRadius:8,border:`1px solid ${C.border}`,background:C.bg,color:C.text,fontSize:14,outline:'none',fontFamily:'inherit',boxSizing:'border-box'}}/>
+            style={{width:'100%',padding:'11px 14px',borderRadius:10,border:`1.5px solid ${C.border}`,background:C.bg,color:C.text,fontSize:14,outline:'none',fontFamily:'inherit',boxSizing:'border-box',transition:'border-color .2s'}}
+            onFocus={e=>e.target.style.borderColor=C.accent} onBlur={e=>e.target.style.borderColor=C.border}/>
         </div>
-        <div style={{marginBottom:20}}>
-          <label style={{fontSize:11,color:C.muted,fontWeight:500,display:'block',marginBottom:5,letterSpacing:0.5}}>CONTRASEÑA</label>
+        <div style={{marginBottom:24}}>
+          <label style={{fontSize:10,color:C.muted,fontWeight:600,display:'block',marginBottom:6,letterSpacing:1.2,textTransform:'uppercase'}}>Contraseña</label>
           <input value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==='Enter'&&login()}
             type="password" placeholder="••••••••"
-            style={{width:'100%',padding:'10px 12px',borderRadius:8,border:`1px solid ${C.border}`,background:C.bg,color:C.text,fontSize:14,outline:'none',fontFamily:'inherit',boxSizing:'border-box'}}/>
+            style={{width:'100%',padding:'11px 14px',borderRadius:10,border:`1.5px solid ${C.border}`,background:C.bg,color:C.text,fontSize:14,outline:'none',fontFamily:'inherit',boxSizing:'border-box',transition:'border-color .2s'}}
+            onFocus={e=>e.target.style.borderColor=C.accent} onBlur={e=>e.target.style.borderColor=C.border}/>
         </div>
-        {err && <div style={{background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',borderRadius:8,padding:'8px 12px',fontSize:12,color:C.red,marginBottom:16}}>{err}</div>}
+        {err && <div style={{background:'rgba(239,68,68,0.08)',border:'1px solid rgba(239,68,68,0.25)',borderRadius:10,padding:'10px 14px',fontSize:12,color:C.red,marginBottom:18}}>{err}</div>}
         <button onClick={login} disabled={loading}
-          style={{width:'100%',padding:'12px',borderRadius:8,border:'none',background:C.accent,color:'white',fontSize:14,fontWeight:600,cursor:loading?'not-allowed':'pointer',opacity:loading?0.7:1,fontFamily:'inherit'}}>
-          {loading ? 'Ingresando...' : 'Ingresar'}
+          style={{width:'100%',padding:'13px',borderRadius:10,border:'none',background:`linear-gradient(135deg, ${C.accent} 0%, #c73d0a 100%)`,color:'white',fontSize:14,fontWeight:700,cursor:loading?'not-allowed':'pointer',opacity:loading?0.75:1,fontFamily:'inherit',letterSpacing:0.3,boxShadow:loading?'none':'0 4px 16px rgba(232,78,15,0.35)',transition:'all .2s'}}>
+          {loading ? 'Ingresando...' : 'Ingresar al CRM'}
         </button>
       </div>
     </div>

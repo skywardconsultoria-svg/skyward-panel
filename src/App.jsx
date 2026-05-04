@@ -10512,7 +10512,7 @@ function EdgePanel({ token, user, onLogout }) {
         )}
         <div style={{background:C.surface,borderBottom:`1px solid ${C.border}`,padding:"0 16px",display:"flex",alignItems:"center",justifyContent:"space-between",height:56,flexShrink:0,gap:8}}>
           <div style={{display:"flex",alignItems:"center",gap:10,minWidth:0}}>
-            <img src="/logo.svg" alt="Skyward" style={{width:32,height:32,flexShrink:0,filter:"drop-shadow(0 1px 3px rgba(232,78,15,0.3))"}} />
+            <img src="/logo.png" alt="Skyward" style={{width:32,height:32,flexShrink:0,filter:"drop-shadow(0 1px 3px rgba(232,78,15,0.3))"}} />
             <div style={{display:"flex",flexDirection:"column",lineHeight:1.15,minWidth:0}}>
               <span style={{fontWeight:800,fontSize:13,color:C.text,letterSpacing:-0.3,whiteSpace:"nowrap"}}>Skyward Consultoría Jurídica</span>
               <span style={{fontSize:10,color:C.accentLight,fontWeight:500,letterSpacing:0.5,textTransform:"uppercase"}}>{view==="admin"?"Panel Admin":selClient?.nombre||"CRM"}</span>
@@ -10664,7 +10664,7 @@ function LoginForm({ onLogin }) {
       <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:20,padding:'40px 44px',width:400,maxWidth:'94vw',boxShadow:'0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(232,78,15,0.08)'}}>
         {/* Logo + Brand */}
         <div style={{textAlign:'center',marginBottom:36}}>
-          <img src="/logo.svg" alt="Skyward" style={{width:60,height:60,marginBottom:16,filter:'drop-shadow(0 4px 12px rgba(232,78,15,0.35))'}}/>
+          <img src="/logo.png" alt="Skyward" style={{width:60,height:60,marginBottom:16,filter:'drop-shadow(0 4px 12px rgba(232,78,15,0.35))'}}/>
           <div style={{fontSize:22,fontWeight:800,color:C.text,letterSpacing:-0.5,lineHeight:1.1}}>Skyward</div>
           <div style={{fontSize:12,color:C.accentLight,fontWeight:600,letterSpacing:2,textTransform:'uppercase',marginTop:4}}>Consultoría Jurídica</div>
           <div style={{width:40,height:2,background:`linear-gradient(90deg, ${C.accent}, ${C.yellow})`,borderRadius:2,margin:'14px auto 0'}}/>

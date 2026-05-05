@@ -803,7 +803,8 @@ function AdminView({ stats, clientes, onSelectClient, onRefresh, onCrearUsuario,
         {[
           { label:"Clientes", value: clientes.length },
           { label:"Prospectos", value: stats?.prospectos||0 },
-          { label:"Turnos totales", value: stats?.agendados||0 },
+          { label:"Consultas totales", value: stats?.agendados||0 },
+          { label:"Honorarios aceptados", value: stats?.honorarios_aceptados||0 },
           { label:"Conversión", value: stats?.conversion ? `${stats.conversion}%` : "0%" },
         ].map((s,i) => (
           <div key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:"16px 20px"}}>
@@ -1461,7 +1462,7 @@ function FichaClinicaModal({ client, turno, paciente, onClose, onSaved }) {
         {/* Header */}
         <div style={{padding:'18px 22px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
           <div>
-            <div style={{fontSize:15,fontWeight:700}}>📋 Ficha del prospecto</div>
+            <div style={{fontSize:15,fontWeight:700}}>📋 Ficha del cliente</div>
             <div style={{fontSize:12,color:C.muted,marginTop:2}}>
               {paciente?.nombre || turno?.paciente_nombre || '-'}
               {turno?.tratamiento && ` · ${turno.tratamiento}`}
@@ -1829,7 +1830,7 @@ function CamposFichaConfig({ client }) {
 
   return (
     <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
-      <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>📋 Campos del prospecto</div>
+      <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>📋 Campos del cliente</div>
       <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Definí qué información se registra en cada sesión</div>
 
       {loading ? <div style={{color:C.muted,fontSize:12}}>Cargando...</div> : (
@@ -4143,11 +4144,11 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
             // Ocultar cuando hay chat abierto en mobile para no tapar el input
             transform:(activeTab==="conversations" && selectedProspect)?"translateY(100%)":"translateY(0)",
             transition:"transform .2s ease"
-          } : {width:64,background:C.surface,borderRight:`1px solid ${C.border}`,display:"flex",flexDirection:"column",flexShrink:0,zIndex:10}}>
+          } : {width:76,background:C.surface,borderRight:`1px solid ${C.border}`,display:"flex",flexDirection:"column",flexShrink:0,zIndex:10}}>
             {/* Logo / cliente */}
             {!isMobile && <div style={{height:56,display:"flex",alignItems:"center",justifyContent:"center",borderBottom:`1px solid ${C.border}`,flexShrink:0}}>
               <div title={client?.nombre} style={{width:34,height:34,borderRadius:10,background:C.accentGlow,border:`1px solid ${C.accent}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:C.accent,cursor:"default",userSelect:"none",overflow:"hidden"}}>
-                {client?.logo_url ? <img src={client.logo_url} style={{width:"100%",height:"100%",objectFit:"cover",borderRadius:"inherit"}} alt="Logo"/> : (client?.nombre||"?")[0].toUpperCase()}
+                {client?.logo_url ? <img src={client.logo_url} style={{width:"100%",height:"100%",objectFit:"contain",borderRadius:"inherit"}} alt="Logo"/> : (client?.nombre||"?")[0].toUpperCase()}
               </div>
             </div>}
             {/* Items */}
@@ -4165,8 +4166,9 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       borderTop:active?`2px solid ${C.accent}`:"2px solid transparent",
                       padding:"0 6px",transition:"all .15s"
                     } : {
-                      width:"100%",height:52,display:"flex",flexDirection:"column",alignItems:"center",
+                      width:"100%",minHeight:52,display:"flex",flexDirection:"column",alignItems:"center",
                       justifyContent:"center",gap:3,cursor:"pointer",position:"relative",
+                      padding:"6px 4px",
                       background:active?C.accentGlow:"transparent",
                       borderRight:active?`2px solid ${C.accent}`:"2px solid transparent",
                       transition:"all .15s"
@@ -4179,7 +4181,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         </div>
                       )}
                     </span>
-                    <span style={{fontSize:9,color:active?C.accent:C.muted,fontWeight:active?600:400,letterSpacing:".3px",textAlign:"center",lineHeight:1.2,maxWidth:56,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",padding:"0 4px"}}>
+                    <span style={{fontSize:9,color:active?C.accent:C.muted,fontWeight:active?600:400,letterSpacing:".3px",textAlign:"center",lineHeight:1.2,maxWidth:68,whiteSpace:"normal",wordBreak:"break-word",padding:"0 2px"}}>
                       {item.label}
                     </span>
                   </div>
@@ -4632,7 +4634,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       <div style={{margin:"0 16px 0 16px",marginTop:12,borderRadius:12,border:"1.5px solid #f97316",background:"rgba(249,115,22,0.07)",padding:"12px 16px",marginBottom:6}}>
                         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
                           <div style={{width:10,height:10,borderRadius:"50%",background:"#f97316",animation:"pulse 1.5s infinite"}}/>
-                          <div style={{fontSize:13,fontWeight:700,color:"#f97316"}}>Preferencias del paciente</div>
+                          <div style={{fontSize:13,fontWeight:700,color:"#f97316"}}>Preferencias del cliente</div>
                         </div>
                         <div style={{background:"rgba(0,0,0,0.2)",borderRadius:8,padding:"8px 12px",fontSize:12,color:"#e9edef"}}>
                           {selectedProspect?.preferencia_horaria && selectedProspect.preferencia_horaria !== "cualquiera" && (
@@ -4719,7 +4721,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     {showAcciones && (
                       <div style={{marginBottom:8,background:"#1f2c34",border:"1px solid #2a3942",borderRadius:12,overflow:"hidden"}}>
                         {[
-                          { icon:"📅", label:"Ofrecer horarios", desc:"Abre el calendario y ofrece slots al paciente", action: ()=>{ setReagendaMode(false); setModalCalendario(true); setShowAcciones(false); } },
+                          { icon:"📅", label:"Ofrecer horarios", desc:"Abre el calendario y ofrece slots al cliente", action: ()=>{ setReagendaMode(false); setModalCalendario(true); setShowAcciones(false); } },
                           { icon:"✅", label:"Confirmar turno", desc:"Abre el modal para confirmar el turno", action: async ()=>{ setShowAcciones(false);
                             setEnviandoConfirm(true);
                             try {
@@ -4764,7 +4766,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                             }
                             setEnviandoConfirm(false);
                           }},
-                          { icon:"📋", label:"Pedir datos", desc:"Manda la lista de datos al paciente", action: async ()=>{ setShowAcciones(false);
+                          { icon:"📋", label:"Pedir datos", desc:"Manda la lista de datos al cliente", action: async ()=>{ setShowAcciones(false);
                             const camposRes = await fetch(`${API}/api/campos-agenda?cliente_id=${client.id}`, {headers:aH()}).catch(()=>null);
                             const c = camposRes ? await camposRes.json().catch(()=>({})) : {};
                             const lista = [];
@@ -5377,7 +5379,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               </div>
               <div style={{overflowY:"auto",flex:1}}>
                 {pacientes.length === 0 ? (
-                  <div style={{padding:24,textAlign:"center",color:C.muted,fontSize:13}}>Sin prospectos registrados</div>
+                  <div style={{padding:24,textAlign:"center",color:C.muted,fontSize:13}}>Sin clientes registrados</div>
                 ) : pacientes.map(p => (
                   <div key={p.id} className="pi" onClick={()=>setSelPac(p)}
                     style={{padding:"12px 14px",borderBottom:`1px solid ${C.border}`,background:selPac?.id===p.id?C.accentGlow:"transparent",cursor:"pointer"}}>
@@ -6145,7 +6147,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         ...(urgente?{boxShadow:`0 0 6px ${C.accent}`,animation:"pulse 1.5s infinite"}:{})}}/>
                       <div style={{flex:1,minWidth:0}}>
                         <span style={{fontSize:12,fontWeight:600,color:urgente?C.accent:C.text}}>
-                          Próximo: {proximo.paciente_nombre?.split(' ')[0]||'Paciente'}
+                          Próximo: {proximo.paciente_nombre?.split(' ')[0]||'Cliente'}
                         </span>
                         <span style={{fontSize:12,color:C.muted,marginLeft:6}}>
                           {proximo.hora?.slice(0,5)}hs
@@ -6460,7 +6462,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     )}
                   </div>
                   <div style={{marginBottom:14}}>
-                    <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Paciente (opcional)</label>
+                    <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Cliente (opcional)</label>
                     <select value={formRec.paciente_id} onChange={e=>setFormRec({...formRec,paciente_id:e.target.value})}
                       style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
                       <option value="">Sin prospecto</option>
@@ -6589,7 +6591,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20,flexWrap:"wrap",gap:12}}>
                 <div>
                   <div style={{fontSize:16,fontWeight:700,marginBottom:2}}>Facturación</div>
-                  <div style={{fontSize:12,color:C.muted}}>Ingresos, turnos, prospectos y conversión</div>
+                  <div style={{fontSize:12,color:C.muted}}>Ingresos, consultas y honorarios</div>
                 </div>
                 <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
                   {/* Vista mes/año */}
@@ -6658,8 +6660,8 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         { label:"Pendiente", value:val(r.totalPendiente,r.totalPendienteUSD), color:"#f59e0b", sub:"por cobrar" },
                         { label:"En cuotas", value:val(r.totalCuotas,r.totalCuotas/facData.cotizUSD), color:"#8b5cf6", sub:"parcial" },
                         { label:"Total ingresos", value:val(r.totalIngresos,r.totalIngresosUSD), color:C.accent, sub:"cobrado + cuotas" },
-                        { label:"Turnos", value:r.cantTurnos, color:C.text, sub:"en el período" },
-                        { label:"Ticket prom.", value:val(r.ticketProm,r.ticketPromUSD), color:C.text, sub:"por turno" },
+                        { label:"Consultas", value:r.cantTurnos, color:C.text, sub:"en el período" },
+                        { label:"Honorario prom.", value:val(r.ticketProm,r.ticketPromUSD), color:C.text, sub:"por consulta" },
                       ].map(card=>(
                         <div key={card.label} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:"16px 18px"}}>
                           <div style={{fontSize:11,color:C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:".6px"}}>{card.label}</div>
@@ -6716,7 +6718,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                                       {lista.map((pg,i)=>(
                                         <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:`1px solid ${C.border}`}}>
                                           <div>
-                                            <div style={{fontSize:13,fontWeight:500}}>{pg.paciente_nombre||"Prospecto"}</div>
+                                            <div style={{fontSize:13,fontWeight:500}}>{pg.paciente_nombre||"Cliente"}</div>
                                             <div style={{fontSize:11,color:C.muted,marginTop:2}}>
                                               {pg.tratamiento||"-"} · {pg.forma_pago?.replace("_"," ")} · {new Date(pg.fecha).toLocaleDateString("es-AR")}
                                             </div>
@@ -7165,7 +7167,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 )}
               </div>
 
-              {/* Campos del prospecto */}
+              {/* Campos del cliente */}
               <CamposFichaConfig client={client} />
 
               {/* Usuarios del panel — solo admin y dueño */}
@@ -7839,7 +7841,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               <div style={{background:C.accentGlow,border:`1px solid ${C.accent}44`,borderRadius:8,padding:"8px 14px",marginBottom:14,fontSize:13,color:C.accentLight}}>👤 {resContextPac.nombre}</div>
             ) : (
               <div style={{marginBottom:14}}>
-                <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Paciente (opcional)</label>
+                <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Cliente (opcional)</label>
                 <select value={formRes.paciente_id} onChange={e=>setFormRes({...formRes,paciente_id:e.target.value})}
                   style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
                   <option value="">Sin prospecto</option>
@@ -8020,7 +8022,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   {/* Paciente - siempre visible arriba */}
                   {!turnoPaciente ? (
                     <div style={{marginBottom:18}}>
-                      <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:8,textTransform:"uppercase",letterSpacing:".6px"}}>Paciente</label>
+                      <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:8,textTransform:"uppercase",letterSpacing:".6px"}}>Cliente</label>
                       <input value={turnoSearch} onChange={e=>buscarPacientesModal(e.target.value)}
                         placeholder="Buscar por nombre o teléfono..."
                         style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",marginBottom:6}}/>
@@ -8037,10 +8039,10 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       )}
                       {turnoSearch.length > 1 && turnoSearchRes.length === 0 && <div style={{fontSize:12,color:C.muted,textAlign:"center",padding:"10px 0"}}>Sin resultados</div>}
                       <div style={{height:1,background:C.border,margin:"10px 0"}}/>
-                      {turnoStep !== "nuevo_pac" && <Btn onClick={()=>setTurnoStep("nuevo_pac")} secondary small>+ Crear paciente nuevo</Btn>}
+                      {turnoStep !== "nuevo_pac" && <Btn onClick={()=>setTurnoStep("nuevo_pac")} secondary small>+ Crear cliente nuevo</Btn>}
                       {turnoStep === "nuevo_pac" && (
                         <div style={{marginTop:12,background:"rgba(99,102,241,0.06)",border:`1px solid ${C.border}`,borderRadius:10,padding:14}}>
-                          <div style={{fontSize:11,color:C.accent,textTransform:"uppercase",letterSpacing:".6px",fontWeight:600,marginBottom:10}}>① Completá los datos del paciente</div>
+                          <div style={{fontSize:11,color:C.accent,textTransform:"uppercase",letterSpacing:".6px",fontWeight:600,marginBottom:10}}>① Completá los datos del cliente</div>
                           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                             <Field label="Nombre *" value={formNuevoPac.nombre} onChange={v=>setFormNuevoPac({...formNuevoPac,nombre:v})} placeholder="Nombre completo"/>
                             <Field label="Teléfono" value={formNuevoPac.telefono} onChange={v=>setFormNuevoPac({...formNuevoPac,telefono:v})} placeholder="+54 9..."/>
@@ -8903,9 +8905,9 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
 
       {/* Paciente opcional */}
       <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:16,marginBottom:16}}>
-        <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:6}}>Paciente (opcional)</label>
+        <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:6}}>Cliente (opcional)</label>
         <input value={pacienteGrab} onChange={e=>setPacienteGrab(e.target.value)}
-          placeholder="Nombre del paciente..."
+          placeholder="Nombre del cliente..."
           style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
       </div>
 
@@ -8968,7 +8970,7 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
             <div style={{textAlign:"center",padding:40,color:C.muted}}>
               <div style={{fontSize:32,marginBottom:12}}>🎙️</div>
               <div style={{fontSize:13}}>No hay valoraciones grabadas aún</div>
-              <div style={{fontSize:11,marginTop:8}}>Las valoraciones se grabarán desde la ficha del paciente</div>
+              <div style={{fontSize:11,marginTop:8}}>Las valoraciones se grabarán desde la ficha del cliente</div>
             </div>
           ) : (
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -9101,7 +9103,7 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
               </div>
             </div>
             <div style={{marginBottom:16}}>
-              <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:6}}>Perfil del paciente</label>
+              <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:6}}>Perfil del cliente</label>
               <select value={perfilEnt} onChange={e=>setPerfilEnt(e.target.value)} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
                 <option value="indeciso">😕 Indeciso — "lo tengo que pensar"</option>
                 <option value="precio">💸 Sensible al precio — compara y pregunta costos</option>
@@ -9113,7 +9115,7 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
               </select>
             </div>
             <div style={{marginBottom:16}}>
-              <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:6}}>{perfilEnt === "personalizado" ? "Contexto del paciente *" : "Contexto adicional (opcional)"}</label>
+              <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:6}}>{perfilEnt === "personalizado" ? "Contexto del cliente *" : "Contexto adicional (opcional)"}</label>
               <textarea value={contextoEnt} onChange={e=>setContextoEnt(e.target.value)}
                 placeholder={perfilEnt === 'personalizado' ? 'Describí al prospecto y la situación. La IA va a actuar exactamente según este contexto, sin mezclar perfiles predefinidos.' : 'Ej: "El prospecto ya habló con otra agencia y le salió más barato", "Viene recomendado por un colega"...'}
                 rows={3}
@@ -9169,7 +9171,7 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
             <div ref={entRef} style={{height:350,overflowY:"auto",padding:16,display:"flex",flexDirection:"column",gap:8}}>
               {entHistorial.length === 0 && (
                 <div style={{textAlign:"center",padding:20,color:C.muted,fontSize:12}}>
-                  {modoEnt==='chat'?'Escribí el primer mensaje como si fuera tu secretaria/comercial contactando al paciente por WhatsApp':'Comenzá la valoración presentándote'}
+                  {modoEnt==='chat'?'Escribí el primer mensaje como si fuera tu secretaria/comercial contactando al cliente por WhatsApp':'Comenzá la valoración presentándote'}
                 </div>
               )}
               {entHistorial.filter(m=>m.role!=='system').map((m,i)=>(
@@ -9179,7 +9181,7 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
                   </div>
                 </div>
               ))}
-              {entLoading && <div style={{fontSize:12,color:C.muted,textAlign:"center"}}>El paciente está escribiendo...</div>}
+              {entLoading && <div style={{fontSize:12,color:C.muted,textAlign:"center"}}>El cliente está escribiendo...</div>}
             </div>
           </div>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
@@ -10745,7 +10747,7 @@ function EdgePanel({ token, user, onLogout }) {
             <span style={{fontSize:16,flexShrink:0}}>🎯</span>
             <span style={{fontSize:12,fontWeight:700,color:"#fb923c",flexShrink:0}}>
               {prospectos.filter(p=>p.listo_para_cierre&&!p.horario_elegido).length === 1
-                ? "Paciente esperando horarios:"
+                ? "Cliente esperando horarios:"
                 : `${prospectos.filter(p=>p.listo_para_cierre&&!p.horario_elegido).length} pacientes esperando horarios:`}
             </span>
             <div style={{display:"flex",gap:6,flexWrap:"wrap",flex:1}}>

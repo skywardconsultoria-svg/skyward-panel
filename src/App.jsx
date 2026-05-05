@@ -9968,7 +9968,9 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
       const d = await r.json();
       if (d.ok) {
         if (d.es_conversacional) {
-          setHistorialChat(d.historial || [...historialChat, {role:'user',content:texto}, {role:'assistant',content:d.mensaje}]);
+          const newHist = d.historial || [...historialChat, {role:'user',content:texto}, {role:'assistant',content:d.mensaje}];
+          setHistorialChat(newHist);
+          if (esEdicion) setMensajeEdicion('');
         } else {
           setContenidoGenerado(d.contenido);
           setHistorialChat(d.historial || []);
@@ -10443,29 +10445,53 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
           <AccordionHeader idx={3} label="Bloque 4 · Información en crudo" />
           {abiertos[3] && (
             <div style={{padding:'16px'}}>
+              <div style={{background:`${C.accent}10`,border:`1px solid ${C.accent}25`,borderRadius:8,padding:'10px 12px',marginBottom:12,fontSize:12,color:C.muted,lineHeight:1.5}}>
+                💡 <strong style={{color:C.text}}>Dos formas de generar:</strong> completá los bloques 1–3 y hacé clic en <strong style={{color:C.accent}}>✨ Generar IA</strong> arriba, o escribí toda la info acá abajo y usá <strong style={{color:'#8b5cf6'}}>Autocompletar</strong>.
+              </div>
+              <div style={{display:'flex',gap:8,marginBottom:10}}>
+                <button onClick={()=>{const compilado = compilarInfoCruda(); if(compilado.trim()) setInfoCruda(compilado);}}
+                  style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',color:C.text,fontSize:12,fontWeight:600,cursor:'pointer'}}>
+                  📋 Compilar datos del formulario
+                </button>
+              </div>
               <div style={fieldSt}>
-                <label style={labelSt}>Info del cliente y del caso</label>
+                <label style={labelSt}>Texto libre (opcional si ya completaste los bloques)</label>
                 <textarea value={infoCruda} onChange={e=>setInfoCruda(e.target.value)}
-                  placeholder={"Escribí en detalle toda la información del cliente y del caso:\n\nNombre, apellido, DNI/CUIT, provincia, ciudad, código postal, detalles del servicio, fuero, valor de honorarios, plazos de pago, objetivo del trabajo y cualquier información relevante para la elaboración del presupuesto de honorarios."}
-                  rows={8} style={{...inputSt,resize:'vertical',lineHeight:1.6}}/>
+                  placeholder={"Podés escribir acá información adicional o todo el caso desde cero:\n\nNombre, apellido, DNI/CUIT, provincia, ciudad, código postal, detalles del servicio, fuero, valor de honorarios, plazos de pago, objetivo del trabajo..."}
+                  rows={7} style={{...inputSt,resize:'vertical',lineHeight:1.6}}/>
               </div>
               <button onClick={autocompletar} disabled={autocompletando||!infoCruda.trim()}
                 style={{width:'100%',padding:'10px',borderRadius:8,border:'none',background:autocompletando?'#374151':'#8b5cf6',color:'white',fontSize:13,fontWeight:600,cursor:'pointer'}}>
-                {autocompletando?'✨ Autocompletando formulario...':'✨ Autocompletar formulario desde el crudo'}
+                {autocompletando?'✨ Autocompletando formulario...':'✨ Autocompletar bloques 1–3 desde el texto'}
               </button>
             </div>
           )}
 
-          {/* Edición con IA (visible solo si hay contenido generado) */}
-          {contenidoGenerado && (
+          {/* Chat IA: respuestas conversacionales + edición */}
+          {(historialChat.length > 0 || contenidoGenerado) && (
             <div style={{padding:'16px',borderTop:`1px solid ${C.border}`}}>
-              <div style={{fontSize:12,fontWeight:600,color:C.muted,marginBottom:10,textTransform:'uppercase',letterSpacing:'.7px'}}>Editar con IA</div>
+              {/* Mensajes del historial */}
+              {historialChat.length > 0 && (
+                <div style={{marginBottom:12,maxHeight:200,overflowY:'auto',display:'flex',flexDirection:'column',gap:8}}>
+                  {historialChat.filter(m=>m.role==='assistant').map((m,i)=>(
+                    <div key={i} style={{background:`${C.accent}15`,border:`1px solid ${C.accent}30`,borderRadius:8,padding:'10px 12px',fontSize:12,color:C.text,lineHeight:1.5}}>
+                      <span style={{fontSize:10,color:C.accent,fontWeight:700,display:'block',marginBottom:4}}>✨ IA</span>
+                      {m.content}
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div style={{fontSize:12,fontWeight:600,color:C.muted,marginBottom:8,textTransform:'uppercase',letterSpacing:'.7px'}}>
+                {contenidoGenerado ? 'Editar con IA' : 'Responder a la IA'}
+              </div>
               <textarea value={mensajeEdicion} onChange={e=>setMensajeEdicion(e.target.value)}
-                placeholder='Ej: "Cambiá el precio a $350.000", "Hacelo más formal", "Agregá cláusula de confidencialidad"'
+                placeholder={contenidoGenerado
+                  ? '"Cambiá el precio a $350.000", "Hacelo más formal", "Agregá cláusula de confidencialidad"'
+                  : 'Respondé la pregunta de la IA para continuar generando el presupuesto...'}
                 rows={3} style={{...inputSt,resize:'vertical',lineHeight:1.5}}/>
               <button onClick={()=>generarPropuesta(true)} disabled={generando||!mensajeEdicion.trim()}
                 style={{width:'100%',marginTop:8,padding:'9px',borderRadius:8,border:'none',background:generando?'#374151':'#8b5cf6',color:'white',fontSize:13,fontWeight:600,cursor:'pointer'}}>
-                {generando?'Editando...':'💬 Aplicar cambio con IA'}
+                {generando?'Procesando...':contenidoGenerado?'💬 Aplicar cambio con IA':'💬 Enviar respuesta a la IA'}
               </button>
             </div>
           )}
@@ -11219,7 +11245,7 @@ function EdgePanel({ token, user, onLogout }) {
         )}
         <div style={{background:C.surface,borderBottom:`1px solid ${C.border}`,padding:"0 16px",display:"flex",alignItems:"center",justifyContent:"space-between",height:56,flexShrink:0,gap:8}}>
           <div style={{display:"flex",alignItems:"center",gap:10,minWidth:0}}>
-            <img src="/logo.png" alt="Skyward" style={{width:32,height:32,objectFit:"contain",flexShrink:0,filter:"drop-shadow(0 1px 3px rgba(232,78,15,0.3))"}} />
+            <img src="/logo.svg" alt="Skyward" style={{height:38,width:"auto",flexShrink:0,filter:"drop-shadow(0 1px 4px rgba(232,78,15,0.4))"}} />
             <div style={{display:"flex",flexDirection:"column",lineHeight:1.15,minWidth:0}}>
               <span style={{fontWeight:800,fontSize:13,color:C.text,letterSpacing:-0.3,whiteSpace:"nowrap"}}>CRM - Skyward</span>
               <span style={{fontSize:10,color:C.accentLight,fontWeight:500,letterSpacing:0.5,textTransform:"uppercase"}}>{view==="admin"?"Panel Admin":selClient?.nombre||"CRM"}</span>
@@ -11371,7 +11397,7 @@ function LoginForm({ onLogin }) {
       <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:20,padding:'40px 44px',width:400,maxWidth:'94vw',boxShadow:'0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(232,78,15,0.08)'}}>
         {/* Logo + Brand */}
         <div style={{textAlign:'center',marginBottom:36}}>
-          <img src="/logo.png" alt="Skyward" style={{width:60,height:60,marginBottom:16,filter:'drop-shadow(0 4px 12px rgba(232,78,15,0.35))'}}/>
+          <img src="/logo.svg" alt="Skyward" style={{height:72,width:"auto",marginBottom:16,filter:'drop-shadow(0 4px 12px rgba(232,78,15,0.35))'}}/>
           <div style={{fontSize:22,fontWeight:800,color:C.text,letterSpacing:-0.5,lineHeight:1.1}}>Skyward</div>
           <div style={{fontSize:12,color:C.accentLight,fontWeight:600,letterSpacing:2,textTransform:'uppercase',marginTop:4}}>Consultoría Jurídica</div>
           <div style={{width:40,height:2,background:`linear-gradient(90deg, ${C.accent}, ${C.yellow})`,borderRadius:2,margin:'14px auto 0'}}/>

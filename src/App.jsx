@@ -302,7 +302,7 @@ const ONBOARDING_PASOS = [
       {
         id: "crear_usuario", label: "Crear usuario y contraseña",
         desc: "Ir a Admin → cliente → crear usuario con email y contraseña para que el equipo pueda acceder al panel.",
-        detalle: "Ve a la fila del cliente en Admin → botón 'Usuarios' → Nuevo usuario. Asigná el rango correcto:\n• Dueño: ve todo\n• Staff: solo conversaciones y agenda"
+        detalle: "Ve a la fila del cliente en Admin → botón 'Usuarios' → Nuevo usuario. Asigná el rango correcto:\n• Socio/Dueño: ve todo\n• Abogado Auxiliar: casos, honorarios y agenda\n• Secretario/a: solo conversaciones y agenda"
       },
       {
         id: "configurar_pais", label: "Configurar país",
@@ -954,7 +954,7 @@ function AdminView({ stats, clientes, onSelectClient, onRefresh, onCrearUsuario,
                     <select value={c.plan||"pro"}
                       onChange={async e=>{const plan=e.target.value;await fetch(`${API}/api/clientes/${c.id}/plan`,{method:"PUT",headers:{"Content-Type":"application/json","Authorization":`Bearer ${tok()}`},body:JSON.stringify({plan})});if(onPlanChange)onPlanChange(c.id,plan);else onRefresh();}}
                       style={{background:c.plan==="base"?"rgba(251,191,36,0.15)":c.plan==="plus"?"rgba(20,184,166,0.15)":C.accentGlow,border:`1px solid ${c.plan==="base"?"#f59e0b":c.plan==="plus"?"#14b8a6":C.accent}`,borderRadius:6,padding:"4px 8px",fontSize:11,fontWeight:600,color:c.plan==="base"?"#f59e0b":c.plan==="plus"?"#14b8a6":C.accent,cursor:"pointer",fontFamily:"inherit"}}>
-                      <option value="pro">Edge Pro</option><option value="plus">Edge Plus</option><option value="base">Edge Lite</option>
+                      <option value="pro">Pro</option><option value="plus">Plus</option><option value="base">Básico</option>
                     </select>
                   </td>
                   <td style={{padding:"12px 16px",fontSize:13}}>{c.total_prospectos||0}</td>
@@ -986,7 +986,7 @@ function AdminView({ stats, clientes, onSelectClient, onRefresh, onCrearUsuario,
                   onChange={async e=>{e.stopPropagation();const plan=e.target.value;await fetch(`${API}/api/clientes/${c.id}/plan`,{method:"PUT",headers:{"Content-Type":"application/json","Authorization":`Bearer ${tok()}`},body:JSON.stringify({plan})});if(onPlanChange)onPlanChange(c.id,plan);else onRefresh();}}
                   onClick={e=>e.stopPropagation()}
                   style={{background:c.plan==="base"?"rgba(251,191,36,0.15)":c.plan==="plus"?"rgba(20,184,166,0.15)":C.accentGlow,border:`1px solid ${c.plan==="base"?"#f59e0b":c.plan==="plus"?"#14b8a6":C.accent}`,borderRadius:6,padding:"4px 8px",fontSize:11,fontWeight:600,color:c.plan==="base"?"#f59e0b":c.plan==="plus"?"#14b8a6":C.accent,cursor:"pointer",fontFamily:"inherit"}}>
-                  <option value="pro">Edge Pro</option><option value="plus">Edge Plus</option><option value="base">Edge Lite</option>
+                  <option value="pro">Pro</option><option value="plus">Plus</option><option value="base">Básico</option>
                 </select>
               </div>
               <div style={{display:"flex",gap:12,fontSize:12,color:C.muted}}>
@@ -4243,7 +4243,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
         const navItems = [
           {key:"inicio",     icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></>, label:"Inicio",       rangos:["admin","dueno"],         planes:["base","plus","pro"]},
           {key:"calendario", icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></>, label:"Agenda",       rangos:["admin","dueno","staff","profesional"], planes:["base","plus","pro"]},
-          {key:"conversations",icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></>,label:"Conversación",rangos:["admin","dueno","staff"], planes:["plus","pro"], badge: solicitudesPendientes + (prospectos||[]).filter(p=>p.insistencia_notificada&&p.modo_humano).length + (prospectos||[]).filter(p=>p.listo_para_cierre&&!p.horario_elegido).length, badgeUrgente: (prospectos||[]).filter(p=>p.listo_para_cierre&&!p.horario_elegido).length > 0},
+          {key:"conversations",icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></>,label:"Conversación",rangos:["admin","dueno","staff"], planes:["base","plus","pro"], badge: solicitudesPendientes + (prospectos||[]).filter(p=>p.insistencia_notificada&&p.modo_humano).length + (prospectos||[]).filter(p=>p.listo_para_cierre&&!p.horario_elegido).length, badgeUrgente: (prospectos||[]).filter(p=>p.listo_para_cierre&&!p.horario_elegido).length > 0},
           {key:"prospectos",  icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></>, label:"Clientes",    rangos:["admin","dueno","staff","profesional"], planes:["base","plus","pro"]},
           {key:"recordatorios",icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></>,label:"Recordatorios",rangos:["admin","dueno","staff"],planes:["base","plus","pro"]},
           {key:"honorarios",  icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></>, label:"Honorarios",    rangos:["admin","dueno","staff","profesional"],  planes:["base","plus","pro"], badge: notificaciones.filter(n=>n.referencia_tipo==='propuesta').length},
@@ -7292,9 +7292,9 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                             await fetch(`${API}/api/usuarios/${u.id}/rango`,{method:'PUT',headers:jH(),body:JSON.stringify({rango:e.target.value})});
                             fetchUsuarios();
                           }} style={{background:"transparent",border:`1px solid ${C.border}`,borderRadius:4,padding:"1px 6px",fontSize:10,color:C.muted,fontFamily:"inherit",cursor:"pointer"}}>
-                            <option value="dueno">Dueño</option>
-                            <option value="profesional">Profesional</option>
-                            <option value="staff">Staff</option>
+                            <option value="dueno">Socio / Dueño</option>
+                            <option value="profesional">Abogado Auxiliar</option>
+                            <option value="staff">Secretario/a</option>
                           </select>
                         </div>
                       </div>
@@ -7310,7 +7310,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       <div style={{marginBottom:14}}>
                         <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:6}}>Rango</label>
                         <div style={{display:"flex",gap:8}}>
-                          {[{v:"dueno",l:"Dueño",d:"Acceso completo"},{v:"profesional",l:"Profesional",d:"Pacientes, Resultados y Propuestas"},{v:"staff",l:"Staff",d:"Pacientes y Turnos"}].map(r=>(
+                          {[{v:"dueno",l:"Socio / Dueño",d:"Acceso completo"},{v:"profesional",l:"Abogado Auxiliar",d:"Clientes, Casos y Honorarios"},{v:"staff",l:"Secretario/a",d:"Clientes y Agenda"}].map(r=>(
                             <div key={r.v} onClick={()=>setFormUsuario({...formUsuario,rango:r.v})}
                               style={{flex:1,padding:"8px 12px",borderRadius:8,border:`1px solid ${formUsuario.rango===r.v?C.accent:C.border}`,background:formUsuario.rango===r.v?C.accentGlow:"transparent",cursor:"pointer"}}>
                               <div style={{fontSize:12,fontWeight:600,color:formUsuario.rango===r.v?C.accentLight:C.text}}>{r.l}</div>
@@ -10719,9 +10719,9 @@ function EdgePanel({ token, user, onLogout }) {
                   <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Rango</label>
                   <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
                     {[
-                      {v:"dueno",   label:"Dueño",    desc:"Todo + Config"},
-                      {v:"profesional", label:"Profesional", desc:"Prospectos, Resultados y Propuestas"},
-                      {v:"staff",   label:"Staff",     desc:"Prospectos y Agenda"},
+                      {v:"dueno",   label:"Socio / Dueño",    desc:"Todo + Config"},
+                      {v:"profesional", label:"Abogado Auxiliar", desc:"Clientes, Casos y Honorarios"},
+                      {v:"staff",   label:"Secretario/a",     desc:"Clientes y Agenda"},
                     ].map(r=>(
                       <div key={r.v} onClick={()=>setFormUsr({...formUsr,rango:r.v})}
                         style={{flex:1,minWidth:100,padding:"10px 14px",borderRadius:8,border:`1px solid ${(formUsr.rango||"staff")===r.v?C.accent:C.border}`,background:(formUsr.rango||"staff")===r.v?C.accentGlow:"transparent",cursor:"pointer",transition:"all .15s"}}>

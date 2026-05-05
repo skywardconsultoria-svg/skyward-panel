@@ -365,7 +365,7 @@ RECUPERACIÓN CONFIRMACIÓN (Utilidad):
 ];
 
 function OnboardingChecklist({ cliente, onClose, API, jH }) {
-  const C = {bg:"#0a0a0f",surface:"#111827",border:"#1e2a38",text:"#e2e8f0",muted:"#64748b",accent:"#6366f1",accentLight:"#818cf8",green:"#10b981",orange:"#f59e0b"};
+  const _t = typeof localStorage !== 'undefined' ? localStorage.getItem('skyward_theme') : 'dark'; const C = _t === 'light' ? LIGHT_C : DARK_C;
   const storageKey = `onboarding_${cliente.id}`;
   const [completados, setCompletados] = React.useState(() => {
     try { return JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch { return {}; }
@@ -2428,7 +2428,7 @@ function WAConfigPanel({ client }) {
 
 
 function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
-  const C = {bg:"#0a0a0f",surface:"#111827",border:"#1e2a38",text:"#e2e8f0",muted:"#64748b",accent:"#6366f1",accentLight:"#818cf8",accentGlow:"rgba(99,102,241,0.12)",green:"#10b981",red:"#ef4444"};
+  const _t = typeof localStorage !== 'undefined' ? localStorage.getItem('skyward_theme') : 'dark'; const C = _t === 'light' ? LIGHT_C : DARK_C;
   const [tratFiltro, setTratFiltro] = useState('');
   const [sinTurnoDias, setSinTurnoDias] = useState('');
   const [minTurnos, setMinTurnos] = useState('');
@@ -2880,10 +2880,8 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
 }
 
 function FuentesConfig({ client }) {
-  const C = {
-    bg:"#0a0a0f",surface:"#111827",border:"#1e2a38",text:"#e2e8f0",muted:"#64748b",
-    accent:"#6366f1",accentLight:"#818cf8",accentGlow:"rgba(99,102,241,0.12)",green:"#10b981"
-  };
+  const _t = typeof localStorage !== 'undefined' ? localStorage.getItem('skyward_theme') : 'dark';
+  const C = _t === 'light' ? LIGHT_C : DARK_C;
   const waNum = client?.numero_whatsapp?.replace(/\D/g,'') || '';
   const waBase = waNum ? `https://wa.me/${waNum}` : 'https://wa.me/TU_NUMERO';
   const linkGoogle = `${waBase}?text=ref:google`;
@@ -8625,7 +8623,7 @@ function ScoreBadge({ score }) {
 }
 
 function VentasPanel({ client, API, aH, jH, user, rango }) {
-  const C = {bg:"#0a0a0f",surface:"#111827",border:"#1e2a38",text:"#e2e8f0",muted:"#64748b",accent:"#6366f1",accentLight:"#818cf8",accentGlow:"rgba(99,102,241,0.12)",green:"#10b981",red:"#ef4444"};
+  const _t = typeof localStorage !== 'undefined' ? localStorage.getItem('skyward_theme') : 'dark'; const C = _t === 'light' ? LIGHT_C : DARK_C;
   const [vista, setVista] = useState('menu'); // menu | feedback | entrenador | grabar
   const [subVista, setSubVista] = useState('historial'); // historial | detalle
   const [valoraciones, setValoraciones] = useState([]);
@@ -9248,7 +9246,7 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
 
 
 function ValoracionesPaciente({ paciente, client, API, aH, jH, user }) {
-  const C = {bg:"#0a0a0f",surface:"#111827",border:"#1e2a38",text:"#e2e8f0",muted:"#64748b",accent:"#6366f1",accentLight:"#818cf8",accentGlow:"rgba(99,102,241,0.12)",green:"#10b981",red:"#ef4444"};
+  const _t = typeof localStorage !== 'undefined' ? localStorage.getItem('skyward_theme') : 'dark'; const C = _t === 'light' ? LIGHT_C : DARK_C;
   const [valoraciones, setValoraciones] = useState([]);
   const [grabando, setGrabando] = useState(false);
   const [grabSegundos, setGrabSegundos] = useState(0);
@@ -10295,7 +10293,7 @@ function PropuestaPreview({ contenido: c, cliente }) {
 
 
 function AsistenteIA({ API, aH, jH, plan, rango, nombre, activeTab }) {
-  const C = {bg:"#0a0a0f",surface:"#111827",border:"#1e2a38",text:"#e2e8f0",muted:"#64748b",accent:"#6366f1",accentLight:"#818cf8",accentGlow:"rgba(99,102,241,0.12)"};
+  const _t = typeof localStorage !== 'undefined' ? localStorage.getItem('skyward_theme') : 'dark'; const C = _t === 'light' ? LIGHT_C : DARK_C;
   const [abierto, setAbierto] = useState(false);
   const [historial, setHistorial] = useState([]);
   const [msg, setMsg] = useState('');

@@ -3732,16 +3732,22 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
           body:JSON.stringify({ monto_adicional: formPago.monto, forma_pago: formPago.forma_pago, nota: formPago.nota })
         });
       } else {
-        // Pago suelto (seña, producto, etc)
-        await fetch(`${API}/api/pagos`, {
+        // Pago suelto → crear plan de pago pagado al 100% para que aparezca en la ficha
+        const montoNum = parseFloat(formPago.monto) || 0;
+        await fetch(`${API}/api/planes-pago`, {
           method:"POST", headers:jH(),
           body:JSON.stringify({
             cliente_id: client.id,
             paciente_id: pagoCtx.paciente.id,
-            monto: formPago.monto,
+            tratamiento: formPago.concepto || "Pago manual",
+            monto_total: montoNum,
+            monto_pagado: montoNum,
             moneda: formPago.moneda,
             forma_pago: formPago.forma_pago,
-            nota: formPago.concepto || formPago.nota || "Pago manual",
+            total_sesiones: 1,
+            sesiones_pagas: 1,
+            estado: "pagado",
+            notas_pago: formPago.nota || "",
           })
         });
       }

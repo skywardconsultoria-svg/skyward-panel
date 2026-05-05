@@ -5237,11 +5237,11 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   {/* KPIs principales */}
                   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:10,marginBottom:24}}>
                     {[
-                      {label:"Prospectos",    value:funnelNuevo.etapas.prospectos,  color:"#6366f1", icon:"💬", desc:"Del bot"},
-                      {label:"Rapport",       value:funnelNuevo.etapas.rapport,     color:"#3b82f6", icon:"🗣", desc:"≥2 mensajes"},
-                      {label:"Agendados",     value:funnelNuevo.etapas.agendados,   color:"#f59e0b", icon:"📅", desc:"Todos los turnos"},
-                      {label:"Se presentó",   value:funnelNuevo.etapas.presentados, color:"#10b981", icon:"✅", desc:"Showup"},
-                      {label:"Vendido",       value:funnelNuevo.etapas.vendidos,    color:"#8b5cf6", icon:"💰", desc:"Servicio contratado"},
+                      {label:"Potenciales clientes", value:funnelNuevo.etapas.prospectos,  color:"#6366f1", icon:"💬", desc:"Del bot"},
+                      {label:"Rapport",              value:funnelNuevo.etapas.rapport,     color:"#3b82f6", icon:"🗣", desc:"≥2 mensajes"},
+                      {label:"Consulta agendada",    value:funnelNuevo.etapas.agendados,   color:"#f59e0b", icon:"📅", desc:"Todos los turnos"},
+                      {label:"Presentados",          value:funnelNuevo.etapas.presentados, color:"#10b981", icon:"✅", desc:"Showup"},
+                      {label:"Honorarios aceptados", value:funnelNuevo.etapas.vendidos,    color:"#8b5cf6", icon:"💰", desc:"Servicio contratado"},
                     ].map((s,i)=>(
                       <div key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:"14px 16px"}}>
                         <div style={{fontSize:18,marginBottom:4}}>{s.icon}</div>
@@ -5257,11 +5257,11 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     <div style={{fontSize:13,fontWeight:600,marginBottom:20}}>Conversión entre etapas</div>
                     {(() => {
                       const etapas = [
-                        {label:"Prospectos",  value:funnelNuevo.etapas.prospectos,  color:"#6366f1", conv:null, convLabel:null},
-                        {label:"Rapport",     value:funnelNuevo.etapas.rapport,     color:"#3b82f6", conv:funnelNuevo.conversiones.prospectos_rapport,    convLabel:"Prospectos → Rapport"},
-                        {label:"Agendados",   value:funnelNuevo.etapas.agendados,   color:"#f59e0b", conv:funnelNuevo.conversiones.rapport_agendados,     convLabel:"Rapport → Agendados"},
-                        {label:"Se presentó", value:funnelNuevo.etapas.presentados, color:"#10b981", conv:funnelNuevo.conversiones.agendados_presentados,  convLabel:"Agendados → Se presentó"},
-                        {label:"Vendido",     value:funnelNuevo.etapas.vendidos,    color:"#8b5cf6", conv:funnelNuevo.conversiones.presentados_vendidos,   convLabel:"Se presentó → Vendido"},
+                        {label:"Potenciales clientes", value:funnelNuevo.etapas.prospectos,  color:"#6366f1", conv:null, convLabel:null},
+                        {label:"Rapport",              value:funnelNuevo.etapas.rapport,     color:"#3b82f6", conv:funnelNuevo.conversiones.prospectos_rapport,    convLabel:"Potenciales → Rapport"},
+                        {label:"Consulta agendada",    value:funnelNuevo.etapas.agendados,   color:"#f59e0b", conv:funnelNuevo.conversiones.rapport_agendados,     convLabel:"Rapport → Consulta agendada"},
+                        {label:"Presentados",          value:funnelNuevo.etapas.presentados, color:"#10b981", conv:funnelNuevo.conversiones.agendados_presentados,  convLabel:"Consulta → Presentados"},
+                        {label:"Honorarios aceptados", value:funnelNuevo.etapas.vendidos,    color:"#8b5cf6", conv:funnelNuevo.conversiones.presentados_vendidos,   convLabel:"Presentados → Honorarios"},
                       ];
                       const max = Math.max(...etapas.map(e=>e.value), 1);
                       return etapas.map((etapa, i) => {
@@ -5368,7 +5368,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   <input value={searchQ} onChange={e=>{setSearchQ(e.target.value);fetchPacientes(e.target.value);}}
                     placeholder="Buscar nombre, doc..."
                     style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"7px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
-                  <Btn onClick={()=>{setShowNuevoTurno(true);setTurnoStep("buscar");setTurnoPaciente(null);setTurnoSearch("");setTurnoSearchRes([]);setFormTurno(FORM_TURNO_INIT);}} small>+ Nuevo turno</Btn>
+                  <Btn onClick={()=>{setShowNuevoTurno(true);setTurnoStep("buscar");setTurnoPaciente(null);setTurnoSearch("");setTurnoSearchRes([]);setFormTurno(FORM_TURNO_INIT);}} small>+ Nuevo cliente</Btn>
                 </div>
                 <button onClick={()=>{const nd=!filtroDeuda;setFiltroDeuda(nd);fetchPacientes(searchQ,nd);}}
                   style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:8,border:`1px solid ${filtroDeuda?"#ef4444":C.border}`,background:filtroDeuda?"rgba(239,68,68,0.1)":"transparent",color:filtroDeuda?"#ef4444":C.muted,fontSize:11,cursor:"pointer",fontWeight:filtroDeuda?600:400,width:"fit-content"}}>
@@ -5812,11 +5812,11 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       <>
                         <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
                           {[
-                            {label:"Prospectos",  value:funnelNuevo.etapas.prospectos,  color:"#6366f1"},
-                            {label:"Rapport",     value:funnelNuevo.etapas.rapport,     color:"#3b82f6"},
-                            {label:"Agendados",   value:funnelNuevo.etapas.agendados,   color:"#f59e0b"},
-                            {label:"Se presentó", value:funnelNuevo.etapas.presentados, color:"#10b981"},
-                            {label:"Vendido",     value:funnelNuevo.etapas.vendidos,    color:"#8b5cf6"},
+                            {label:"Potenciales clientes", value:funnelNuevo.etapas.prospectos,  color:"#6366f1"},
+                            {label:"Rapport",              value:funnelNuevo.etapas.rapport,     color:"#3b82f6"},
+                            {label:"Consulta agendada",    value:funnelNuevo.etapas.agendados,   color:"#f59e0b"},
+                            {label:"Presentados",          value:funnelNuevo.etapas.presentados, color:"#10b981"},
+                            {label:"Honorarios aceptados", value:funnelNuevo.etapas.vendidos,    color:"#8b5cf6"},
                           ].map((e,i)=>(
                             <div key={i} style={{flex:1,minWidth:90,textAlign:"center",padding:"10px 6px",background:C.bg,borderRadius:10,border:`1px solid ${C.border}`}}>
                               <div style={{fontSize:20,fontWeight:700,color:e.color}}>{e.value}</div>
@@ -6804,11 +6804,11 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         <>
                           <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:14}}>
                             {[
-                              {label:"Contactados", value:funnelNuevo.etapas.prospectos||0,  color:"#6366f1"},
-                              {label:"Rapport",     value:funnelNuevo.etapas.rapport||0,     color:"#3b82f6"},
-                              {label:"Agendados",   value:funnelNuevo.etapas.agendados||0,   color:"#f59e0b"},
-                              {label:"Se presentó", value:funnelNuevo.etapas.presentados||0, color:"#10b981"},
-                              {label:"Vendido",     value:funnelNuevo.etapas.vendidos||0,    color:C.green},
+                              {label:"Potenciales clientes", value:funnelNuevo.etapas.prospectos||0,  color:"#6366f1"},
+                              {label:"Rapport",              value:funnelNuevo.etapas.rapport||0,     color:"#3b82f6"},
+                              {label:"Consulta agendada",    value:funnelNuevo.etapas.agendados||0,   color:"#f59e0b"},
+                              {label:"Presentados",          value:funnelNuevo.etapas.presentados||0, color:"#10b981"},
+                              {label:"Honorarios aceptados", value:funnelNuevo.etapas.vendidos||0,    color:C.green},
                             ].map(e=>(
                               <div key={e.label} style={{flex:1,minWidth:80,background:C.bg,borderRadius:10,padding:"12px 10px",textAlign:"center",border:`1px solid ${e.color}33`}}>
                                 <div style={{fontSize:22,fontWeight:700,color:e.color}}>{e.value}</div>

@@ -66,6 +66,8 @@ function AudioBubble({ audioUrl }) {
 // DARK_C y LIGHT_C vienen de ./theme; STAGES, etc. de ./constants.
 const _storedTheme = typeof localStorage !== 'undefined' ? localStorage.getItem('skyward_theme') : 'dark';
 let C = _storedTheme === 'light' ? LIGHT_C : DARK_C;
+const _storedScale = typeof localStorage !== 'undefined' ? (localStorage.getItem('skyward_ui_scale')||'sm') : 'sm';
+const UI_SCALE = _storedScale === 'lg' ? 1.5 : _storedScale === 'md' ? 1.3 : 1;
 
 function timeAgo(d) {
   const s = Math.floor((Date.now() - new Date(d)) / 1000);
@@ -4064,7 +4066,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
   const isMobile = useIsMobile();
 
   return (
-    <>
+    <div style={{zoom:UI_SCALE,transformOrigin:"top left"}}>
     {/* Banner solicitudes pendientes — fuera del overflow:hidden */}
     {solicitudesPendientes > 0 && (
       <div className="slide-down" onClick={()=>{
@@ -4130,6 +4132,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
           {key:"recordatorios",icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></>,label:"Recordatorios",rangos:["admin","dueno","staff"],planes:["base","plus","pro"]},
           {key:"honorarios",  icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></>, label:"Honorarios",    rangos:["admin","dueno","staff","profesional"],  planes:["base","plus","pro"], badge: notificaciones.filter(n=>n.referencia_tipo==='propuesta').length},
           {key:"honorarios_dash", icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><path d="M18 20V4"/><path d="M6 20v-4"/><circle cx="12" cy="6" r="2"/></svg></>, label:"Balance", rangos:["admin","dueno","staff"], planes:["base","plus","pro"]},
+          {key:"tracker",    icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><circle cx="11" cy="11" r="3"/></svg></>, label:"Tracker",  rangos:["admin","dueno","staff"], planes:["base","plus","pro"]},
           {key:"funnel",      icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></>, label:"Etapas",        rangos:["admin","dueno"],          planes:["base","plus","pro"]},
           {key:"facturacion",icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></>, label:"Facturación",  rangos:["admin","dueno"],         planes:["base","plus","pro"]},
           {key:"config",     icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></>, label:"Config",       rangos:["admin","dueno"],         planes:["base","plus","pro"]},
@@ -4199,6 +4202,16 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 style={{height:44,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:C.muted,fontSize:16,transition:"color .15s"}}
                 onMouseEnter={e=>e.currentTarget.style.color=C.text} onMouseLeave={e=>e.currentTarget.style.color=C.muted}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+              </div>
+              {/* Selector de tamaño de texto */}
+              <div style={{display:"flex",alignItems:"center",gap:2,height:44}}>
+                {[{k:'sm',l:'A',s:10},{k:'md',l:'A',s:13},{k:'lg',l:'A',s:16}].map(({k,l,s})=>(
+                  <button key={k} onClick={()=>{localStorage.setItem('skyward_ui_scale',k);window.location.reload();}}
+                    title={k==='sm'?'Tamaño normal':k==='md'?'Tamaño grande':'Tamaño muy grande'}
+                    style={{background:_storedScale===k?C.accentGlow:"transparent",border:`1px solid ${_storedScale===k?C.accent:C.border}`,borderRadius:5,width:22,height:22,cursor:"pointer",color:_storedScale===k?C.accentLight:C.muted,fontSize:s,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1,padding:0,fontFamily:"Georgia,serif"}}>
+                    {l}
+                  </button>
+                ))}
               </div>
               <div onClick={()=>{const next=localStorage.getItem('skyward_theme')==='light'?'dark':'light';localStorage.setItem('skyward_theme',next);window.location.reload();}} title={localStorage.getItem('skyward_theme')==='light'?"Modo oscuro":"Modo claro"}
                 style={{height:44,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:C.muted,fontSize:16,transition:"color .15s"}}
@@ -6580,6 +6593,13 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
           </div>
         )}
 
+        {/* Tracker de Clientes */}
+        {activeTab === "tracker" && (
+          <div style={{flex:1,overflowY:"auto",padding:24}}>
+            <TrackerClientesPanel prospectos={prospectos||[]} onVerCliente={p=>{setSelectedProspect(p);setActiveTab('prospectos');}} />
+          </div>
+        )}
+
         {/* Facturación */}
         {activeTab === "facturacion" && (
           <div style={{flex:1,overflowY:"auto",padding:24}}>
@@ -6954,7 +6974,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 <div style={{fontSize:12,color:C.muted,marginBottom:14}}>Se usa en propuestas y comunicaciones. PNG o JPG, máx 2MB.</div>
                 <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:14}}>
                   <div style={{width:64,height:64,borderRadius:10,background:C.bg,border:`1px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",flexShrink:0}}>
-                    {logoPreview ? <img src={logoPreview} style={{width:"100%",height:"100%",objectFit:"contain"}} alt="Logo"/> : <span style={{fontSize:24}}>🏥</span>}
+                    {logoPreview ? <img src={logoPreview} style={{width:"100%",height:"100%",objectFit:"contain"}} alt="Logo"/> : <span style={{fontSize:24}}>⚖️</span>}
                   </div>
                   <div style={{flex:1}}>
                     <input type="file" accept="image/*" style={{display:"none"}} id="logo-upload"
@@ -7039,8 +7059,8 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               {/* -- TAB AGENDA -- */}
               {confTab === "agenda" && (<>
 
-              {/* Tratamientos */}
-              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
+              {/* Tratamientos — oculto para estudios jurídicos (los servicios se definen por propuesta) */}
+              {false && <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
                   <div>
                     <div style={{fontSize:13,fontWeight:600,marginBottom:2}}>Tratamientos</div>
@@ -7091,14 +7111,14 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     </div>
                   </div>
                 )}
-              </div>
+              </div>}
 
               {/* Profesionales */}
               <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
                   <div>
                     <div style={{fontSize:13,fontWeight:600,marginBottom:2}}>Profesionales</div>
-                    <div style={{fontSize:12,color:C.muted}}>Equipo de la agencia</div>
+                    <div style={{fontSize:12,color:C.muted}}>Equipo del estudio</div>
                   </div>
                   <Btn onClick={()=>setShowNewProf(true)} small>+ Agregar</Btn>
                 </div>
@@ -7108,9 +7128,9 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   <div key={p.id} style={{marginBottom:8}}>
                     {editingProf === p.id ? (
                       <div style={{padding:14,background:C.bg,borderRadius:8,border:`1.5px solid ${C.accent}`}}>
-                        <Field label="Nombre *" value={formEditProf.nombre} onChange={v=>setFormEditProf({...formEditProf,nombre:v})} placeholder="Dra. García"/>
-                        <Field label="Rol" value={formEditProf.rol} onChange={v=>setFormEditProf({...formEditProf,rol:v})} placeholder="Médica estética..."/>
-                        <Field label="Email" value={formEditProf.email} onChange={v=>setFormEditProf({...formEditProf,email:v})} placeholder="asesor@skyward.com"/>
+                        <Field label="Nombre *" value={formEditProf.nombre} onChange={v=>setFormEditProf({...formEditProf,nombre:v})} placeholder="Dr. García"/>
+                        <Field label="Rol" value={formEditProf.rol} onChange={v=>setFormEditProf({...formEditProf,rol:v})} placeholder="Socio, Abogado/a, Asesor..."/>
+                        <Field label="Email (para invitar a la consulta)" value={formEditProf.email} onChange={v=>setFormEditProf({...formEditProf,email:v})} placeholder="asesor@estudio.com"/>
                         <div style={{marginBottom:8}}>
                           <div style={{fontSize:11,color:C.muted,marginBottom:4}}>Color en calendario</div>
                           <div style={{display:"flex",gap:4}}>{PROF_COLORS.map(c=>(
@@ -7147,9 +7167,9 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 ))}
                 {showNewProf && (
                   <div style={{marginTop:12,padding:16,background:C.bg,borderRadius:8,border:`1px solid ${C.border}`}}>
-                    <Field label="Nombre *" value={formProf.nombre} onChange={v=>setFormProf({...formProf,nombre:v})} placeholder="Dra. García"/>
-                    <Field label="Rol" value={formProf.rol} onChange={v=>setFormProf({...formProf,rol:v})} placeholder="Médica estética, Esteticista..."/>
-                    <Field label="Email (para invitar al turno)" value={formProf.email} onChange={v=>setFormProf({...formProf,email:v})} placeholder="martin@skyward.com"/>
+                    <Field label="Nombre *" value={formProf.nombre} onChange={v=>setFormProf({...formProf,nombre:v})} placeholder="Dr. García"/>
+                    <Field label="Rol" value={formProf.rol} onChange={v=>setFormProf({...formProf,rol:v})} placeholder="Socio, Abogado/a, Asesor..."/>
+                    <Field label="Email (para invitar a la consulta)" value={formProf.email} onChange={v=>setFormProf({...formProf,email:v})} placeholder="martin@estudio.com"/>
                     <div style={{marginBottom:8}}>
                       <div style={{fontSize:11,color:C.muted,marginBottom:4}}>Color en calendario</div>
                       <div style={{display:"flex",gap:4}}>{PROF_COLORS.map(c=>(
@@ -7578,24 +7598,24 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               {/* Nombres de tipos de turno */}
               {campos && (
                 <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
-                  <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>Nombres de tipos de turno</div>
-                  <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Cómo llama la agencia a cada tipo. Aparece en el funnel y reportes.</div>
+                  <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>Terminología del estudio</div>
+                  <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Cómo el estudio llama a cada tipo de encuentro. Aparece en el funnel y reportes.</div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
                     <div>
-                      <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>🩺 Nombre para "valoración"</label>
-                      <input value={campos.nombre_valoracion||"valoración"}
+                      <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>📋 Nombre para la "primera consulta"</label>
+                      <input value={campos.nombre_valoracion||"primera consulta"}
                         onChange={e=>setCampos({...campos,nombre_valoracion:e.target.value})}
-                        placeholder="valoración, consulta, evaluación..."
+                        placeholder="primera consulta, evaluación inicial..."
                         style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
-                      <div style={{fontSize:10,color:C.muted,marginTop:4}}>Primera cita, sin costo de servicio</div>
+                      <div style={{fontSize:10,color:C.muted,marginTop:4}}>Primera reunión con el cliente</div>
                     </div>
                     <div>
-                      <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>💉 Nombre para "tratamiento"</label>
-                      <input value={campos.nombre_tratamiento||"tratamiento"}
+                      <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>⚖️ Nombre para el "servicio"</label>
+                      <input value={campos.nombre_tratamiento||"consulta"}
                         onChange={e=>setCampos({...campos,nombre_tratamiento:e.target.value})}
-                        placeholder="tratamiento, sesión, procedimiento..."
+                        placeholder="consulta, asesoramiento, representación..."
                         style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
-                      <div style={{fontSize:10,color:C.muted,marginTop:4}}>Servicio real que genera ingreso</div>
+                      <div style={{fontSize:10,color:C.muted,marginTop:4}}>Servicio legal que genera honorario</div>
                     </div>
                   </div>
                   <Btn onClick={guardarCampos} disabled={camposSaving} small>{camposSaving?"Guardando...":"Guardar"}</Btn>
@@ -7908,6 +7928,8 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
       {(showNuevoTurno || (showEditTurno && editTurnoData)) && (() => {
         const esEdicion = !showNuevoTurno && showEditTurno;
         const METODOS_LABELS = {efectivo:"Efectivo",transferencia:"Transferencia",tarjeta_debito:"Tarjeta débito",tarjeta_credito:"Tarjeta crédito",mercadopago:"MercadoPago",paypal:"PayPal",stripe:"Stripe",pix:"Pix",zelle:"Zelle",venmo:"Venmo",nequi:"Nequi",daviplata:"Daviplata",yape:"Yape",cheque:"Cheque",cripto:"Cripto"};
+        const MONEDA_LABELS = {ARS:"Pesos argentinos",USD:"Dólares (USD)",EUR:"Euros (EUR)",BRL:"Reales (BRL)",UYU:"Pesos uruguayos",CLP:"Pesos chilenos",MXN:"Pesos mexicanos",COP:"Pesos colombianos",PEN:"Soles (PEN)",PYG:"Guaraníes",BOB:"Bolivianos",VES:"Bolívares",JUL:"JUL"};
+        const SERVICIOS_LEGALES = ["Consulta inicial","Asesoramiento legal","Redacción de contrato","Revisión de documento","Mediación","Representación judicial","Consulta urgente"];
         const cerrar = () => { setShowNuevoTurno(false); setShowEditTurno(false); setErrTurno(null); setErrEditTurno(null); setTurnoStep("buscar"); setTurnoPaciente(null); setTurnoSearch(""); setTurnoSearchRes([]); };
         const pacienteActual = esEdicion ? (selPac || {nombre: editTurnoData?.paciente_nombre}) : turnoPaciente;
         return (
@@ -7917,7 +7939,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               {/* Header */}
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}>
                 <div>
-                  <div style={{fontSize:16,fontWeight:700}}>{esEdicion ? "Editar turno" : "Nuevo turno"}</div>
+                  <div style={{fontSize:16,fontWeight:700}}>{esEdicion ? "Editar turno" : "Nueva consulta"}</div>
                   {pacienteActual && <div style={{fontSize:12,color:C.accent,marginTop:2}}>👤 {pacienteActual.nombre}{esEdicion && editTurnoData?.tratamiento ? ` · ${editTurnoData.tratamiento}` : ""}</div>}
                 </div>
                 <button onClick={cerrar} style={{background:"transparent",border:"none",color:C.muted,fontSize:20,cursor:"pointer",lineHeight:1}}>×</button>
@@ -8073,23 +8095,19 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
                         <div>
                           <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Servicio</label>
-                          <select value={formTurno.tratamiento_id} onChange={e=>{
-                            const trat = tratamientos.find(t=>t.id===parseInt(e.target.value));
-                            setFormTurno({...formTurno,tratamiento_id:e.target.value,tratamiento_libre:"",tipo_turno:trat?.tipo||formTurno.tipo_turno||"tratamiento"});
-                          }} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
-                            <option value="">Escribir manualmente...</option>
-                            {tratamientos.map(t=><option key={t.id} value={t.id}>{t.nombre} ({t.tipo==="valoracion"?"Val.":"Trat."} · {t.duracion_minutos}min)</option>)}
+                          <select
+                            value={SERVICIOS_LEGALES.includes(formTurno.tratamiento_libre)?formTurno.tratamiento_libre:"__manual"}
+                            onChange={e=>{
+                              if(e.target.value==="__manual") setFormTurno({...formTurno,tratamiento_id:"",tratamiento_libre:""});
+                              else setFormTurno({...formTurno,tratamiento_id:"",tratamiento_libre:e.target.value});
+                            }}
+                            style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
+                            <option value="__manual">✏️ Escribir manualmente...</option>
+                            {SERVICIOS_LEGALES.map(s=><option key={s} value={s}>{s}</option>)}
                           </select>
-                          {!formTurno.tratamiento_id && <input value={formTurno.tratamiento_libre} onChange={e=>setFormTurno({...formTurno,tratamiento_libre:e.target.value})} placeholder="Ej: Valoración, Ultraformer..." style={{marginTop:6,width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>}
-                          {/* Tipo override */}
-                          <div style={{display:"flex",gap:6,marginTop:6}}>
-                            {[{v:"tratamiento",l:"💉 Tratamiento"},{v:"valoracion",l:"🩺 Valoración"}].map(op=>(
-                              <div key={op.v} onClick={()=>setFormTurno({...formTurno,tipo_turno:op.v})}
-                                style={{flex:1,textAlign:"center",padding:"5px 8px",borderRadius:6,border:`1px solid ${formTurno.tipo_turno===op.v?C.accent:C.border}`,background:formTurno.tipo_turno===op.v?C.accentGlow:"transparent",cursor:"pointer",fontSize:11,fontWeight:formTurno.tipo_turno===op.v?600:400,color:formTurno.tipo_turno===op.v?C.accentLight:C.muted,transition:"all .15s"}}>
-                                {op.l}
-                              </div>
-                            ))}
-                          </div>
+                          {!SERVICIOS_LEGALES.includes(formTurno.tratamiento_libre) && (
+                            <input value={formTurno.tratamiento_libre} onChange={e=>setFormTurno({...formTurno,tratamiento_libre:e.target.value})} placeholder="Ej: Consulta inicial, asesoramiento..." style={{marginTop:6,width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
+                          )}
                         </div>
                         <div>
                           <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Profesional</label>
@@ -8115,10 +8133,13 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       <div style={{fontSize:11,color:C.muted,textTransform:"uppercase",letterSpacing:".6px",fontWeight:500,marginBottom:12}}>Pago <span style={{fontSize:10,fontWeight:400,textTransform:"none",letterSpacing:0}}>(opcional)</span></div>
                       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:12}}>
                         <div><label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Monto</label>
-                          <input type="number" value={formTurno.monto} onChange={e=>setFormTurno({...formTurno,monto:e.target.value})} placeholder="0" style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/></div>
+                          <input type="text" inputMode="numeric"
+                            value={formTurno.monto ? Number(formTurno.monto).toLocaleString('es-AR') : ''}
+                            onChange={e=>{const raw=e.target.value.replace(/\./g,'').replace(/[^0-9]/g,'');setFormTurno({...formTurno,monto:raw});}}
+                            placeholder="0" style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/></div>
                         <div><label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Moneda</label>
                           <select value={formTurno.moneda} onChange={e=>setFormTurno({...formTurno,moneda:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
-                            {(campos?.monedas||"ARS").split(",").filter(Boolean).map(c=><option key={c} value={c}>{c}</option>)}
+                            {(campos?.monedas||"ARS").split(",").filter(Boolean).map(c=><option key={c} value={c}>{MONEDA_LABELS[c]||c}</option>)}
                           </select></div>
                         <div><label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Estado</label>
                           <select value={formTurno.estado_pago} onChange={e=>setFormTurno({...formTurno,estado_pago:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
@@ -8144,7 +8165,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       {errTurno && <div style={{background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,padding:"8px 12px",fontSize:12,color:C.red,marginBottom:12}}>{errTurno}</div>}
                       <div style={{display:"flex",gap:8,justifyContent:"flex-end",marginTop:12}}>
                         <Btn onClick={cerrar} secondary>Cancelar</Btn>
-                        <Btn onClick={()=>crearTurno(turnoPaciente.id)} disabled={savingTurno||!turnoPaciente}>{savingTurno?"Guardando...":"Confirmar turno ✓"}</Btn>
+                        <Btn onClick={()=>crearTurno(turnoPaciente.id)} disabled={savingTurno||!turnoPaciente}>{savingTurno?"Guardando...":"Confirmar consulta ✓"}</Btn>
                       </div>
                     </div>
                   )}
@@ -8214,7 +8235,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
           }}
         />
       )}
-    </>
+    </div>
   );
 }
 
@@ -9417,6 +9438,190 @@ function ValoracionesPaciente({ paciente, client, API, aH, jH, user }) {
   );
 }
 
+// ── TRACKER DE CLIENTES ────────────────────────────────────────────────────────
+function TrackerClientesPanel({ prospectos, onVerCliente }) {
+  const _t = typeof localStorage !== 'undefined' ? localStorage.getItem('skyward_theme') : 'dark';
+  const C = _t === 'light' ? LIGHT_C : DARK_C;
+
+  const [busqueda, setBusqueda] = React.useState('');
+  const [filtroFuente, setFiltroFuente] = React.useState('');
+  const [filtroEtapa, setFiltroEtapa] = React.useState('');
+
+  const FUENTE_META = {
+    meta: {label:'Meta Ads', icon:'🟢', color:'#22c55e'},
+    google: {label:'Google Ads', icon:'🔵', color:'#3b82f6'},
+    directo: {label:'Directo', icon:'⚪', color:'#64748b'},
+  };
+  const getFuente = (f) => FUENTE_META[f] || {label: f||'Sin fuente', icon:'🟣', color:'#8b5cf6'};
+
+  // KPIs
+  const total = prospectos.length;
+  const porFuente = prospectos.reduce((acc, p) => {
+    const k = p.fuente || 'directo';
+    acc[k] = (acc[k]||0) + 1;
+    return acc;
+  }, {});
+  const porEtapa = prospectos.reduce((acc, p) => {
+    const k = p.etapa || 'SIN_ETAPA';
+    acc[k] = (acc[k]||0) + 1;
+    return acc;
+  }, {});
+  const agendados = prospectos.filter(p => p.etapa === 'AGENDADO' || p.horario_elegido).length;
+  const conEmail = prospectos.filter(p => p.email).length;
+  const tasaConv = total > 0 ? Math.round((agendados/total)*100) : 0;
+
+  // Filtros
+  const lista = prospectos.filter(p => {
+    if (filtroFuente && (p.fuente||'directo') !== filtroFuente) return false;
+    if (filtroEtapa && p.etapa !== filtroEtapa) return false;
+    if (busqueda) {
+      const q = busqueda.toLowerCase();
+      return (p.nombre||'').toLowerCase().includes(q) || (p.telefono||'').includes(q) || (p.email||'').toLowerCase().includes(q) || (p.tratamiento||'').toLowerCase().includes(q);
+    }
+    return true;
+  });
+
+  const maxFuente = Math.max(...Object.values(porFuente), 1);
+
+  return (
+    <div style={{maxWidth:1100, margin:'0 auto'}}>
+      {/* Header */}
+      <div style={{marginBottom:24}}>
+        <div style={{fontSize:18,fontWeight:800,color:C.text,marginBottom:4}}>🔍 Tracker de Clientes</div>
+        <div style={{fontSize:12,color:C.muted}}>Origen, seguimiento y estado de todos los prospectos del estudio</div>
+      </div>
+
+      {/* KPI Cards */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:12,marginBottom:24}}>
+        {[
+          {label:'Total prospectos', value:total, icon:'👥', color:C.accent},
+          {label:'Agendados', value:agendados, icon:'📅', color:C.green},
+          {label:'Tasa conversión', value:`${tasaConv}%`, icon:'🎯', color:tasaConv>=40?C.green:C.yellow},
+          {label:'Con email', value:conEmail, icon:'📧', color:C.accentLight},
+          {label:'Fuentes activas', value:Object.keys(porFuente).length, icon:'📡', color:'#8b5cf6'},
+        ].map((kpi,i)=>(
+          <div key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:'14px 16px'}}>
+            <div style={{fontSize:18,marginBottom:5}}>{kpi.icon}</div>
+            <div style={{fontSize:22,fontWeight:800,color:kpi.color,marginBottom:2}}>{kpi.value}</div>
+            <div style={{fontSize:10,color:C.muted,letterSpacing:.3}}>{kpi.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Gráfico por fuente */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:24}}>
+        <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20}}>
+          <div style={{fontSize:13,fontWeight:600,marginBottom:16}}>📊 Prospectos por fuente</div>
+          {Object.entries(porFuente).sort((a,b)=>b[1]-a[1]).map(([fuente, cant])=>{
+            const meta = getFuente(fuente);
+            const pct = Math.round((cant/maxFuente)*100);
+            return (
+              <div key={fuente} style={{marginBottom:10}}>
+                <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
+                  <span style={{fontSize:12,color:C.text}}>{meta.icon} {meta.label}</span>
+                  <span style={{fontSize:12,fontWeight:700,color:meta.color}}>{cant}</span>
+                </div>
+                <div style={{background:C.bg,borderRadius:4,height:6,overflow:'hidden'}}>
+                  <div style={{width:`${pct}%`,height:'100%',background:meta.color,borderRadius:4,transition:'width .6s ease'}}/>
+                </div>
+              </div>
+            );
+          })}
+          {Object.keys(porFuente).length === 0 && <div style={{fontSize:12,color:C.muted,textAlign:'center',padding:'12px 0'}}>Sin datos de fuente aún</div>}
+        </div>
+
+        <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20}}>
+          <div style={{fontSize:13,fontWeight:600,marginBottom:16}}>🏷️ Prospectos por etapa</div>
+          {Object.entries(porEtapa).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([etapa, cant])=>{
+            const pct = Math.round((cant/total)*100);
+            const color = etapa==='AGENDADO'?C.green:etapa==='PERDIDO'?C.red:etapa==='CONSULTA_GRATIS'?C.yellow:C.accent;
+            return (
+              <div key={etapa} style={{marginBottom:10}}>
+                <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
+                  <span style={{fontSize:11,color:C.text}}>{etapa.replace(/_/g,' ')}</span>
+                  <span style={{fontSize:12,fontWeight:700,color}}>{cant} <span style={{fontSize:10,color:C.muted,fontWeight:400}}>({pct}%)</span></span>
+                </div>
+                <div style={{background:C.bg,borderRadius:4,height:5,overflow:'hidden'}}>
+                  <div style={{width:`${pct}%`,height:'100%',background:color,borderRadius:4}}/>
+                </div>
+              </div>
+            );
+          })}
+          {Object.keys(porEtapa).length === 0 && <div style={{fontSize:12,color:C.muted,textAlign:'center',padding:'12px 0'}}>Sin etapas aún</div>}
+        </div>
+      </div>
+
+      {/* Tabla */}
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,overflow:'hidden'}}>
+        {/* Filtros */}
+        <div style={{padding:'14px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',gap:10,flexWrap:'wrap',alignItems:'center'}}>
+          <input value={busqueda} onChange={e=>setBusqueda(e.target.value)}
+            placeholder="Buscar por nombre, teléfono, email..."
+            style={{flex:1,minWidth:180,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:'8px 12px',color:C.text,fontSize:12,fontFamily:'inherit'}}/>
+          <select value={filtroFuente} onChange={e=>setFiltroFuente(e.target.value)}
+            style={{background:C.bg,border:`1px solid ${filtroFuente?C.accent:C.border}`,borderRadius:8,padding:'8px 12px',color:filtroFuente?C.accentLight:C.muted,fontSize:12,fontFamily:'inherit'}}>
+            <option value=''>Todas las fuentes</option>
+            {Object.keys(porFuente).map(f=><option key={f} value={f}>{getFuente(f).label}</option>)}
+          </select>
+          <select value={filtroEtapa} onChange={e=>setFiltroEtapa(e.target.value)}
+            style={{background:C.bg,border:`1px solid ${filtroEtapa?C.accent:C.border}`,borderRadius:8,padding:'8px 12px',color:filtroEtapa?C.accentLight:C.muted,fontSize:12,fontFamily:'inherit'}}>
+            <option value=''>Todas las etapas</option>
+            {Object.keys(porEtapa).map(e=><option key={e} value={e}>{e.replace(/_/g,' ')}</option>)}
+          </select>
+          {(busqueda||filtroFuente||filtroEtapa) && (
+            <button onClick={()=>{setBusqueda('');setFiltroFuente('');setFiltroEtapa('');}}
+              style={{background:'transparent',border:`1px solid ${C.border}`,borderRadius:8,padding:'7px 12px',color:C.muted,fontSize:11,cursor:'pointer'}}>× Limpiar</button>
+          )}
+          <span style={{fontSize:11,color:C.muted,marginLeft:'auto'}}>{lista.length} cliente{lista.length!==1?'s':''}</span>
+        </div>
+
+        {/* Header tabla */}
+        <div style={{display:'grid',gridTemplateColumns:'2fr 1.2fr 1.2fr 1.4fr 1fr 1fr',padding:'10px 20px',background:C.bg,borderBottom:`1px solid ${C.border}`}}>
+          {['Cliente','Teléfono','Email','Servicio','Fuente','Etapa'].map(h=>(
+            <div key={h} style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:'uppercase',letterSpacing:'.5px'}}>{h}</div>
+          ))}
+        </div>
+
+        {/* Rows */}
+        {lista.length === 0 ? (
+          <div style={{padding:'32px 20px',textAlign:'center',color:C.muted,fontSize:13}}>
+            {prospectos.length === 0 ? 'No hay prospectos registrados aún' : 'Sin resultados para los filtros aplicados'}
+          </div>
+        ) : lista.slice(0,100).map((p,i)=>{
+          const fuente = getFuente(p.fuente||'directo');
+          const etapaColor = p.etapa==='AGENDADO'?C.green:p.etapa==='PERDIDO'?C.red:C.muted;
+          return (
+            <div key={p.id||i} onClick={()=>onVerCliente&&onVerCliente(p)}
+              style={{display:'grid',gridTemplateColumns:'2fr 1.2fr 1.2fr 1.4fr 1fr 1fr',padding:'11px 20px',
+                borderBottom:`1px solid ${C.border}`,cursor:'pointer',transition:'background .12s'}}
+              onMouseEnter={e=>e.currentTarget.style.background=C.surfaceHover}
+              onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+              <div>
+                <div style={{fontSize:13,fontWeight:600,color:C.text}}>{p.nombre||p.telefono||'—'}</div>
+                {p.tratamiento && <div style={{fontSize:10,color:C.accent,marginTop:2}}>{p.tratamiento}</div>}
+              </div>
+              <div style={{fontSize:12,color:C.muted,alignSelf:'center'}}>{p.telefono||'—'}</div>
+              <div style={{fontSize:12,color:C.muted,alignSelf:'center',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.email||<span style={{color:C.border}}>Sin email</span>}</div>
+              <div style={{fontSize:12,color:C.text,alignSelf:'center',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.tratamiento||'—'}</div>
+              <div style={{alignSelf:'center'}}>
+                <span style={{fontSize:11,padding:'2px 7px',borderRadius:20,background:`${fuente.color}18`,color:fuente.color,border:`1px solid ${fuente.color}40`,fontWeight:600}}>
+                  {fuente.icon} {fuente.label}
+                </span>
+              </div>
+              <div style={{alignSelf:'center'}}>
+                <span style={{fontSize:10,padding:'2px 8px',borderRadius:20,background:`${etapaColor}15`,color:etapaColor,border:`1px solid ${etapaColor}30`,fontWeight:500}}>
+                  {(p.etapa||'—').replace(/_/g,' ')}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── HONORARIOS DASHBOARD ───────────────────────────────────────────────────────
 function HonorariosDashboard({ client, API, aH, jH, onIrAHonorarios }) {
   const [data, setData] = useState([]);
   const [mes, setMes] = useState(new Date().getMonth() + 1);
@@ -9505,7 +9710,7 @@ function HonorariosDashboard({ client, API, aH, jH, onIrAHonorarios }) {
       <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:20,flexWrap:"wrap",gap:12}}>
         <div>
           <div style={{fontSize:18,fontWeight:800,color:C.text,marginBottom:3}}>⚖️ Balance de Honorarios</div>
-          <div style={{fontSize:12,color:C.muted}}>Clientes con consulta del mes · seguimiento Legal Design</div>
+          <div style={{fontSize:12,color:C.muted}}>Honorarios enviados este mes · pipeline de seguimiento</div>
         </div>
         <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
           <select value={mes} onChange={e=>setMes(Number(e.target.value))}
@@ -9522,7 +9727,7 @@ function HonorariosDashboard({ client, API, aH, jH, onIrAHonorarios }) {
       {/* KPI Cards */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:24}}>
         {[
-          {label:"Consultas del mes", value:totalConsultas, icon:"📋", color:C.accent},
+          {label:"Honorarios del mes", value:totalConsultas, icon:"⚖️", color:C.accent},
           {label:"Honorarios enviados", value:totalEnviados, icon:"📤", color:C.accentLight},
           {label:"Aceptados", value:totalAceptados, icon:"✅", color:C.green},
           {label:"Tasa de cierre", value:totalEnviados>0?`${tasaCierre}%`:"—", icon:"🎯", color:tasaCierre>=50?C.green:C.yellow},
@@ -9549,8 +9754,8 @@ function HonorariosDashboard({ client, API, aH, jH, onIrAHonorarios }) {
         ) : data.length === 0 ? (
           <div style={{padding:50,textAlign:"center",color:C.muted}}>
             <div style={{fontSize:32,marginBottom:10}}>📋</div>
-            <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>Sin consultas este mes</div>
-            <div style={{fontSize:11}}>Cuando registres consultas pagas o gratuitas aparecerán acá para hacer seguimiento</div>
+            <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>Sin honorarios enviados este mes</div>
+            <div style={{fontSize:11}}>Cuando envíes honorarios a clientes aparecerán acá para hacer seguimiento</div>
           </div>
         ) : (
           <div>

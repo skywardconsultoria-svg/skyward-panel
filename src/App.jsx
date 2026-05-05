@@ -6691,7 +6691,8 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
         {/* Balance de Honorarios */}
         {activeTab === "honorarios_dash" && (
           <div style={{flex:1,overflowY:"auto",padding:24}}>
-            <HonorariosDashboard client={client} API={API} aH={aH} jH={jH} />
+            <HonorariosDashboard client={client} API={API} aH={aH} jH={jH}
+              onIrAHonorarios={(pacienteId)=>{ setActiveTab('honorarios'); }} />
           </div>
         )}
 
@@ -9532,99 +9533,344 @@ function ValoracionesPaciente({ paciente, client, API, aH, jH, user }) {
   );
 }
 
-function HonorariosDashboard({ client, API, aH, jH }) {
+function HonorariosDashboard({ client, API, aH, jH, onIrAHonorarios }) {
   const [data, setData] = useState([]);
   const [mes, setMes] = useState(new Date().getMonth() + 1);
   const [año, setAño] = useState(new Date().getFullYear());
   const [loading, setLoading] = useState(false);
+  const [expandido, setExpandido] = useState(null); // paciente_id expandido
+  const [guardando, setGuardando] = useState(null); // paciente_id guardando
+  const [edits, setEdits] = useState({}); // { paciente_id: { campo: valor } }
   const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
-  useEffect(() => {
+  const cargar = () => {
     if (!client?.id) return;
     setLoading(true);
-    fetch(`${API}/api/propuestas?cliente_id=${client.id}&estado=enviada`, { headers: aH() })
+    fetch(`${API}/api/honorario-tracker?cliente_id=${client.id}&mes=${mes}&año=${año}`, { headers: aH() })
       .then(r => r.ok ? r.json() : [])
       .then(d => { setData(Array.isArray(d) ? d : []); })
       .catch(() => setData([]))
       .finally(() => setLoading(false));
-  }, [client?.id, mes, año]);
+  };
 
-  const filtrados = data.filter(p => {
-    if (!p.actualizado_en && !p.creado_en) return true;
-    const fecha = new Date(p.actualizado_en || p.creado_en);
-    return fecha.getMonth() + 1 === mes && fecha.getFullYear() === año;
-  });
+  useEffect(() => { cargar(); }, [client?.id, mes, año]);
 
-  const totalEnviados = filtrados.length;
-  const totalMonto = filtrados.reduce((acc, p) => acc + (parseFloat(p.monto_total || p.monto || 0)), 0);
-  const aceptados = filtrados.filter(p => p.estado === 'aceptada' || p.estado === 'enviada');
-  const montoAceptado = aceptados.reduce((acc, p) => acc + (parseFloat(p.monto_total || p.monto || 0)), 0);
+  const getEdit = (pid, campo, fallback) => edits[pid]?.[campo] !== undefined ? edits[pid][campo] : fallback;
+  const setEdit = (pid, campo, val) => setEdits(e => ({ ...e, [pid]: { ...(e[pid]||{}), [campo]: val } }));
+
+  const guardar = async (row) => {
+    const pid = row.paciente_id;
+    const e = edits[pid] || {};
+    setGuardando(pid);
+    try {
+      await fetch(`${API}/api/honorario-tracker`, {
+        method: 'POST', headers: { 'Content-Type':'application/json', ...aH() },
+        body: JSON.stringify({
+          cliente_id: client.id, paciente_id: pid,
+          propuesta_id: row.propuesta?.id || null,
+          fecha_envio: e.fecha_envio !== undefined ? e.fecha_envio : row.fecha_envio,
+          acepto: e.acepto !== undefined ? e.acepto : row.acepto,
+          fecha_aceptacion: e.fecha_aceptacion !== undefined ? e.fecha_aceptacion : row.fecha_aceptacion,
+          monto_honorario: e.monto_honorario !== undefined ? e.monto_honorario : row.monto_honorario,
+          seg1_hecho: e.seg1_hecho !== undefined ? e.seg1_hecho : row.seg1_hecho,
+          seg1_fecha: e.seg1_fecha !== undefined ? e.seg1_fecha : row.seg1_fecha,
+          seg1_nota: e.seg1_nota !== undefined ? e.seg1_nota : row.seg1_nota,
+          seg2_hecho: e.seg2_hecho !== undefined ? e.seg2_hecho : row.seg2_hecho,
+          seg2_fecha: e.seg2_fecha !== undefined ? e.seg2_fecha : row.seg2_fecha,
+          seg2_nota: e.seg2_nota !== undefined ? e.seg2_nota : row.seg2_nota,
+          seg3_hecho: e.seg3_hecho !== undefined ? e.seg3_hecho : row.seg3_hecho,
+          seg3_fecha: e.seg3_fecha !== undefined ? e.seg3_fecha : row.seg3_fecha,
+          seg3_nota: e.seg3_nota !== undefined ? e.seg3_nota : row.seg3_nota,
+          notas: e.notas !== undefined ? e.notas : row.notas,
+        })
+      });
+      setEdits(ed => { const n={...ed}; delete n[pid]; return n; });
+      cargar();
+    } catch(err) {}
+    setGuardando(null);
+  };
+
+  // KPIs
+  const totalConsultas = data.length;
+  const totalEnviados = data.filter(r => r.fecha_envio).length;
+  const totalAceptados = data.filter(r => getEdit(r.paciente_id,'acepto',r.acepto)).length;
+  const tasaCierre = totalEnviados > 0 ? Math.round((totalAceptados / totalEnviados) * 100) : 0;
+  const promDias = (() => {
+    const conDias = data.filter(r => r.dias_transcurridos !== null && !getEdit(r.paciente_id,'acepto',r.acepto));
+    if (!conDias.length) return null;
+    return Math.round(conDias.reduce((a,r) => a + r.dias_transcurridos, 0) / conDias.length);
+  })();
+  const pendSeg = data.filter(r => {
+    if (getEdit(r.paciente_id,'acepto',r.acepto)) return false;
+    if (!r.fecha_envio) return false;
+    return !getEdit(r.paciente_id,'seg1_hecho',r.seg1_hecho) || !getEdit(r.paciente_id,'seg2_hecho',r.seg2_hecho) || !getEdit(r.paciente_id,'seg3_hecho',r.seg3_hecho);
+  }).length;
+
+  const diasColor = (dias) => {
+    if (dias === null) return C.muted;
+    if (dias <= 2) return C.green;
+    if (dias <= 5) return C.yellow;
+    return C.red;
+  };
+
+  const fmtFecha = (f) => f ? new Date(f+'T00:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short'}) : '—';
 
   return (
-    <div style={{maxWidth:900,margin:"0 auto"}}>
+    <div style={{maxWidth:1100,margin:"0 auto"}}>
       {/* Header */}
-      <div style={{marginBottom:24}}>
-        <div style={{fontSize:18,fontWeight:800,color:C.text,marginBottom:4}}>⚖️ Balance de Honorarios</div>
-        <div style={{fontSize:12,color:C.muted}}>Honorarios enviados a clientes del estudio jurídico</div>
-      </div>
-
-      {/* Selector mes/año */}
-      <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap",alignItems:"center"}}>
-        <select value={mes} onChange={e=>setMes(Number(e.target.value))}
-          style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"7px 14px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
-          {meses.map((m,i)=><option key={i+1} value={i+1}>{m}</option>)}
-        </select>
-        <select value={año} onChange={e=>setAño(Number(e.target.value))}
-          style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"7px 14px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
-          {[2024,2025,2026,2027].map(y=><option key={y} value={y}>{y}</option>)}
-        </select>
+      <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:20,flexWrap:"wrap",gap:12}}>
+        <div>
+          <div style={{fontSize:18,fontWeight:800,color:C.text,marginBottom:3}}>⚖️ Balance de Honorarios</div>
+          <div style={{fontSize:12,color:C.muted}}>Clientes con consulta del mes · seguimiento Legal Design</div>
+        </div>
+        <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+          <select value={mes} onChange={e=>setMes(Number(e.target.value))}
+            style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"7px 14px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
+            {meses.map((m,i)=><option key={i+1} value={i+1}>{m}</option>)}
+          </select>
+          <select value={año} onChange={e=>setAño(Number(e.target.value))}
+            style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"7px 14px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
+            {[2024,2025,2026,2027].map(y=><option key={y} value={y}>{y}</option>)}
+          </select>
+        </div>
       </div>
 
       {/* KPI Cards */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:12,marginBottom:24}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:24}}>
         {[
-          {label:"Honorarios enviados",value:totalEnviados,icon:"📄",color:C.accent},
-          {label:"Monto total",value:`$${totalMonto.toLocaleString('es-AR')}`,icon:"💰",color:C.accentLight},
-          {label:"Tasa de cierre",value:totalEnviados>0?`${Math.round((aceptados.length/totalEnviados)*100)}%`:"—",icon:"🎯",color:C.green},
-          {label:"Monto cerrado",value:`$${montoAceptado.toLocaleString('es-AR')}`,icon:"✅",color:C.green},
+          {label:"Consultas del mes", value:totalConsultas, icon:"📋", color:C.accent},
+          {label:"Honorarios enviados", value:totalEnviados, icon:"📤", color:C.accentLight},
+          {label:"Aceptados", value:totalAceptados, icon:"✅", color:C.green},
+          {label:"Tasa de cierre", value:totalEnviados>0?`${tasaCierre}%`:"—", icon:"🎯", color:tasaCierre>=50?C.green:C.yellow},
+          {label:"Días prom. respuesta", value:promDias!==null?`${promDias}d`:"—", icon:"⏱️", color:C.muted},
+          {label:"Seguimientos pend.", value:pendSeg, icon:"🔔", color:pendSeg>0?C.yellow:C.green},
         ].map((kpi,i)=>(
-          <div key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:"16px 18px"}}>
-            <div style={{fontSize:20,marginBottom:6}}>{kpi.icon}</div>
-            <div style={{fontSize:22,fontWeight:800,color:kpi.color,marginBottom:2}}>{kpi.value}</div>
-            <div style={{fontSize:11,color:C.muted,letterSpacing:.3}}>{kpi.label}</div>
+          <div key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:"14px 16px"}}>
+            <div style={{fontSize:18,marginBottom:5}}>{kpi.icon}</div>
+            <div style={{fontSize:20,fontWeight:800,color:kpi.color,marginBottom:2}}>{kpi.value}</div>
+            <div style={{fontSize:10,color:C.muted,letterSpacing:.3,lineHeight:1.3}}>{kpi.label}</div>
           </div>
         ))}
       </div>
 
-      {/* Lista de honorarios */}
+      {/* Tabla tracker */}
       <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,overflow:"hidden"}}>
-        <div style={{padding:"14px 18px",borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div style={{fontSize:13,fontWeight:700,color:C.text}}>Honorarios del mes</div>
-          <div style={{fontSize:11,color:C.muted}}>{meses[mes-1]} {año}</div>
+        <div style={{padding:"13px 18px",borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{fontSize:13,fontWeight:700,color:C.text}}>Pipeline de seguimiento — {meses[mes-1]} {año}</div>
+          <div style={{fontSize:11,color:C.muted}}>{totalConsultas} cliente{totalConsultas!==1?'s':''}</div>
         </div>
+
         {loading ? (
           <div style={{padding:40,textAlign:"center",color:C.muted}}>Cargando...</div>
-        ) : filtrados.length === 0 ? (
-          <div style={{padding:40,textAlign:"center",color:C.muted,fontSize:13}}>No hay honorarios enviados en este período</div>
+        ) : data.length === 0 ? (
+          <div style={{padding:50,textAlign:"center",color:C.muted}}>
+            <div style={{fontSize:32,marginBottom:10}}>📋</div>
+            <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>Sin consultas este mes</div>
+            <div style={{fontSize:11}}>Cuando registres consultas pagas o gratuitas aparecerán acá para hacer seguimiento</div>
+          </div>
         ) : (
           <div>
-            {filtrados.map((p,i)=>(
-              <div key={p.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 18px",borderBottom:i<filtrados.length-1?`1px solid ${C.border}`:"none"}}>
-                <div style={{width:34,height:34,borderRadius:8,background:C.accentGlow,border:`1px solid ${C.accent}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0}}>⚖️</div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:13,fontWeight:600,color:C.text,marginBottom:1}}>{p.titulo||"Honorario sin título"}</div>
-                  <div style={{fontSize:11,color:C.muted}}>{p.paciente_nombre||"Cliente"} · {p.actualizado_en?new Date(p.actualizado_en).toLocaleDateString('es-AR',{day:'numeric',month:'short'}):"—"}</div>
+            {data.map((row, idx) => {
+              const pid = row.paciente_id;
+              const isOpen = expandido === pid;
+              const hasEdits = !!edits[pid] && Object.keys(edits[pid]).length > 0;
+              const acepto = getEdit(pid,'acepto',row.acepto);
+              const fechaEnvio = getEdit(pid,'fecha_envio',row.fecha_envio);
+              const seg1h = getEdit(pid,'seg1_hecho',row.seg1_hecho);
+              const seg2h = getEdit(pid,'seg2_hecho',row.seg2_hecho);
+              const seg3h = getEdit(pid,'seg3_hecho',row.seg3_hecho);
+              const diasT = fechaEnvio ? Math.floor((Date.now() - new Date(fechaEnvio)) / 86400000) : null;
+              const estadoPreso = row.propuesta ? (acepto ? 'aceptado' : (fechaEnvio ? 'enviado' : 'borrador')) : 'sin_presupuesto';
+
+              return (
+                <div key={pid} style={{borderBottom:idx<data.length-1?`1px solid ${C.border}`:"none"}}>
+                  {/* Fila principal */}
+                  <div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 18px",cursor:"pointer",transition:"background .15s",background:isOpen?C.surfaceHover:"transparent"}}
+                    onClick={()=>setExpandido(isOpen?null:pid)}>
+
+                    {/* Avatar */}
+                    <div style={{width:36,height:36,borderRadius:9,background:acepto?"rgba(16,185,129,0.15)":C.accentGlow,border:`1px solid ${acepto?"rgba(16,185,129,0.3)":C.accent+"44"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>
+                      {acepto?"✅":"⚖️"}
+                    </div>
+
+                    {/* Nombre y tipo */}
+                    <div style={{flex:"0 0 200px",minWidth:0}}>
+                      <div style={{fontSize:13,fontWeight:600,color:C.text,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{row.paciente_nombre||row.paciente_telefono}</div>
+                      <div style={{fontSize:10,color:row.tipo_consulta==='gratis'?C.green:C.accentLight,fontWeight:600,marginTop:1}}>
+                        {row.tipo_consulta==='gratis'?'🆓 Consulta gratis':'💰 Consulta paga'} · {fmtFecha(row.fecha_consulta)}
+                      </div>
+                    </div>
+
+                    {/* Estado presupuesto */}
+                    <div style={{flex:"0 0 130px"}}>
+                      {estadoPreso==='sin_presupuesto' && <span style={{fontSize:11,padding:"3px 9px",borderRadius:20,background:"rgba(100,100,100,0.15)",color:C.muted,fontWeight:600}}>Sin presupuesto</span>}
+                      {estadoPreso==='borrador' && <span style={{fontSize:11,padding:"3px 9px",borderRadius:20,background:"rgba(100,100,100,0.15)",color:C.muted,fontWeight:600}}>📝 Borrador</span>}
+                      {estadoPreso==='enviado' && <span style={{fontSize:11,padding:"3px 9px",borderRadius:20,background:C.accentGlow,color:C.accentLight,fontWeight:600}}>📤 Enviado</span>}
+                      {estadoPreso==='aceptado' && <span style={{fontSize:11,padding:"3px 9px",borderRadius:20,background:"rgba(16,185,129,0.15)",color:C.green,fontWeight:600}}>✅ Aceptado</span>}
+                    </div>
+
+                    {/* Días transcurridos */}
+                    <div style={{flex:"0 0 90px",textAlign:"center"}}>
+                      {diasT !== null ? (
+                        <div>
+                          <div style={{fontSize:18,fontWeight:800,color:diasColor(diasT),lineHeight:1}}>{diasT}</div>
+                          <div style={{fontSize:9,color:C.muted}}>días</div>
+                        </div>
+                      ) : <div style={{fontSize:11,color:C.muted}}>—</div>}
+                    </div>
+
+                    {/* Seguimientos — pills */}
+                    <div style={{flex:1,display:"flex",gap:6,justifyContent:"center"}}>
+                      {[['S1',seg1h],['S2',seg2h],['S3',seg3h]].map(([label,hecho])=>(
+                        <div key={label} style={{width:28,height:28,borderRadius:7,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,
+                          background:hecho?"rgba(16,185,129,0.2)":"rgba(100,100,100,0.1)",
+                          color:hecho?C.green:C.muted,
+                          border:`1px solid ${hecho?"rgba(16,185,129,0.35)":C.border}`}}>
+                          {hecho?"✓":label}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Chevron */}
+                    <div style={{color:C.muted,fontSize:11,flexShrink:0,transition:"transform .2s",transform:isOpen?"rotate(180deg)":"rotate(0deg)"}}>▼</div>
+                  </div>
+
+                  {/* Panel expandido */}
+                  {isOpen && (
+                    <div style={{background:C.bg,borderTop:`1px solid ${C.border}`,padding:"20px 18px 18px"}}>
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:16,marginBottom:16}}>
+
+                        {/* Columna 1: Presupuesto */}
+                        <div>
+                          <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:10,textTransform:"uppercase",letterSpacing:".6px"}}>Presupuesto</div>
+                          {row.propuesta ? (
+                            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 12px",marginBottom:8}}>
+                              <div style={{fontSize:12,fontWeight:600,color:C.text,marginBottom:2}}>{row.propuesta.titulo||'Sin título'}</div>
+                              <div style={{fontSize:10,color:C.muted}}>Estado: {row.propuesta.estado||'borrador'}</div>
+                            </div>
+                          ) : (
+                            <div style={{fontSize:11,color:C.muted,marginBottom:8,padding:"10px",background:C.surface,borderRadius:8,border:`1px dashed ${C.border}`,textAlign:"center"}}>
+                              Sin presupuesto<br/>
+                              <span style={{fontSize:10}}>Crealo desde Honorarios →</span>
+                            </div>
+                          )}
+                          <div>
+                            <label style={{fontSize:10,color:C.muted,display:"block",marginBottom:3}}>Fecha de envío</label>
+                            <input type="date" value={getEdit(pid,'fecha_envio',row.fecha_envio)||''}
+                              onChange={e=>setEdit(pid,'fecha_envio',e.target.value)}
+                              style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:7,padding:"6px 10px",color:C.text,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
+                          </div>
+                          <div style={{marginTop:8}}>
+                            <label style={{fontSize:10,color:C.muted,display:"block",marginBottom:3}}>Monto honorario ($)</label>
+                            <input type="number" placeholder="Ej: 150000" value={getEdit(pid,'monto_honorario',row.monto_honorario)||''}
+                              onChange={e=>setEdit(pid,'monto_honorario',e.target.value)}
+                              style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:7,padding:"6px 10px",color:C.text,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
+                          </div>
+                        </div>
+
+                        {/* Columna 2: Resultado */}
+                        <div>
+                          <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:10,textTransform:"uppercase",letterSpacing:".6px"}}>Resultado</div>
+                          {/* Aceptó */}
+                          <div style={{marginBottom:10}}>
+                            <label style={{fontSize:10,color:C.muted,display:"block",marginBottom:6}}>¿Aceptó el honorario?</label>
+                            <div style={{display:"flex",gap:8}}>
+                              {[{v:true,l:"✅ Sí, aceptó"},{v:false,l:"❌ No aceptó"}].map(opt=>(
+                                <button key={String(opt.v)} onClick={()=>setEdit(pid,'acepto',opt.v)}
+                                  style={{flex:1,padding:"7px 6px",borderRadius:8,border:`1px solid ${getEdit(pid,'acepto',row.acepto)===opt.v?(opt.v?"rgba(16,185,129,0.5)":"rgba(239,68,68,0.4)"):C.border}`,
+                                    background:getEdit(pid,'acepto',row.acepto)===opt.v?(opt.v?"rgba(16,185,129,0.15)":"rgba(239,68,68,0.1)"):"transparent",
+                                    color:getEdit(pid,'acepto',row.acepto)===opt.v?(opt.v?C.green:C.red):C.muted,
+                                    fontSize:11,fontWeight:600,cursor:"pointer"}}>
+                                  {opt.l}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          {getEdit(pid,'acepto',row.acepto) && (
+                            <div style={{marginBottom:10}}>
+                              <label style={{fontSize:10,color:C.muted,display:"block",marginBottom:3}}>Fecha de aceptación</label>
+                              <input type="date" value={getEdit(pid,'fecha_aceptacion',row.fecha_aceptacion)||''}
+                                onChange={e=>setEdit(pid,'fecha_aceptacion',e.target.value)}
+                                style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:7,padding:"6px 10px",color:C.text,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
+                            </div>
+                          )}
+                          <div>
+                            <label style={{fontSize:10,color:C.muted,display:"block",marginBottom:3}}>Notas internas</label>
+                            <textarea value={getEdit(pid,'notas',row.notas)||''} onChange={e=>setEdit(pid,'notas',e.target.value)}
+                              rows={3} placeholder="Observaciones, objeciones, próximos pasos..."
+                              style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:7,padding:"7px 10px",color:C.text,fontSize:12,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box",lineHeight:1.5}}/>
+                          </div>
+                        </div>
+
+                        {/* Columna 3: Seguimientos */}
+                        <div>
+                          <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:10,textTransform:"uppercase",letterSpacing:".6px"}}>Seguimientos</div>
+                          {[
+                            {n:1,hecho:'seg1_hecho',fecha:'seg1_fecha',nota:'seg1_nota',
+                             hint:"2-3 días post-envío: preguntar si lo pudo revisar"},
+                            {n:2,hecho:'seg2_hecho',fecha:'seg2_fecha',nota:'seg2_nota',
+                             hint:"5-7 días: resolver objeciones, reforzar valor"},
+                            {n:3,hecho:'seg3_hecho',fecha:'seg3_fecha',nota:'seg3_nota',
+                             hint:"10-14 días: decisión final, oferta especial o cerrar"},
+                          ].map(seg => (
+                            <div key={seg.n} style={{marginBottom:12,background:C.surface,border:`1px solid ${getEdit(pid,seg.hecho,row[seg.hecho])?"rgba(16,185,129,0.3)":C.border}`,borderRadius:8,padding:"10px 12px",transition:"border-color .2s"}}>
+                              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                                <input type="checkbox" checked={!!getEdit(pid,seg.hecho,row[seg.hecho])}
+                                  onChange={e=>setEdit(pid,seg.hecho,e.target.checked)}
+                                  style={{width:16,height:16,cursor:"pointer",accentColor:C.green}}/>
+                                <span style={{fontSize:12,fontWeight:700,color:getEdit(pid,seg.hecho,row[seg.hecho])?C.green:C.text}}>Seguimiento {seg.n}</span>
+                              </div>
+                              <div style={{fontSize:9,color:C.muted,marginBottom:6,lineHeight:1.4}}>{seg.hint}</div>
+                              <input type="date" value={getEdit(pid,seg.fecha,row[seg.fecha])||''}
+                                onChange={e=>setEdit(pid,seg.fecha,e.target.value)}
+                                style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:6,padding:"5px 8px",color:C.text,fontSize:11,fontFamily:"inherit",boxSizing:"border-box",marginBottom:5}}/>
+                              <input placeholder={`Nota seg. ${seg.n}...`} value={getEdit(pid,seg.nota,row[seg.nota])||''}
+                                onChange={e=>setEdit(pid,seg.nota,e.target.value)}
+                                style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:6,padding:"5px 8px",color:C.text,fontSize:11,fontFamily:"inherit",boxSizing:"border-box"}}/>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Footer expandido */}
+                      <div style={{display:"flex",gap:8,justifyContent:"flex-end",paddingTop:12,borderTop:`1px solid ${C.border}`}}>
+                        {onIrAHonorarios && (
+                          <button onClick={()=>onIrAHonorarios(pid)}
+                            style={{padding:"7px 14px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:11,cursor:"pointer"}}>
+                            📄 Ver / crear presupuesto
+                          </button>
+                        )}
+                        <button onClick={()=>{setExpandido(null);setEdits(ed=>{const n={...ed};delete n[pid];return n;});}}
+                          style={{padding:"7px 14px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:11,cursor:"pointer"}}>
+                          Cancelar
+                        </button>
+                        <button onClick={()=>guardar(row)} disabled={guardando===pid}
+                          style={{padding:"7px 16px",borderRadius:8,border:"none",background:C.accent,color:"white",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                          {guardando===pid?"Guardando…":"💾 Guardar cambios"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                {(p.monto_total||p.monto)>0 && (
-                  <div style={{fontSize:14,fontWeight:700,color:C.accentLight,flexShrink:0}}>${parseFloat(p.monto_total||p.monto||0).toLocaleString('es-AR')}</div>
-                )}
-                <div style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:p.estado==='aceptada'?"rgba(16,185,129,0.12)":C.accentGlow,color:p.estado==='aceptada'?C.green:C.accent,flexShrink:0}}>
-                  {p.estado==='aceptada'?"✅ Aceptado":"📤 Enviado"}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
+      </div>
+
+      {/* Leyenda */}
+      <div style={{display:"flex",gap:16,marginTop:12,flexWrap:"wrap"}}>
+        {[
+          {color:C.green,label:"0-2 días"},
+          {color:C.yellow,label:"3-5 días"},
+          {color:C.red,label:"6+ días"},
+        ].map(l=>(
+          <div key={l.label} style={{display:"flex",alignItems:"center",gap:5,fontSize:10,color:C.muted}}>
+            <div style={{width:8,height:8,borderRadius:"50%",background:l.color}}/>
+            {l.label}
+          </div>
+        ))}
+        <div style={{fontSize:10,color:C.muted,marginLeft:"auto"}}>🕐 Días desde envío del honorario</div>
       </div>
     </div>
   );

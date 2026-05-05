@@ -4156,6 +4156,8 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 const active = activeTab===item.key;
                 return (
                   <div key={item.key} onClick={()=>setActiveTab(item.key)} title={item.label}
+                    onMouseEnter={e=>{if(!active){e.currentTarget.style.background=C.accentGlow;const s=e.currentTarget.querySelectorAll('span');if(s[0]){s[0].style.color=C.accentLight;s[0].style.filter='drop-shadow(0 0 6px #f39200)';}if(s[1])s[1].style.color=C.accentLight;}}}
+                    onMouseLeave={e=>{if(!active){e.currentTarget.style.background='transparent';const s=e.currentTarget.querySelectorAll('span');if(s[0]){s[0].style.color=C.muted;s[0].style.filter='none';}if(s[1])s[1].style.color=C.muted;}}}
                     style={isMobile ? {
                       flex:"0 0 auto",minWidth:60,height:56,display:"flex",flexDirection:"column",
                       alignItems:"center",justifyContent:"center",gap:2,cursor:"pointer",position:"relative",
@@ -4169,7 +4171,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       borderRight:active?`2px solid ${C.accent}`:"2px solid transparent",
                       transition:"all .15s"
                     }}>
-                    <span style={{color:active?C.accentLight:C.muted,lineHeight:1,position:"relative",display:"inline-flex",alignItems:"center",justifyContent:"center",transition:"color .15s"}}>
+                    <span style={{color:active?C.accentLight:C.muted,lineHeight:1,position:"relative",display:"inline-flex",alignItems:"center",justifyContent:"center",transition:"color .15s, filter .15s",filter:active?'drop-shadow(0 0 8px #f39200)':'none'}}>
                       {item.icon}
                       {item.badge > 0 && (
                         <div className={item.badgeUrgente?"pulso-naranja":""} style={{position:"absolute",top:-5,right:-7,background:item.badgeUrgente?"#f97316":"#ef4444",borderRadius:"50%",width:15,height:15,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:700,color:"white"}}>
@@ -9882,8 +9884,12 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
   };
 
   const eliminar = async (id) => {
-    await fetch(`${API}/api/propuestas/${id}`, {method:'DELETE', headers:jH()});
-    fetchPropuestas();
+    if (!confirm('¿Eliminar este presupuesto? Esta acción no se puede deshacer.')) return;
+    try {
+      const r = await fetch(`${API}/api/propuestas/${id}`, {method:'DELETE', headers:jH()});
+      if (!r.ok) { const d = await r.json().catch(()=>{}); alert('Error al eliminar: ' + (d?.error || r.status)); return; }
+      fetchPropuestas();
+    } catch(e) { alert('Error de red al eliminar'); }
   };
 
   const abrirEditor = (prop) => {

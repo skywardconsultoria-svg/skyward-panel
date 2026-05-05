@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-
-const API = import.meta.env.VITE_API_URL || "https://api.edgecrm.net";
+import { DARK_C, LIGHT_C } from "./theme";
+import { STAGES, FUNNEL_ORDER, PROF_COLORS, MONEDAS_MUNDO } from "./constants";
+import { API, tok, aH, jH } from "./utils/api";
+import { useIsMobile } from "./hooks/useIsMobile";
 
 // -- Componente de reproducción de audio --
 function AudioBubble({ audioUrl }) {
@@ -60,128 +62,10 @@ function AudioBubble({ audioUrl }) {
   );
 }
 
-function useIsMobile() {
-  const [mobile, setMobile] = useState(false);
-  useEffect(() => {
-    const check = () => setMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
-  return mobile;
-}
-
-const DARK_C = {
-  bg:"#0c0a07", surface:"#141109", surfaceHover:"#1c1710",
-  border:"#2a2016", accent:"#E84E0F", accentLight:"#F39200",
-  accentGlow:"rgba(232,78,15,0.13)", green:"#10b981",
-  yellow:"#FBBA00", red:"#ef4444", text:"#f0ece4", muted:"#646464",
-};
-const LIGHT_C = {
-  bg:"#f7f4ef", surface:"#ffffff", surfaceHover:"#f0ece6",
-  border:"#e8ddd0", accent:"#E84E0F", accentLight:"#d46a00",
-  accentGlow:"rgba(232,78,15,0.07)", green:"#059669",
-  yellow:"#b45309", red:"#dc2626", text:"#1c1710", muted:"#9a8a78",
-};
+// C se calcula dinámicamente según el tema guardado en localStorage.
+// DARK_C y LIGHT_C vienen de ./theme; STAGES, etc. de ./constants.
 const _storedTheme = typeof localStorage !== 'undefined' ? localStorage.getItem('skyward_theme') : 'dark';
 let C = _storedTheme === 'light' ? LIGHT_C : DARK_C;
-
-const STAGES = {
-  RAPPORT: { color:"#F39200", bg:"rgba(243,146,0,0.12)", label:"Rapport" },
-  CIERRE_SUAVE: { color:"#FBBA00", bg:"rgba(251,186,0,0.12)", label:"Cierre Suave" },
-  LISTO_PARA_CIERRE: { color:"#E84E0F", bg:"rgba(232,78,15,0.15)", label:"🎯 Listo para cierre" },
-  OFRECER_AGENDA: { color:"#F39200", bg:"rgba(243,146,0,0.1)", label:"Ofreciendo Reunión" },
-  CONFIRMAR_AGENDA: { color:"#10b981", bg:"rgba(16,185,129,0.1)", label:"Confirmando" },
-  RECOLECTAR_DATOS: { color:"#FBBA00", bg:"rgba(251,186,0,0.1)", label:"Recolectando datos" },
-  SEGUIMIENTO_PENDIENTE: { color:"#646464", bg:"rgba(100,100,100,0.12)", label:"Agendado ✓" },
-  HONORARIO_ENVIADO: { color:"#F39200", bg:"rgba(243,146,0,0.12)", label:"⚖️ Honorario enviado" },
-  PENDIENTE_CONFIRMACION: { color:"#E84E0F", bg:"rgba(232,78,15,0.1)", label:"⏳ Espera confirm." },
-};
-
-const FUNNEL_ORDER = ["RAPPORT","CIERRE_SUAVE","OFRECER_AGENDA","CONFIRMAR_AGENDA","SEGUIMIENTO_PENDIENTE"];
-
-const PROF_COLORS = [
-  '#E84E0F','#F39200','#FBBA00','#646464','#10b981',
-  '#06b6d4','#f97316','#84cc16','#e11d48','#0ea5e9',
-];
-
-const MONEDAS_MUNDO = [
-  // Latinoamérica
-  { code:"ARS", label:"Peso argentino" },
-  { code:"CLP", label:"Peso chileno" },
-  { code:"COP", label:"Peso colombiano" },
-  { code:"MXN", label:"Peso mexicano" },
-  { code:"PEN", label:"Sol peruano" },
-  { code:"UYU", label:"Peso uruguayo" },
-  { code:"PYG", label:"Guaraní paraguayo" },
-  { code:"BOB", label:"Boliviano" },
-  { code:"VES", label:"Bolívar venezolano" },
-  { code:"BRL", label:"Real brasileño" },
-  { code:"GTQ", label:"Quetzal guatemalteco" },
-  { code:"HNL", label:"Lempira hondureño" },
-  { code:"NIO", label:"Córdoba nicaragüense" },
-  { code:"CRC", label:"Colón costarricense" },
-  { code:"PAB", label:"Balboa panameño" },
-  { code:"DOP", label:"Peso dominicano" },
-  { code:"CUP", label:"Peso cubano" },
-  { code:"HTG", label:"Gourde haitiano" },
-  { code:"JMD", label:"Dólar jamaicano" },
-  { code:"TTD", label:"Dólar de Trinidad" },
-  { code:"BBD", label:"Dólar de Barbados" },
-  { code:"BSD", label:"Dólar bahameño" },
-  { code:"BZD", label:"Dólar de Belice" },
-  { code:"GYD", label:"Dólar guyanés" },
-  { code:"SRD", label:"Dólar surinamés" },
-  // Norteamérica
-  { code:"USD", label:"Dólar estadounidense" },
-  { code:"CAD", label:"Dólar canadiense" },
-  // Europa
-  { code:"EUR", label:"Euro" },
-  { code:"GBP", label:"Libra esterlina" },
-  { code:"CHF", label:"Franco suizo" },
-  { code:"NOK", label:"Corona noruega" },
-  { code:"SEK", label:"Corona sueca" },
-  { code:"DKK", label:"Corona danesa" },
-  { code:"PLN", label:"Esloti polaco" },
-  { code:"CZK", label:"Corona checa" },
-  { code:"HUF", label:"Forinto húngaro" },
-  { code:"RON", label:"Leu rumano" },
-  { code:"HRK", label:"Kuna croata" },
-  { code:"RSD", label:"Dinar serbio" },
-  { code:"BGN", label:"Lev búlgaro" },
-  { code:"UAH", label:"Grivna ucraniana" },
-  { code:"RUB", label:"Rublo ruso" },
-  { code:"TRY", label:"Lira turca" },
-  // Asia / Pacífico
-  { code:"JPY", label:"Yen japonés" },
-  { code:"CNY", label:"Yuan chino" },
-  { code:"INR", label:"Rupia india" },
-  { code:"KRW", label:"Won surcoreano" },
-  { code:"AUD", label:"Dólar australiano" },
-  { code:"NZD", label:"Dólar neozelandés" },
-  { code:"SGD", label:"Dólar de Singapur" },
-  { code:"HKD", label:"Dólar de Hong Kong" },
-  { code:"TWD", label:"Dólar taiwanés" },
-  { code:"THB", label:"Baht tailandés" },
-  { code:"MYR", label:"Ringgit malayo" },
-  { code:"IDR", label:"Rupia indonesia" },
-  { code:"PHP", label:"Peso filipino" },
-  { code:"VND", label:"Dong vietnamita" },
-  { code:"PKR", label:"Rupia pakistaní" },
-  { code:"BDT", label:"Taka bangladesí" },
-  { code:"LKR", label:"Rupia de Sri Lanka" },
-  // Medio Oriente / África
-  { code:"AED", label:"Dírham de EAU" },
-  { code:"SAR", label:"Riyal saudí" },
-  { code:"ILS", label:"Séquel israelí" },
-  { code:"EGP", label:"Libra egipcia" },
-  { code:"ZAR", label:"Rand sudafricano" },
-  { code:"NGN", label:"Naira nigeriana" },
-  { code:"KES", label:"Chelín keniano" },
-  { code:"GHS", label:"Cedi ghanés" },
-  { code:"MAD", label:"Dírham marroquí" },
-  { code:"TND", label:"Dinar tunecino" },
-];
 
 function timeAgo(d) {
   const s = Math.floor((Date.now() - new Date(d)) / 1000);
@@ -191,9 +75,7 @@ function timeAgo(d) {
   return `hace ${Math.floor(s/86400)}d`;
 }
 
-function tok() { return localStorage.getItem("edge_token") || ""; }
-function aH() { return { "Authorization": `Bearer ${tok()}` }; }
-function jH() { return { "Content-Type":"application/json", ...aH() }; }
+// tok, aH, jH → importados desde ./utils/api
 
 function Spinner() {
   return <div style={{width:28,height:28,border:`2px solid ${C.border}`,borderTop:`2px solid ${C.accent}`,borderRadius:"50%",animation:"spin .8s linear infinite"}}/>;

@@ -9970,11 +9970,11 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={()=>setShowEnviar(false)}>
           <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:24,width:400}} onClick={e=>e.stopPropagation()}>
             <div style={{fontSize:14,fontWeight:600,marginBottom:4}}>Enviar propuesta</div>
-            <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Elegí cómo enviarla al paciente</div>
+            <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Elegí cómo enviárselo al cliente</div>
             <div style={{marginBottom:14}}>
               <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:4}}>📧 Email</label>
               <input value={emailEnvio} onChange={e=>setEmailEnvio(e.target.value)}
-                placeholder="Email del paciente..."
+                placeholder="Email del cliente..."
                 style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
             </div>
             {client?.plan === 'pro' && (() => {
@@ -10005,7 +10005,7 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
                   await guardar(false);
                   const pac = pacientes.find(p=>p.id===parseInt(pacienteId));
                   const linkPropuesta = propActual?.uuid ? `https://api.edgecrm.net/tratamiento/${propActual.uuid}` : '';
-                  const resumen = contenidoGenerado?.titulo ? `Hola ${pac?.nombre?.split(' ')[0]||''}! Te enviamos tu propuesta de tratamiento: *${contenidoGenerado.titulo}*\n\n${contenidoGenerado?.diagnostico||''}${linkPropuesta ? `\n\n👉 Podés verla completa acá:\n${linkPropuesta}` : ''}\n\nAnte cualquier consulta escribinos.` : 'Te enviamos tu propuesta de tratamiento.';
+                  const resumen = contenidoGenerado?.titulo ? `Hola ${pac?.nombre?.split(' ')[0]||''}! Te enviamos tu propuesta de honorarios: *${contenidoGenerado.titulo}*\n\n${contenidoGenerado?.diagnostico||''}${linkPropuesta ? `\n\n👉 Podés verla completa acá:\n${linkPropuesta}` : ''}\n\nAnte cualquier consulta escribinos.` : 'Te enviamos tu propuesta de honorarios.';
                   await fetch(`${API}/api/enviar-mensaje`, {method:'POST',headers:jH(),body:JSON.stringify({telefono:pac.telefono,texto:resumen,cliente_id:client.id})});
                   setShowEnviar(false); setEnviando(false);
                 }} disabled={enviando} style={{padding:"8px 14px",borderRadius:8,border:"none",background:"#25d366",color:"white",fontSize:12,fontWeight:600,cursor:"pointer"}}>
@@ -10024,10 +10024,10 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
         {/* Panel izquierdo — editor */}
         <div>
           <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
-            <div style={{fontSize:12,fontWeight:600,color:C.muted,marginBottom:10,textTransform:"uppercase",letterSpacing:".7px"}}>Paciente</div>
+            <div style={{fontSize:12,fontWeight:600,color:C.muted,marginBottom:10,textTransform:"uppercase",letterSpacing:".7px"}}>Cliente</div>
             <select value={pacienteId} onChange={e=>setPacienteId(e.target.value)}
               style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
-              <option value="">Sin paciente asignado</option>
+              <option value="">Sin cliente asignado</option>
               {(pacientes||[]).map(p=><option key={p.id} value={p.id}>{p.nombre||p.telefono}</option>)}
             </select>
           </div>

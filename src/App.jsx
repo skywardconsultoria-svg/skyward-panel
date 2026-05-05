@@ -4179,7 +4179,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         </div>
                       )}
                     </span>
-                    <span style={{fontSize:9,color:active?C.accent:C.muted,fontWeight:active?600:400,letterSpacing:".3px",textAlign:"center",lineHeight:1.2,maxWidth:68,whiteSpace:"normal",wordBreak:"break-word",padding:"0 2px"}}>
+                    <span style={{fontSize:9,color:active?C.accent:C.muted,fontWeight:active?600:400,letterSpacing:".3px",textAlign:"center",lineHeight:1.2,maxWidth:72,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",padding:"0 2px"}}>
                       {item.label}
                     </span>
                   </div>
@@ -10782,7 +10782,7 @@ function EdgePanel({ token, user, onLogout }) {
           <div style={{display:"flex",alignItems:"center",gap:10,minWidth:0}}>
             <img src="/logo.png" alt="Skyward" style={{width:32,height:32,objectFit:"contain",flexShrink:0,filter:"drop-shadow(0 1px 3px rgba(232,78,15,0.3))"}} />
             <div style={{display:"flex",flexDirection:"column",lineHeight:1.15,minWidth:0}}>
-              <span style={{fontWeight:800,fontSize:13,color:C.text,letterSpacing:-0.3,whiteSpace:"nowrap"}}>Skyward Consultoría Jurídica</span>
+              <span style={{fontWeight:800,fontSize:13,color:C.text,letterSpacing:-0.3,whiteSpace:"nowrap"}}>CRM - Skyward</span>
               <span style={{fontSize:10,color:C.accentLight,fontWeight:500,letterSpacing:0.5,textTransform:"uppercase"}}>{view==="admin"?"Panel Admin":selClient?.nombre||"CRM"}</span>
             </div>
           </div>

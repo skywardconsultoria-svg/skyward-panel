@@ -9760,27 +9760,147 @@ function HonorariosDashboard({ client, API, aH, jH, onIrAHonorarios }) {
   );
 }
 
+// ── HONORARIOS CONSTANTS ─────────────────────────────────────────────────────
+const FUEROS_JURIDICOS = ['Civil','Comercial','Familia','Laboral','Penal','Administrativo','Tributario','Sucesorio','Otros'];
+const SERVICIOS_POR_FUERO = {
+  Civil:['Daños y perjuicios','Cumplimiento contractual','Desalojo','Cobro de alquileres','Prescripción adquisitiva','Reivindicación','Otros'],
+  Comercial:['Contratos comerciales','Sociedades','Concursos y quiebras','Facturas impagas','Marcas y patentes','Otros'],
+  Familia:['Divorcio vincular','Alimentos','Régimen de visitas','Adopción','Violencia familiar','Guarda','Otros'],
+  Laboral:['Despido','Accidente laboral','Liquidación de haberes','Reinstalación','ART','Otros'],
+  Penal:['Defensa penal','Querella','Violencia de género','Delitos informáticos','Narcotráfico','Otros'],
+  Administrativo:['Impugnación de acto admin.','Contrato administrativo','Habeas data','Amparo','Otros'],
+  Tributario:['AFIP','ARBA','Ejecución fiscal','Concurso de acreedores','Otros'],
+  Sucesorio:['Sucesión intestada','Sucesión testamentaria','Legítima','Colación','Otros'],
+  Otros:['Consultoría','Redacción de contratos','Asesoría general','Mediación','Otros'],
+};
+const PROVINCIAS_AR = ['Buenos Aires','CABA','Catamarca','Chaco','Chubut','Córdoba','Corrientes','Entre Ríos','Formosa','Jujuy','La Pampa','La Rioja','Mendoza','Misiones','Neuquén','Río Negro','Salta','San Juan','San Luis','Santa Cruz','Santa Fe','Santiago del Estero','Tierra del Fuego','Tucumán'];
+
 function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], onLeerNotificacion }) {
-  const [vista, setVista] = useState('lista'); // lista | editor | preview
+  // ── Vista ─────────────────────────────────────────────────────────────────
+  const [vista, setVista] = useState('lista'); // lista | editor | plantillas
   const [propuestas, setPropuestas] = useState([]);
   const [plantillas, setPlantillas] = useState([]);
   const [cargando, setCargando] = useState(false);
   const [propActual, setPropActual] = useState(null);
-  const [infoCruda, setInfoCruda] = useState('');
-  const [pacienteId, setPacienteId] = useState('');
   const [titulo, setTitulo] = useState('');
   const [contenidoGenerado, setContenidoGenerado] = useState(null);
+  const [previewTick, setPreviewTick] = useState(0);
+  const [generando, setGenerando] = useState(false);
+  const [autocompletando, setAutocompletando] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [showEnviar, setShowEnviar] = useState(false);
+  const [emailEnvio, setEmailEnvio] = useState('');
   const [historialChat, setHistorialChat] = useState([]);
   const [mensajeEdicion, setMensajeEdicion] = useState('');
-  const [generando, setGenerando] = useState(false);
-  const [guardando, setGuardando] = useState(false);
-  const [showGuardarPlantilla, setShowGuardarPlantilla] = useState(false);
-  const [nombrePlantilla, setNombrePlantilla] = useState('');
-  const [enviando, setEnviando] = useState(false);
-  const [emailEnvio, setEmailEnvio] = useState('');
-  const [showEnviar, setShowEnviar] = useState(false);
-  const [filtro, setFiltro] = useState('propuestas'); // propuestas | plantillas
+  const [abiertos, setAbiertos] = useState([true, true, true, true]);
+  const [selectedPlantillaId, setSelectedPlantillaId] = useState('');
 
+  // ── Bloque 1: Datos del cliente ───────────────────────────────────────────
+  const [pacienteId, setPacienteId] = useState('');
+  const [tipoPersona, setTipoPersona] = useState('humana');
+  const [b1Nombre, setB1Nombre] = useState('');
+  const [b1Apellido, setB1Apellido] = useState('');
+  const [b1Dni, setB1Dni] = useState('');
+  const [b1RazonSocial, setB1RazonSocial] = useState('');
+  const [b1Cuit, setB1Cuit] = useState('');
+  const [b1Representante, setB1Representante] = useState('');
+  const [b1Tel, setB1Tel] = useState('');
+  const [b1Email, setB1Email] = useState('');
+  const [b1Calle, setB1Calle] = useState('');
+  const [b1Numero, setB1Numero] = useState('');
+  const [b1Piso, setB1Piso] = useState('');
+  const [b1DomConst, setB1DomConst] = useState('');
+  const [b1Ciudad, setB1Ciudad] = useState('');
+  const [b1Provincia, setB1Provincia] = useState('');
+  const [b1Cp, setB1Cp] = useState('');
+
+  // ── Bloque 2: Información del servicio legal ──────────────────────────────
+  const [b2Fuero, setB2Fuero] = useState('');
+  const [b2Servicio, setB2Servicio] = useState('');
+  const [b2Jurisdiccion, setB2Jurisdiccion] = useState('');
+  const [b2Descripcion, setB2Descripcion] = useState('');
+  const [b2Objetivo, setB2Objetivo] = useState('');
+  const [b2Incluye, setB2Incluye] = useState(['']);
+  const [b2NoIncluye, setB2NoIncluye] = useState(['']);
+  const [b2Contraparte, setB2Contraparte] = useState('');
+  const [b2Urgencia, setB2Urgencia] = useState('Normal');
+
+  // ── Bloque 3: Honorarios ──────────────────────────────────────────────────
+  const [b3Modalidad, setB3Modalidad] = useState('fijo');
+  const [b3Valor, setB3Valor] = useState('');
+  const [b3Moneda, setB3Moneda] = useState('ARS');
+  const [b3Etapas, setB3Etapas] = useState([{nombre:'', valor:''}]);
+  const [b3ValorHora, setB3ValorHora] = useState('');
+  const [b3Horas, setB3Horas] = useState('');
+  const [b3CuotaLitisPct, setB3CuotaLitisPct] = useState('');
+  const [b3Anticipo, setB3Anticipo] = useState('');
+  const [b3FormaPago, setB3FormaPago] = useState([]);
+  const [b3Cuotas, setB3Cuotas] = useState('');
+  const [b3GastosNoInc, setB3GastosNoInc] = useState(['Tasa de justicia','Edictos','Peritos','Sellados','Gastos de inscripción']);
+  const [b3Validez, setB3Validez] = useState('15');
+  const [b3Condiciones, setB3Condiciones] = useState('');
+
+  // ── Bloque 4: Info en crudo ───────────────────────────────────────────────
+  const [infoCruda, setInfoCruda] = useState('');
+
+  // ── Debounce preview ──────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!contenidoGenerado) return;
+    const t = setTimeout(() => setPreviewTick(n => n + 1), 400);
+    return () => clearTimeout(t);
+  }, [contenidoGenerado]);
+
+  // ── Helpers de estilo ─────────────────────────────────────────────────────
+  const inputSt = {width:'100%',background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:'8px 12px',color:C.text,fontSize:13,fontFamily:'inherit',boxSizing:'border-box'};
+  const labelSt = {fontSize:11,color:C.muted,fontWeight:500,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:'.5px'};
+  const fieldSt = {marginBottom:12};
+  const bloqueBodySt = {padding:'16px',borderBottom:`1px solid ${C.border}`};
+
+  const toggleBloque = i => setAbiertos(prev => prev.map((v, j) => j === i ? !v : v));
+
+  const AccordionHeader = ({idx, label}) => (
+    <div onClick={()=>toggleBloque(idx)}
+      style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',padding:'12px 16px',background:C.surface,borderBottom:`1px solid ${C.border}`,userSelect:'none'}}>
+      <span style={{fontSize:10,color:C.muted,transition:'transform .15s',display:'inline-block',transform:abiertos[idx]?'rotate(90deg)':'rotate(0deg)'}}>▶</span>
+      <span style={{fontSize:12,fontWeight:700,letterSpacing:'.7px',textTransform:'uppercase',flex:1,color:C.text}}>{label}</span>
+    </div>
+  );
+
+  // ── Compilar info cruda desde los bloques ─────────────────────────────────
+  const compilarInfoCruda = () => {
+    const id = tipoPersona==='humana'
+      ? `Cliente: ${[b1Nombre,b1Apellido].filter(Boolean).join(' ')}${b1Dni?`, DNI ${b1Dni}`:''}`
+      : `Empresa: ${b1RazonSocial}${b1Cuit?`, CUIT ${b1Cuit}`:''}${b1Representante?`, Rep. Legal: ${b1Representante}`:''}`;
+    const dir = [b1Calle,b1Numero,b1Piso,b1Ciudad,b1Provincia,b1Cp].filter(Boolean).join(', ');
+    const contacto = [b1Tel&&`Tel: ${b1Tel}`, b1Email&&`Email: ${b1Email}`].filter(Boolean).join(' | ');
+    const domConst = b1DomConst ? `Domicilio constituido: ${b1DomConst}` : '';
+    const svc = [
+      b2Fuero&&`Fuero: ${b2Fuero}`,
+      b2Servicio&&`Tipo de servicio: ${b2Servicio}`,
+      b2Jurisdiccion&&`Jurisdicción: ${b2Jurisdiccion}`,
+      b2Urgencia!=='Normal'&&`Urgencia: ${b2Urgencia}`,
+    ].filter(Boolean).join(' | ');
+    const desc = b2Descripcion ? `Descripción del caso: ${b2Descripcion}` : '';
+    const obj = b2Objetivo ? `Objetivo: ${b2Objetivo}` : '';
+    const inc = b2Incluye.filter(Boolean).length ? `Incluye: ${b2Incluye.filter(Boolean).join(', ')}` : '';
+    const noInc = b2NoIncluye.filter(Boolean).length ? `No incluye: ${b2NoIncluye.filter(Boolean).join(', ')}` : '';
+    const contra = b2Contraparte ? `Contraparte: ${b2Contraparte}` : '';
+    const hon = b3Modalidad==='fijo' ? `Honorarios fijos: ${b3Valor} ${b3Moneda}`
+      : b3Modalidad==='hora' ? `Por hora: ${b3ValorHora} ${b3Moneda}/h, estimado ${b3Horas}h`
+      : b3Modalidad==='cuota_litis' ? `Cuota litis: ${b3CuotaLitisPct}%${b3Anticipo?`, anticipo $${b3Anticipo}`:''}`
+      : b3Modalidad==='mixto' ? `Honorarios mixtos: anticipo $${b3Anticipo} + ${b3CuotaLitisPct}% sobre éxito`
+      : b3Modalidad==='etapa' ? `Por etapas: ${b3Etapas.filter(e=>e.nombre).map(e=>`${e.nombre} ($${e.valor})`).join(', ')}`
+      : '';
+    const pago = b3FormaPago.length ? `Forma de pago: ${b3FormaPago.join(', ')}` : '';
+    const cuotas = b3Cuotas ? `Cuotas: ${b3Cuotas}` : '';
+    const gastos = b3GastosNoInc.filter(Boolean).length ? `Gastos no incluidos: ${b3GastosNoInc.filter(Boolean).join(', ')}` : '';
+    const validez = b3Validez ? `Validez de la oferta: ${b3Validez} días` : '';
+    const cond = b3Condiciones ? `Condiciones: ${b3Condiciones}` : '';
+    return [id, dir&&`Domicilio: ${dir}`, domConst, contacto, svc, desc, obj, inc, noInc, contra, hon, pago, cuotas, gastos, validez, cond, infoCruda].filter(Boolean).join('\n');
+  };
+
+  // ── Data fetching ─────────────────────────────────────────────────────────
   const fetchPropuestas = async () => {
     setCargando(true);
     try {
@@ -9796,7 +9916,6 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
 
   useState(() => {
     fetchPropuestas();
-    // Verificar si viene desde una valoración
     const fromVal = sessionStorage.getItem('propuesta_desde_valoracion');
     if (fromVal) {
       try {
@@ -9809,18 +9928,20 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
     }
   }, []);
 
+  // ── IA: Generar propuesta ─────────────────────────────────────────────────
   const generarPropuesta = async (esEdicion = false) => {
-    const texto = esEdicion ? mensajeEdicion : infoCruda;
+    const texto = esEdicion ? mensajeEdicion : compilarInfoCruda();
     if (!texto.trim()) return;
     setGenerando(true);
     try {
       const pac = pacientes?.find(p => p.id === parseInt(pacienteId));
+      const nombreCliente = pac?.nombre || [b1Nombre, b1Apellido].filter(Boolean).join(' ') || b1RazonSocial || '';
       const r = await fetch(`${API}/api/propuestas/generar`, {
-        method: 'POST', headers: jH(),
+        method:'POST', headers:jH(),
         body: JSON.stringify({
           info_cruda: texto,
           cliente_id: client.id,
-          paciente_nombre: pac?.nombre || '',
+          paciente_nombre: nombreCliente,
           historial_chat: esEdicion ? historialChat : [],
         })
       });
@@ -9833,24 +9954,49 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
           setHistorialChat(d.historial || []);
           if (!titulo && d.contenido?.titulo) setTitulo(d.contenido.titulo);
           if (esEdicion) setMensajeEdicion('');
-          setVista('preview');
         }
       }
     } catch(e) { console.error(e); }
     setGenerando(false);
   };
 
-  const guardar = async (comoPlantilla = false, notificarSecretaria = false) => {
+  // ── IA: Autocompletar formulario desde crudo ──────────────────────────────
+  const autocompletar = async () => {
+    if (!infoCruda.trim()) return;
+    setAutocompletando(true);
+    try {
+      const r = await fetch(`${API}/api/propuestas/generar`, {
+        method:'POST', headers:jH(),
+        body: JSON.stringify({ info_cruda: infoCruda, cliente_id: client.id, paciente_nombre: '', historial_chat: [] })
+      });
+      const d = await r.json();
+      if (d.ok && d.contenido) {
+        const c = d.contenido;
+        if (c.titulo && !titulo) setTitulo(c.titulo);
+        if (c.cliente_nombre && !b1Nombre && !b1RazonSocial) {
+          const parts = (c.cliente_nombre || '').split(' ');
+          setB1Nombre(parts[0] || ''); setB1Apellido(parts.slice(1).join(' ') || '');
+        }
+        if (c.diagnostico && !b2Descripcion) setB2Descripcion(c.diagnostico);
+        if (c.objetivo && !b2Objetivo) setB2Objetivo(c.objetivo);
+        setContenidoGenerado(c);
+      }
+    } catch(e) { console.error(e); }
+    setAutocompletando(false);
+  };
+
+  // ── Guardar ───────────────────────────────────────────────────────────────
+  const guardar = async (comoPlantilla = false, notificarSecretaria = false, nomPlantilla = '') => {
     setGuardando(true);
     try {
       const body = {
         cliente_id: client.id,
         paciente_id: comoPlantilla ? null : (pacienteId || null),
         titulo: titulo || contenidoGenerado?.titulo || 'Sin título',
-        info_cruda: infoCruda,
+        info_cruda: infoCruda || compilarInfoCruda(),
         contenido: contenidoGenerado,
         es_plantilla: comoPlantilla,
-        nombre_plantilla: comoPlantilla ? nombrePlantilla : null,
+        nombre_plantilla: comoPlantilla ? nomPlantilla : null,
         estado: notificarSecretaria ? 'borrador' : undefined,
         notificar_secretaria: notificarSecretaria,
       };
@@ -9859,30 +10005,13 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
         r = await fetch(`${API}/api/propuestas/${propActual.id}`, {method:'PUT', headers:jH(), body:JSON.stringify(body)});
       } else {
         r = await fetch(`${API}/api/propuestas`, {method:'POST', headers:jH(), body:JSON.stringify(body)});
-        if (r.ok && notificarSecretaria) {
-          const saved = await r.json();
-          await fetch(`${API}/api/propuestas/${saved.id}`, {method:'PUT', headers:jH(), body:JSON.stringify({estado:'borrador', notificar_secretaria:true, cliente_id:client.id})});
-        }
       }
-      if (r.ok) {
-        const saved = await r.json();
-        setPropActual(saved);
-        fetchPropuestas();
-        setShowGuardarPlantilla(false);
-        setNombrePlantilla('');
-      }
+      if (r.ok) { const saved = await r.json(); setPropActual(saved); fetchPropuestas(); }
     } catch(e) {}
     setGuardando(false);
   };
 
-  const duplicar = async (prop, nuevoPacienteId) => {
-    const r = await fetch(`${API}/api/propuestas/${prop.id}/duplicar`, {
-      method:'POST', headers:jH(),
-      body: JSON.stringify({cliente_id: client.id, paciente_id: nuevoPacienteId || null})
-    });
-    if (r.ok) { const d = await r.json(); abrirEditor(d); fetchPropuestas(); }
-  };
-
+  // ── Eliminar ──────────────────────────────────────────────────────────────
   const eliminar = async (id) => {
     if (!confirm('¿Eliminar este presupuesto? Esta acción no se puede deshacer.')) return;
     try {
@@ -9892,31 +10021,51 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
     } catch(e) { alert('Error de red al eliminar'); }
   };
 
+  // ── Reset editor ──────────────────────────────────────────────────────────
+  const resetEditor = () => {
+    setPropActual(null); setTitulo(''); setContenidoGenerado(null); setHistorialChat([]);
+    setMensajeEdicion(''); setInfoCruda(''); setPacienteId(''); setTipoPersona('humana');
+    setB1Nombre(''); setB1Apellido(''); setB1Dni(''); setB1RazonSocial(''); setB1Cuit('');
+    setB1Representante(''); setB1Tel(''); setB1Email(''); setB1Calle(''); setB1Numero('');
+    setB1Piso(''); setB1DomConst(''); setB1Ciudad(''); setB1Provincia(''); setB1Cp('');
+    setB2Fuero(''); setB2Servicio(''); setB2Jurisdiccion(''); setB2Descripcion('');
+    setB2Objetivo(''); setB2Incluye(['']); setB2NoIncluye(['']); setB2Contraparte(''); setB2Urgencia('Normal');
+    setB3Modalidad('fijo'); setB3Valor(''); setB3Moneda('ARS'); setB3Etapas([{nombre:'',valor:''}]);
+    setB3ValorHora(''); setB3Horas(''); setB3CuotaLitisPct(''); setB3Anticipo('');
+    setB3FormaPago([]); setB3Cuotas('');
+    setB3GastosNoInc(['Tasa de justicia','Edictos','Peritos','Sellados','Gastos de inscripción']);
+    setB3Validez('15'); setB3Condiciones(''); setSelectedPlantillaId('');
+  };
+
   const abrirEditor = (prop) => {
+    resetEditor();
     setPropActual(prop);
     setInfoCruda(prop.info_cruda || '');
     setTitulo(prop.titulo || '');
     setPacienteId(prop.paciente_id ? String(prop.paciente_id) : '');
     setContenidoGenerado(prop.contenido || null);
-    setHistorialChat([]);
-    setVista(prop.contenido ? 'preview' : 'editor');
+    setVista('editor');
   };
 
   const nueva = (plantilla = null) => {
-    setPropActual(null);
-    setInfoCruda(plantilla?.info_cruda || '');
-    setTitulo('');
-    setPacienteId('');
-    setContenidoGenerado(plantilla?.contenido || null);
-    setHistorialChat([]);
-    setMensajeEdicion('');
+    resetEditor();
+    if (plantilla) {
+      setInfoCruda(plantilla.info_cruda || '');
+      setContenidoGenerado(plantilla.contenido || null);
+      setSelectedPlantillaId(String(plantilla.id));
+    }
     setVista('editor');
+  };
+
+  const aplicarPlantilla = (pid) => {
+    setSelectedPlantillaId(pid);
+    const p = plantillas.find(x => String(x.id) === String(pid));
+    if (p?.contenido) setContenidoGenerado(p.contenido);
   };
 
   const enviarEmail = async () => {
     if (!emailEnvio.trim() || !propActual?.id) return;
     setEnviando(true);
-    // Primero guardar
     await guardar(false);
     const r = await fetch(`${API}/api/propuestas/${propActual.id}/enviar-email`, {
       method:'POST', headers:jH(),
@@ -9926,237 +10075,467 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
     setEnviando(false);
   };
 
-  if (vista === 'editor' || vista === 'preview') return (
+  // ── VISTA: Editor ─────────────────────────────────────────────────────────
+  if (vista === 'editor') return (
     <div>
-      {/* Header editor */}
-      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
-        <button onClick={()=>{setVista('lista');}} style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:12,cursor:"pointer"}}>← Volver</button>
-        <input value={titulo} onChange={e=>setTitulo(e.target.value)} placeholder="Título de la propuesta..."
-          style={{flex:1,background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:14,fontWeight:600,fontFamily:"inherit"}}/>
-        <div style={{display:"flex",gap:8}}>
-          {contenidoGenerado && <button onClick={()=>{
-            const pac = pacientes?.find(p=>p.id===parseInt(pacienteId));
-            if (pac?.email) setEmailEnvio(pac.email);
-            setShowEnviar(true);
-          }} style={{padding:"8px 16px",borderRadius:8,border:"none",background:"#0891b2",color:"white",fontSize:12,fontWeight:600,cursor:"pointer"}}>📧 Enviar</button>}
-          <button onClick={()=>guardar(false)} disabled={guardando} style={{padding:"8px 16px",borderRadius:8,border:"none",background:C.accent,color:"white",fontSize:12,fontWeight:600,cursor:"pointer"}}>{guardando?'Guardando...':'💾 Guardar'}</button>
-          {client?.plan === 'pro' && contenidoGenerado && (
-            <button onClick={()=>guardar(false, true)} disabled={guardando} style={{padding:"8px 16px",borderRadius:8,border:"none",background:"#10b981",color:"white",fontSize:12,fontWeight:600,cursor:"pointer"}}>
-              🔔 Guardar y notificar secretaria
-            </button>
+      {/* Header del editor */}
+      <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:20,flexWrap:'wrap'}}>
+        <button onClick={()=>setVista('lista')} style={{padding:'6px 12px',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:12,cursor:'pointer',flexShrink:0}}>← Volver</button>
+        <input value={titulo} onChange={e=>setTitulo(e.target.value)} placeholder="Título del presupuesto de honorarios..."
+          style={{flex:1,minWidth:180,background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:'8px 12px',color:C.text,fontSize:14,fontWeight:600,fontFamily:'inherit'}}/>
+        <div style={{display:'flex',gap:8,flexShrink:0,flexWrap:'wrap'}}>
+          <button onClick={()=>generarPropuesta(false)} disabled={generando}
+            style={{padding:'8px 14px',borderRadius:8,border:'none',background:generando?'#374151':C.accent,color:'white',fontSize:12,fontWeight:600,cursor:'pointer'}}>
+            {generando?'✨ Generando...':'✨ Generar IA'}
+          </button>
+          <button onClick={()=>guardar(false)} disabled={guardando}
+            style={{padding:'8px 14px',borderRadius:8,border:'none',background:C.green,color:'white',fontSize:12,fontWeight:600,cursor:'pointer'}}>
+            {guardando?'Guardando...':'💾 Guardar'}
+          </button>
+          {contenidoGenerado && (
+            <button onClick={()=>{
+              const pac = pacientes?.find(p=>p.id===parseInt(pacienteId));
+              if (pac?.email) setEmailEnvio(pac.email);
+              setShowEnviar(true);
+            }} style={{padding:'8px 14px',borderRadius:8,border:'none',background:'#0891b2',color:'white',fontSize:12,fontWeight:600,cursor:'pointer'}}>✉ Enviar</button>
           )}
-          {contenidoGenerado && <button onClick={()=>setShowGuardarPlantilla(true)} style={{padding:"8px 16px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:12,cursor:"pointer"}}>📋 Como plantilla</button>}
         </div>
       </div>
 
-      {/* Modal guardar plantilla */}
-      {showGuardarPlantilla && (
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={()=>setShowGuardarPlantilla(false)}>
-          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:24,width:360}} onClick={e=>e.stopPropagation()}>
-            <div style={{fontSize:14,fontWeight:600,marginBottom:16}}>Guardar como plantilla</div>
-            <input value={nombrePlantilla} onChange={e=>setNombrePlantilla(e.target.value)}
-              placeholder="Nombre de la plantilla (ej: Protocolo Hifu Papada)"
-              style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit",marginBottom:12,boxSizing:"border-box"}}/>
-            <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
-              <button onClick={()=>setShowGuardarPlantilla(false)} style={{padding:"8px 14px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:12,cursor:"pointer"}}>Cancelar</button>
-              <button onClick={()=>guardar(true)} disabled={!nombrePlantilla.trim()||guardando} style={{padding:"8px 14px",borderRadius:8,border:"none",background:C.accent,color:"white",fontSize:12,fontWeight:600,cursor:"pointer"}}>Guardar plantilla</button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Modal enviar */}
       {showEnviar && (
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={()=>setShowEnviar(false)}>
-          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:24,width:400}} onClick={e=>e.stopPropagation()}>
-            <div style={{fontSize:14,fontWeight:600,marginBottom:4}}>Enviar propuesta</div>
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center'}} onClick={()=>setShowEnviar(false)}>
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:24,width:420}} onClick={e=>e.stopPropagation()}>
+            <div style={{fontSize:14,fontWeight:600,marginBottom:4}}>Enviar presupuesto</div>
             <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Elegí cómo enviárselo al cliente</div>
             <div style={{marginBottom:14}}>
-              <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:4}}>📧 Email</label>
-              <input value={emailEnvio} onChange={e=>setEmailEnvio(e.target.value)}
-                placeholder="Email del cliente..."
-                style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
+              <label style={labelSt}>📧 Email</label>
+              <input value={emailEnvio} onChange={e=>setEmailEnvio(e.target.value)} placeholder="Email del cliente..."
+                style={{width:'100%',background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:'9px 12px',color:C.text,fontSize:13,fontFamily:'inherit',boxSizing:'border-box'}}/>
             </div>
-            {client?.plan === 'pro' && (() => {
-              const pac = pacientes?.find(p=>p.id===parseInt(pacienteId));
-              const tel = pac?.telefono;
-              return tel ? (
-                <div style={{marginBottom:14}}>
-                  <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:4}}>💬 WhatsApp</label>
-                  <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",fontSize:13,color:C.muted}}>{tel}</div>
-                </div>
-              ) : null;
-            })()}
             {propActual?.uuid && (
               <div style={{marginBottom:14}}>
-                <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:4}}>🔗 Link público</label>
-                <div style={{display:"flex",gap:8}}>
+                <label style={labelSt}>🔗 Link público</label>
+                <div style={{display:'flex',gap:8}}>
                   <input readOnly value={`https://api.edgecrm.net/tratamiento/${propActual.uuid}`}
-                    style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",fontSize:12,color:C.text,fontFamily:"inherit",boxSizing:"border-box"}}/>
-                  <button onClick={()=>{navigator.clipboard.writeText(`https://api.edgecrm.net/tratamiento/${propActual.uuid}`);}} style={{padding:"8px 14px",borderRadius:8,border:"none",background:C.accent,color:"white",fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>📋 Copiar</button>
+                    style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:'9px 12px',fontSize:12,color:C.text,fontFamily:'inherit',boxSizing:'border-box'}}/>
+                  <button onClick={()=>navigator.clipboard.writeText(`https://api.edgecrm.net/tratamiento/${propActual.uuid}`)}
+                    style={{padding:'8px 12px',borderRadius:8,border:'none',background:C.accent,color:'white',fontSize:12,fontWeight:600,cursor:'pointer',flexShrink:0}}>📋</button>
                 </div>
               </div>
             )}
-            <div style={{display:"flex",gap:8,justifyContent:"flex-end",flexWrap:"wrap"}}>
-              <button onClick={()=>setShowEnviar(false)} style={{padding:"8px 14px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:12,cursor:"pointer"}}>Cancelar</button>
+            {client?.plan === 'pro' && pacientes?.find(p=>p.id===parseInt(pacienteId))?.telefono && (
+              <div style={{marginBottom:14}}>
+                <label style={labelSt}>💬 WhatsApp</label>
+                <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:'9px 12px',fontSize:13,color:C.muted}}>{pacientes.find(p=>p.id===parseInt(pacienteId)).telefono}</div>
+              </div>
+            )}
+            <div style={{display:'flex',gap:8,justifyContent:'flex-end',flexWrap:'wrap'}}>
+              <button onClick={()=>setShowEnviar(false)} style={{padding:'8px 14px',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:12,cursor:'pointer'}}>Cancelar</button>
               {client?.plan === 'pro' && pacientes?.find(p=>p.id===parseInt(pacienteId))?.telefono && (
                 <button onClick={async()=>{
                   setEnviando(true);
                   await guardar(false);
                   const pac = pacientes.find(p=>p.id===parseInt(pacienteId));
-                  const linkPropuesta = propActual?.uuid ? `https://api.edgecrm.net/tratamiento/${propActual.uuid}` : '';
-                  const resumen = contenidoGenerado?.titulo ? `Hola ${pac?.nombre?.split(' ')[0]||''}! Te enviamos tu propuesta de honorarios: *${contenidoGenerado.titulo}*\n\n${contenidoGenerado?.diagnostico||''}${linkPropuesta ? `\n\n👉 Podés verla completa acá:\n${linkPropuesta}` : ''}\n\nAnte cualquier consulta escribinos.` : 'Te enviamos tu propuesta de honorarios.';
-                  await fetch(`${API}/api/enviar-mensaje`, {method:'POST',headers:jH(),body:JSON.stringify({telefono:pac.telefono,texto:resumen,cliente_id:client.id})});
+                  const link = propActual?.uuid ? `https://api.edgecrm.net/tratamiento/${propActual.uuid}` : '';
+                  const msg = `Hola ${pac?.nombre?.split(' ')[0]||''}! Te enviamos tu propuesta de honorarios${contenidoGenerado?.titulo?`: *${contenidoGenerado.titulo}*`:''}.\n\n${link?`Podés verla completa acá:\n${link}\n\n`:''}Ante cualquier consulta escribinos.`;
+                  await fetch(`${API}/api/enviar-mensaje`, {method:'POST',headers:jH(),body:JSON.stringify({telefono:pac.telefono,texto:msg,cliente_id:client.id})});
                   setShowEnviar(false); setEnviando(false);
-                }} disabled={enviando} style={{padding:"8px 14px",borderRadius:8,border:"none",background:"#25d366",color:"white",fontSize:12,fontWeight:600,cursor:"pointer"}}>
-                  {enviando?'Enviando...':'💬 Enviar por WA'}
+                }} disabled={enviando} style={{padding:'8px 14px',borderRadius:8,border:'none',background:'#25d366',color:'white',fontSize:12,fontWeight:600,cursor:'pointer'}}>
+                  {enviando?'Enviando...':'💬 WhatsApp'}
                 </button>
               )}
-              <button onClick={enviarEmail} disabled={!emailEnvio.trim()||enviando} style={{padding:"8px 14px",borderRadius:8,border:"none",background:"#0891b2",color:"white",fontSize:12,fontWeight:600,cursor:"pointer"}}>
-                {enviando?'Enviando...':'📧 Enviar por email'}
+              <button onClick={enviarEmail} disabled={!emailEnvio.trim()||enviando}
+                style={{padding:'8px 14px',borderRadius:8,border:'none',background:'#0891b2',color:'white',fontSize:12,fontWeight:600,cursor:'pointer'}}>
+                {enviando?'Enviando...':'📧 Enviar email'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
-        {/* Panel izquierdo — editor */}
-        <div>
-          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
-            <div style={{fontSize:12,fontWeight:600,color:C.muted,marginBottom:10,textTransform:"uppercase",letterSpacing:".7px"}}>Cliente</div>
-            <select value={pacienteId} onChange={e=>setPacienteId(e.target.value)}
-              style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
-              <option value="">Sin cliente asignado</option>
-              {(pacientes||[]).map(p=><option key={p.id} value={p.id}>{p.nombre||p.telefono}</option>)}
-            </select>
-          </div>
+      {/* Layout 2 columnas */}
+      <div style={{display:'grid',gridTemplateColumns:'3fr 2fr',gap:20,alignItems:'start'}}>
 
-          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
-            <div style={{fontSize:12,fontWeight:600,color:C.muted,marginBottom:10,textTransform:"uppercase",letterSpacing:".7px"}}>Info en crudo</div>
-            <textarea value={infoCruda} onChange={e=>setInfoCruda(e.target.value)}
-              placeholder={"Escribí toda la info de la valoración...\n\nEj: Paciente quiere reducir papada, 35 años, piel normal. Recomiendo 3 sesiones de Hifu a $80.000 c/u. Primera sesión en 2 semanas, luego cada 4 semanas. Resultado esperado 70-80% de reducción. Incluye crema post-tratamiento."}
-              rows={10}
-              style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 12px",color:C.text,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box",lineHeight:1.6}}/>
-            <button onClick={()=>generarPropuesta(false)} disabled={generando||!infoCruda.trim()}
-              style={{width:"100%",marginTop:10,padding:"10px",borderRadius:8,border:"none",background:generando?"#374151":C.accent,color:"white",fontSize:13,fontWeight:600,cursor:"pointer"}}>
-              {generando?'✨ Generando...':'✨ Generar propuesta con IA'}
-            </button>
-          </div>
+        {/* COL IZQUIERDA: 4 bloques acordeón */}
+        <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,overflow:'hidden'}}>
 
-          {contenidoGenerado && (
-            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20}}>
-              <div style={{fontSize:12,fontWeight:600,color:C.muted,marginBottom:10,textTransform:"uppercase",letterSpacing:".7px"}}>Editar con IA</div>
-              <textarea value={mensajeEdicion} onChange={e=>setMensajeEdicion(e.target.value)}
-                placeholder={'Ej: "Cambiá el precio a $250.000 total", "Agregá que incluye seguimiento post-tratamiento", "Hacelo más formal"'}
-                rows={3}
-                style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 12px",color:C.text,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
-              <button onClick={()=>generarPropuesta(true)} disabled={generando||!mensajeEdicion.trim()}
-                style={{width:"100%",marginTop:8,padding:"9px",borderRadius:8,border:"none",background:generando?"#374151":"#8b5cf6",color:"white",fontSize:13,fontWeight:600,cursor:"pointer"}}>
-                {generando?'Editando...':'💬 Aplicar cambio'}
+          {/* ▼ BLOQUE 1: Datos del cliente */}
+          <AccordionHeader idx={0} label="Bloque 1 · Datos del cliente" />
+          {abiertos[0] && (
+            <div style={bloqueBodySt}>
+              <div style={fieldSt}>
+                <label style={labelSt}>Cliente existente</label>
+                <select value={pacienteId} onChange={e=>{
+                  setPacienteId(e.target.value);
+                  const pac = pacientes?.find(p=>p.id===parseInt(e.target.value));
+                  if (pac) {
+                    const parts = (pac.nombre||'').split(' ');
+                    setB1Nombre(parts[0]||''); setB1Apellido(parts.slice(1).join(' ')||'');
+                    setB1Tel(pac.telefono||''); setB1Email(pac.email||'');
+                  }
+                }} style={inputSt}>
+                  <option value="">Sin cliente asignado</option>
+                  {(pacientes||[]).map(p=><option key={p.id} value={p.id}>{p.nombre||p.telefono}</option>)}
+                </select>
+              </div>
+              <div style={fieldSt}>
+                <label style={labelSt}>Tipo de persona</label>
+                <div style={{display:'flex',gap:20}}>
+                  {[['humana','Persona humana'],['juridica','Persona jurídica']].map(([val,lbl])=>(
+                    <label key={val} style={{display:'flex',alignItems:'center',gap:6,cursor:'pointer',fontSize:13}}>
+                      <input type="radio" checked={tipoPersona===val} onChange={()=>setTipoPersona(val)} style={{accentColor:C.accent}}/>
+                      {lbl}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              {tipoPersona==='humana' ? (
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                  <div style={fieldSt}><label style={labelSt}>Nombre</label><input value={b1Nombre} onChange={e=>setB1Nombre(e.target.value)} style={inputSt}/></div>
+                  <div style={fieldSt}><label style={labelSt}>Apellido</label><input value={b1Apellido} onChange={e=>setB1Apellido(e.target.value)} style={inputSt}/></div>
+                  <div style={fieldSt}><label style={labelSt}>DNI</label><input value={b1Dni} onChange={e=>setB1Dni(e.target.value)} style={inputSt}/></div>
+                  <div style={fieldSt}><label style={labelSt}>Email</label><input value={b1Email} onChange={e=>setB1Email(e.target.value)} style={inputSt}/></div>
+                </div>
+              ) : (
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                  <div style={{...fieldSt,gridColumn:'1/-1'}}><label style={labelSt}>Razón social</label><input value={b1RazonSocial} onChange={e=>setB1RazonSocial(e.target.value)} style={inputSt}/></div>
+                  <div style={fieldSt}><label style={labelSt}>CUIT</label><input value={b1Cuit} onChange={e=>setB1Cuit(e.target.value)} style={inputSt}/></div>
+                  <div style={fieldSt}><label style={labelSt}>Representante legal</label><input value={b1Representante} onChange={e=>setB1Representante(e.target.value)} style={inputSt}/></div>
+                  <div style={fieldSt}><label style={labelSt}>Email</label><input value={b1Email} onChange={e=>setB1Email(e.target.value)} style={inputSt}/></div>
+                </div>
+              )}
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                <div style={fieldSt}><label style={labelSt}>Teléfono</label><input value={b1Tel} onChange={e=>setB1Tel(e.target.value)} style={inputSt}/></div>
+                <div style={fieldSt}><label style={labelSt}>Calle</label><input value={b1Calle} onChange={e=>setB1Calle(e.target.value)} placeholder="Av. Corrientes" style={inputSt}/></div>
+                <div style={fieldSt}><label style={labelSt}>Número</label><input value={b1Numero} onChange={e=>setB1Numero(e.target.value)} style={inputSt}/></div>
+                <div style={fieldSt}><label style={labelSt}>Piso / Depto</label><input value={b1Piso} onChange={e=>setB1Piso(e.target.value)} style={inputSt}/></div>
+                <div style={fieldSt}><label style={labelSt}>Ciudad</label><input value={b1Ciudad} onChange={e=>setB1Ciudad(e.target.value)} style={inputSt}/></div>
+                <div style={fieldSt}>
+                  <label style={labelSt}>Provincia</label>
+                  <select value={b1Provincia} onChange={e=>setB1Provincia(e.target.value)} style={inputSt}>
+                    <option value="">Seleccionar...</option>
+                    {PROVINCIAS_AR.map(p=><option key={p} value={p}>{p}</option>)}
+                  </select>
+                </div>
+                <div style={fieldSt}><label style={labelSt}>Código postal</label><input value={b1Cp} onChange={e=>setB1Cp(e.target.value)} style={inputSt}/></div>
+              </div>
+              <div style={fieldSt}><label style={labelSt}>Domicilio constituido (opcional)</label><input value={b1DomConst} onChange={e=>setB1DomConst(e.target.value)} placeholder="Si difiere del domicilio real..." style={inputSt}/></div>
+            </div>
+          )}
+
+          {/* ▼ BLOQUE 2: Información del servicio legal */}
+          <AccordionHeader idx={1} label="Bloque 2 · Servicio legal" />
+          {abiertos[1] && (
+            <div style={bloqueBodySt}>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                <div style={fieldSt}>
+                  <label style={labelSt}>Fuero / Materia</label>
+                  <select value={b2Fuero} onChange={e=>{setB2Fuero(e.target.value); setB2Servicio('');}} style={inputSt}>
+                    <option value="">Seleccionar...</option>
+                    {FUEROS_JURIDICOS.map(f=><option key={f} value={f}>{f}</option>)}
+                  </select>
+                </div>
+                <div style={fieldSt}>
+                  <label style={labelSt}>Tipo de servicio</label>
+                  <select value={b2Servicio} onChange={e=>setB2Servicio(e.target.value)} style={inputSt} disabled={!b2Fuero}>
+                    <option value="">Seleccionar...</option>
+                    {(SERVICIOS_POR_FUERO[b2Fuero]||[]).map(s=><option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div style={fieldSt}>
+                  <label style={labelSt}>Jurisdicción</label>
+                  <select value={b2Jurisdiccion} onChange={e=>setB2Jurisdiccion(e.target.value)} style={inputSt}>
+                    <option value="">Seleccionar...</option>
+                    {['CABA','Provincia','Federal'].map(j=><option key={j} value={j}>{j}</option>)}
+                  </select>
+                </div>
+                <div style={fieldSt}>
+                  <label style={labelSt}>Urgencia</label>
+                  <select value={b2Urgencia} onChange={e=>setB2Urgencia(e.target.value)} style={inputSt}>
+                    {['Normal','Alta','Crítica'].map(u=><option key={u} value={u}>{u}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div style={fieldSt}>
+                <label style={labelSt}>Descripción del caso</label>
+                <textarea value={b2Descripcion} onChange={e=>setB2Descripcion(e.target.value)} rows={3} style={{...inputSt,resize:'vertical',lineHeight:1.5}}/>
+              </div>
+              <div style={fieldSt}>
+                <label style={labelSt}>Objetivo del cliente</label>
+                <textarea value={b2Objetivo} onChange={e=>setB2Objetivo(e.target.value)} rows={2} style={{...inputSt,resize:'vertical',lineHeight:1.5}}/>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                <div style={fieldSt}>
+                  <label style={labelSt}>Alcance — qué incluye</label>
+                  {b2Incluye.map((item,i)=>(
+                    <div key={i} style={{display:'flex',gap:6,marginBottom:6}}>
+                      <input value={item} onChange={e=>setB2Incluye(prev=>{const n=[...prev];n[i]=e.target.value;return n;})} style={{...inputSt,flex:1}}/>
+                      {b2Incluye.length>1&&<button onClick={()=>setB2Incluye(prev=>prev.filter((_,j)=>j!==i))} style={{padding:'4px 8px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,cursor:'pointer',fontSize:12}}>×</button>}
+                    </div>
+                  ))}
+                  <button onClick={()=>setB2Incluye(prev=>[...prev,''])} style={{fontSize:11,color:C.accent,background:'transparent',border:'none',cursor:'pointer',padding:0}}>+ Agregar</button>
+                </div>
+                <div style={fieldSt}>
+                  <label style={labelSt}>Alcance — no incluye</label>
+                  {b2NoIncluye.map((item,i)=>(
+                    <div key={i} style={{display:'flex',gap:6,marginBottom:6}}>
+                      <input value={item} onChange={e=>setB2NoIncluye(prev=>{const n=[...prev];n[i]=e.target.value;return n;})} style={{...inputSt,flex:1}}/>
+                      {b2NoIncluye.length>1&&<button onClick={()=>setB2NoIncluye(prev=>prev.filter((_,j)=>j!==i))} style={{padding:'4px 8px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,cursor:'pointer',fontSize:12}}>×</button>}
+                    </div>
+                  ))}
+                  <button onClick={()=>setB2NoIncluye(prev=>[...prev,''])} style={{fontSize:11,color:C.accent,background:'transparent',border:'none',cursor:'pointer',padding:0}}>+ Agregar</button>
+                </div>
+              </div>
+              <div style={fieldSt}><label style={labelSt}>Contraparte (opcional)</label><input value={b2Contraparte} onChange={e=>setB2Contraparte(e.target.value)} placeholder="Nombre de la contraparte..." style={inputSt}/></div>
+            </div>
+          )}
+
+          {/* ▼ BLOQUE 3: Honorarios */}
+          <AccordionHeader idx={2} label="Bloque 3 · Honorarios" />
+          {abiertos[2] && (
+            <div style={bloqueBodySt}>
+              <div style={fieldSt}>
+                <label style={labelSt}>Modalidad de honorarios</label>
+                <div style={{display:'flex',flexWrap:'wrap',gap:12}}>
+                  {[['fijo','Honorarios fijos'],['etapa','Por etapa procesal'],['hora','Por hora'],['cuota_litis','Cuota litis'],['mixto','Mixto']].map(([val,lbl])=>(
+                    <label key={val} style={{display:'flex',alignItems:'center',gap:6,cursor:'pointer',fontSize:12}}>
+                      <input type="radio" checked={b3Modalidad===val} onChange={()=>setB3Modalidad(val)} style={{accentColor:C.accent}}/>{lbl}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              {b3Modalidad==='fijo' && (
+                <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:10}}>
+                  <div style={fieldSt}><label style={labelSt}>Valor</label><input value={b3Valor} onChange={e=>setB3Valor(e.target.value)} placeholder="500.000" style={inputSt}/></div>
+                  <div style={fieldSt}><label style={labelSt}>Moneda</label>
+                    <select value={b3Moneda} onChange={e=>setB3Moneda(e.target.value)} style={inputSt}>
+                      {['ARS','USD','UVA'].map(m=><option key={m} value={m}>{m}</option>)}
+                    </select>
+                  </div>
+                </div>
+              )}
+              {b3Modalidad==='hora' && (
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
+                  <div style={fieldSt}><label style={labelSt}>Valor / hora</label><input value={b3ValorHora} onChange={e=>setB3ValorHora(e.target.value)} style={inputSt}/></div>
+                  <div style={fieldSt}><label style={labelSt}>Horas estimadas</label><input value={b3Horas} onChange={e=>setB3Horas(e.target.value)} style={inputSt}/></div>
+                  <div style={fieldSt}><label style={labelSt}>Moneda</label>
+                    <select value={b3Moneda} onChange={e=>setB3Moneda(e.target.value)} style={inputSt}>
+                      {['ARS','USD'].map(m=><option key={m} value={m}>{m}</option>)}
+                    </select>
+                  </div>
+                </div>
+              )}
+              {b3Modalidad==='cuota_litis' && (
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                  <div style={fieldSt}><label style={labelSt}>% sobre cobro</label><input value={b3CuotaLitisPct} onChange={e=>setB3CuotaLitisPct(e.target.value)} placeholder="20" style={inputSt}/></div>
+                  <div style={fieldSt}><label style={labelSt}>Anticipo (opcional)</label><input value={b3Anticipo} onChange={e=>setB3Anticipo(e.target.value)} style={inputSt}/></div>
+                </div>
+              )}
+              {b3Modalidad==='mixto' && (
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                  <div style={fieldSt}><label style={labelSt}>Anticipo fijo</label><input value={b3Anticipo} onChange={e=>setB3Anticipo(e.target.value)} style={inputSt}/></div>
+                  <div style={fieldSt}><label style={labelSt}>% sobre éxito</label><input value={b3CuotaLitisPct} onChange={e=>setB3CuotaLitisPct(e.target.value)} placeholder="15" style={inputSt}/></div>
+                </div>
+              )}
+              {b3Modalidad==='etapa' && (
+                <div style={fieldSt}>
+                  <label style={labelSt}>Etapas procesales</label>
+                  {b3Etapas.map((et,i)=>(
+                    <div key={i} style={{display:'flex',gap:8,marginBottom:8}}>
+                      <input value={et.nombre} onChange={e=>setB3Etapas(prev=>{const n=[...prev];n[i]={...n[i],nombre:e.target.value};return n;})} placeholder="Ej: Mediación" style={{...inputSt,flex:2}}/>
+                      <input value={et.valor} onChange={e=>setB3Etapas(prev=>{const n=[...prev];n[i]={...n[i],valor:e.target.value};return n;})} placeholder="$" style={{...inputSt,flex:1}}/>
+                      {b3Etapas.length>1&&<button onClick={()=>setB3Etapas(prev=>prev.filter((_,j)=>j!==i))} style={{padding:'4px 8px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,cursor:'pointer',fontSize:12}}>×</button>}
+                    </div>
+                  ))}
+                  <button onClick={()=>setB3Etapas(prev=>[...prev,{nombre:'',valor:''}])} style={{fontSize:11,color:C.accent,background:'transparent',border:'none',cursor:'pointer',padding:0}}>+ Agregar etapa</button>
+                </div>
+              )}
+              <div style={fieldSt}>
+                <label style={labelSt}>Forma de pago</label>
+                <div style={{display:'flex',flexWrap:'wrap',gap:12}}>
+                  {['Efectivo','Transferencia','Tarjeta','Cheque'].map(fp=>(
+                    <label key={fp} style={{display:'flex',alignItems:'center',gap:6,cursor:'pointer',fontSize:12}}>
+                      <input type="checkbox" checked={b3FormaPago.includes(fp)} onChange={e=>setB3FormaPago(prev=>e.target.checked?[...prev,fp]:prev.filter(x=>x!==fp))} style={{accentColor:C.accent}}/>{fp}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                <div style={fieldSt}><label style={labelSt}>Cuotas / plazos</label><input value={b3Cuotas} onChange={e=>setB3Cuotas(e.target.value)} placeholder="Ej: 3 cuotas mensuales" style={inputSt}/></div>
+                <div style={fieldSt}><label style={labelSt}>Validez de la oferta (días)</label><input value={b3Validez} onChange={e=>setB3Validez(e.target.value)} style={inputSt}/></div>
+              </div>
+              <div style={fieldSt}>
+                <label style={labelSt}>Gastos no incluidos</label>
+                {b3GastosNoInc.map((g,i)=>(
+                  <div key={i} style={{display:'flex',gap:6,marginBottom:6}}>
+                    <input value={g} onChange={e=>setB3GastosNoInc(prev=>{const n=[...prev];n[i]=e.target.value;return n;})} style={{...inputSt,flex:1}}/>
+                    <button onClick={()=>setB3GastosNoInc(prev=>prev.filter((_,j)=>j!==i))} style={{padding:'4px 8px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,cursor:'pointer',fontSize:12}}>×</button>
+                  </div>
+                ))}
+                <button onClick={()=>setB3GastosNoInc(prev=>[...prev,''])} style={{fontSize:11,color:C.accent,background:'transparent',border:'none',cursor:'pointer',padding:0}}>+ Agregar gasto</button>
+              </div>
+              <div style={fieldSt}><label style={labelSt}>Condiciones adicionales</label><textarea value={b3Condiciones} onChange={e=>setB3Condiciones(e.target.value)} rows={2} style={{...inputSt,resize:'vertical',lineHeight:1.5}}/></div>
+            </div>
+          )}
+
+          {/* ▼ BLOQUE 4: Información en crudo */}
+          <AccordionHeader idx={3} label="Bloque 4 · Información en crudo" />
+          {abiertos[3] && (
+            <div style={{padding:'16px'}}>
+              <div style={fieldSt}>
+                <label style={labelSt}>Info del cliente y del caso</label>
+                <textarea value={infoCruda} onChange={e=>setInfoCruda(e.target.value)}
+                  placeholder={"Escribí en detalle toda la información del cliente y del caso:\n\nNombre, apellido, DNI/CUIT, provincia, ciudad, código postal, detalles del servicio, fuero, valor de honorarios, plazos de pago, objetivo del trabajo y cualquier información relevante para la elaboración del presupuesto de honorarios."}
+                  rows={8} style={{...inputSt,resize:'vertical',lineHeight:1.6}}/>
+              </div>
+              <button onClick={autocompletar} disabled={autocompletando||!infoCruda.trim()}
+                style={{width:'100%',padding:'10px',borderRadius:8,border:'none',background:autocompletando?'#374151':'#8b5cf6',color:'white',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+                {autocompletando?'✨ Autocompletando formulario...':'✨ Autocompletar formulario desde el crudo'}
               </button>
             </div>
           )}
 
-          {contenidoGenerado?.tratamientos?.length > 0 && (
-            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginTop:16}}>
-              <div style={{fontSize:12,fontWeight:600,color:C.muted,marginBottom:12,textTransform:"uppercase",letterSpacing:".7px"}}>🖼️ Imágenes por tratamiento</div>
-              {contenidoGenerado.tratamientos.map((t,i) => {
-                const areaAuto = detectarAreaAnatomica(t.nombre+' '+(t.area||''));
-                const imgActual = t.imagen_override || getAnatomicalImage(areaAuto,'f');
-                return (
-                  <div key={i} style={{marginBottom:12,display:"flex",gap:10,alignItems:"center"}}>
-                    <img src={imgActual} style={{width:48,height:48,objectFit:"cover",objectPosition:"top",borderRadius:6,flexShrink:0,border:`1px solid ${C.border}`}} alt=""/>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:11,color:C.muted,marginBottom:4}}>{t.nombre}</div>
-                      <select value={t.imagen_override||''} onChange={e=>{
-                        const newTrats = [...contenidoGenerado.tratamientos];
-                        newTrats[i] = {...newTrats[i], imagen_override: e.target.value};
-                        setContenidoGenerado({...contenidoGenerado, tratamientos: newTrats});
-                      }} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:6,padding:"5px 8px",color:C.text,fontSize:11,fontFamily:"inherit"}}>
-                        <option value="">Auto ({areaAuto})</option>
-                        {ANATOMICAL_IMAGE_OPTIONS.map((opt,j)=>(
-                          <option key={j} value={getAnatomicalImage(opt.area,opt.genero)}>{opt.label}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                );
-              })}
+          {/* Edición con IA (visible solo si hay contenido generado) */}
+          {contenidoGenerado && (
+            <div style={{padding:'16px',borderTop:`1px solid ${C.border}`}}>
+              <div style={{fontSize:12,fontWeight:600,color:C.muted,marginBottom:10,textTransform:'uppercase',letterSpacing:'.7px'}}>Editar con IA</div>
+              <textarea value={mensajeEdicion} onChange={e=>setMensajeEdicion(e.target.value)}
+                placeholder='Ej: "Cambiá el precio a $350.000", "Hacelo más formal", "Agregá cláusula de confidencialidad"'
+                rows={3} style={{...inputSt,resize:'vertical',lineHeight:1.5}}/>
+              <button onClick={()=>generarPropuesta(true)} disabled={generando||!mensajeEdicion.trim()}
+                style={{width:'100%',marginTop:8,padding:'9px',borderRadius:8,border:'none',background:generando?'#374151':'#8b5cf6',color:'white',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+                {generando?'Editando...':'💬 Aplicar cambio con IA'}
+              </button>
             </div>
           )}
         </div>
 
-        {/* Panel derecho — preview */}
-        <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,overflow:"hidden",maxHeight:"80vh",overflowY:"auto"}}>
-          {!contenidoGenerado ? (
-            <div style={{padding:40,textAlign:"center",color:C.muted}}>
-              <div style={{fontSize:40,marginBottom:12}}>📄</div>
-              <div style={{fontSize:13}}>La propuesta aparecerá acá después de generarla</div>
+        {/* COL DERECHA: Selector de plantilla + Preview */}
+        <div style={{position:'sticky',top:20}}>
+          {plantillas.length > 0 && (
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:'12px 16px',marginBottom:12}}>
+              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+                <span style={{fontSize:11,fontWeight:700,letterSpacing:'.7px',textTransform:'uppercase',color:C.muted,flex:1}}>Plantilla</span>
+                <button onClick={()=>setVista('plantillas')} style={{fontSize:11,color:C.accent,background:'transparent',border:'none',cursor:'pointer',padding:0}}>📐 Gestionar</button>
+              </div>
+              <select value={selectedPlantillaId} onChange={e=>aplicarPlantilla(e.target.value)} style={inputSt}>
+                <option value="">Estándar (sin plantilla)</option>
+                {plantillas.map(p=><option key={p.id} value={p.id}>{p.nombre_plantilla||p.titulo}</option>)}
+              </select>
             </div>
-          ) : (
-            <PropuestaPreviewIframe contenido={contenidoGenerado} cliente={client} propActual={propActual} />
           )}
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,overflow:'hidden'}}>
+            <div style={{padding:'10px 16px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:8}}>
+              <span style={{fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'.7px',color:C.muted,flex:1}}>Preview en vivo</span>
+              {contenidoGenerado && <span style={{fontSize:10,color:C.green}}>● Actualizado</span>}
+            </div>
+            {contenidoGenerado ? (
+              <PropuestaPreviewIframe contenido={contenidoGenerado} cliente={client} propActual={propActual} previewTick={previewTick}/>
+            ) : (
+              <div style={{padding:40,textAlign:'center',color:C.muted}}>
+                <div style={{fontSize:32,marginBottom:12}}>⚖️</div>
+                <div style={{fontSize:13,marginBottom:6}}>Completá el formulario y generá</div>
+                <div style={{fontSize:11}}>la propuesta con IA para ver el preview</div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 
-  // Vista lista
-  return (
+  // ── VISTA: Plantillas ─────────────────────────────────────────────────────
+  if (vista === 'plantillas') return (
     <div>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20}}>
+        <button onClick={()=>setVista('lista')} style={{padding:'6px 12px',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:12,cursor:'pointer'}}>← Volver</button>
         <div>
-          <div style={{fontSize:16,fontWeight:700,marginBottom:2}}>⚖️ Honorarios</div>
-          <div style={{fontSize:12,color:C.muted}}>Presupuestos de honorarios con IA</div>
+          <div style={{fontSize:16,fontWeight:700}}>📐 Plantillas de honorarios</div>
+          <div style={{fontSize:12,color:C.muted}}>Modelos reutilizables para el estudio</div>
         </div>
-        <button onClick={()=>nueva()} style={{padding:"9px 18px",borderRadius:8,border:"none",background:C.accent,color:"white",fontSize:13,fontWeight:600,cursor:"pointer"}}>+ Nuevo presupuesto</button>
+        <button onClick={()=>nueva()} style={{marginLeft:'auto',padding:'8px 16px',borderRadius:8,border:'none',background:C.accent,color:'white',fontSize:12,fontWeight:600,cursor:'pointer'}}>+ Nueva plantilla</button>
       </div>
-
-      {/* Banner propuestas pendientes de envío */}
-      {notificaciones.filter(n=>n.referencia_tipo==='propuesta').map(n => (
-        <div key={n.id} style={{background:"rgba(16,185,129,0.08)",border:"1px solid rgba(16,185,129,0.25)",borderRadius:10,padding:"12px 16px",marginBottom:12,display:"flex",alignItems:"center",gap:12}}>
-          <span style={{fontSize:16}}>📄</span>
-          <div style={{flex:1}}>
-            <div style={{fontSize:12,fontWeight:600,color:"#10b981"}}>{n.titulo}</div>
-            <div style={{fontSize:11,color:C.muted}}>{n.descripcion}</div>
-          </div>
-          <button onClick={()=>{
-            const prop = propuestas.find(p=>p.id===n.referencia_id);
-            if (prop) abrirEditor(prop);
-            onLeerNotificacion?.(n.id);
-          }} style={{padding:"5px 12px",borderRadius:6,border:"none",background:"#10b981",color:"white",fontSize:11,fontWeight:600,cursor:"pointer",flexShrink:0}}>
-            Ver presupuesto
-          </button>
-          <button onClick={()=>onLeerNotificacion?.(n.id)} style={{padding:"5px 8px",borderRadius:6,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:11,cursor:"pointer"}}>×</button>
+      {plantillas.length === 0 ? (
+        <div style={{textAlign:'center',padding:60,color:C.muted}}>
+          <div style={{fontSize:36,marginBottom:12}}>📐</div>
+          <div style={{fontWeight:600,marginBottom:6}}>No hay plantillas guardadas</div>
+          <div style={{fontSize:11,marginBottom:20}}>Creá un presupuesto y guardalo como plantilla para reutilizarlo</div>
+          <button onClick={()=>nueva()} style={{padding:'9px 18px',borderRadius:8,border:'none',background:C.accent,color:'white',fontSize:13,fontWeight:600,cursor:'pointer'}}>Crear primera plantilla</button>
         </div>
-      ))}
-
-      {cargando ? <div style={{textAlign:"center",padding:40,color:C.muted}}>Cargando...</div> : (
-        <div style={{display:"flex",flexDirection:"column",gap:10}}>
-          {propuestas.map(p => (
-            <div key={p.id} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:"14px 16px",display:"flex",alignItems:"center",gap:12}}>
-              <div style={{width:36,height:36,borderRadius:9,background:C.accentGlow,border:`1px solid ${C.accent}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>⚖️</div>
+      ) : (
+        <div style={{display:'flex',flexDirection:'column',gap:10}}>
+          {plantillas.map(p=>(
+            <div key={p.id} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:'14px 16px',display:'flex',alignItems:'center',gap:12}}>
+              <div style={{width:36,height:36,borderRadius:9,background:C.accentGlow,border:`1px solid ${C.accent}44`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>📐</div>
               <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:13,fontWeight:600,color:C.text,marginBottom:2}}>{p.titulo||'Sin título'}</div>
-                <div style={{fontSize:11,color:C.muted}}>
-                  {p.paciente_nombre && <span>{p.paciente_nombre} · </span>}
-                  {p.estado==='enviada' ? <span style={{color:"#10b981"}}>✅ Enviado</span> : <span>Borrador</span>}
-                  {' · '}{new Date(p.actualizado_en).toLocaleDateString('es-AR',{day:'numeric',month:'short'})}
-                </div>
+                <div style={{fontSize:13,fontWeight:600,color:C.text,marginBottom:2}}>{p.nombre_plantilla||p.titulo||'Sin nombre'}</div>
+                <div style={{fontSize:11,color:C.muted}}>{new Date(p.actualizado_en).toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'})}</div>
               </div>
-              <div style={{display:"flex",gap:6,flexShrink:0}}>
-                <button onClick={()=>abrirEditor(p)} style={{padding:"5px 12px",borderRadius:6,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:11,cursor:"pointer"}}>✏️ Editar</button>
-                <button onClick={()=>duplicar(p,null)} style={{padding:"5px 12px",borderRadius:6,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:11,cursor:"pointer"}}>📋 Duplicar</button>
-                <button onClick={()=>eliminar(p.id)} style={{padding:"5px 12px",borderRadius:6,border:"1px solid rgba(239,68,68,0.3)",background:"transparent",color:"#f87171",fontSize:11,cursor:"pointer"}}>🗑️</button>
+              <div style={{display:'flex',gap:6,flexShrink:0}}>
+                <button onClick={()=>nueva(p)} style={{padding:'5px 14px',borderRadius:6,border:'none',background:C.accent,color:'white',fontSize:11,fontWeight:600,cursor:'pointer'}}>Usar</button>
+                <button onClick={()=>abrirEditor(p)} style={{padding:'5px 12px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:11,cursor:'pointer'}}>✏️ Editar</button>
+                <button onClick={()=>eliminar(p.id)} style={{padding:'5px 12px',borderRadius:6,border:'1px solid rgba(239,68,68,0.3)',background:'transparent',color:'#f87171',fontSize:11,cursor:'pointer'}}>🗑️</button>
               </div>
             </div>
           ))}
-          {propuestas.length === 0 && (
-            <div style={{textAlign:"center",padding:60,color:C.muted,fontSize:13}}>
-              <div style={{fontSize:32,marginBottom:12}}>⚖️</div>
-              <div style={{fontWeight:600,marginBottom:4}}>No hay presupuestos aún</div>
-              <div style={{fontSize:11}}>Creá el primer presupuesto de honorarios</div>
+        </div>
+      )}
+    </div>
+  );
+
+  // ── VISTA: Lista de presupuestos ──────────────────────────────────────────
+  return (
+    <div>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:20,flexWrap:'wrap',gap:10}}>
+        <div>
+          <div style={{fontSize:16,fontWeight:700,marginBottom:2}}>⚖️ Honorarios</div>
+          <div style={{fontSize:12,color:C.muted}}>Presupuestos de honorarios profesionales</div>
+        </div>
+        <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+          {plantillas.length>0&&<button onClick={()=>setVista('plantillas')} style={{padding:'8px 14px',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:12,cursor:'pointer'}}>📐 Plantillas ({plantillas.length})</button>}
+          <button onClick={()=>nueva()} style={{padding:'9px 18px',borderRadius:8,border:'none',background:C.accent,color:'white',fontSize:13,fontWeight:600,cursor:'pointer'}}>+ Nuevo presupuesto</button>
+        </div>
+      </div>
+
+      {notificaciones.filter(n=>n.referencia_tipo==='propuesta').map(n=>(
+        <div key={n.id} style={{background:'rgba(16,185,129,0.08)',border:'1px solid rgba(16,185,129,0.25)',borderRadius:10,padding:'12px 16px',marginBottom:12,display:'flex',alignItems:'center',gap:12}}>
+          <span style={{fontSize:16}}>📄</span>
+          <div style={{flex:1}}>
+            <div style={{fontSize:12,fontWeight:600,color:'#10b981'}}>{n.titulo}</div>
+            <div style={{fontSize:11,color:C.muted}}>{n.descripcion}</div>
+          </div>
+          <button onClick={()=>{const prop=propuestas.find(p=>p.id===n.referencia_id);if(prop)abrirEditor(prop);onLeerNotificacion?.(n.id);}}
+            style={{padding:'5px 12px',borderRadius:6,border:'none',background:'#10b981',color:'white',fontSize:11,fontWeight:600,cursor:'pointer',flexShrink:0}}>Ver presupuesto</button>
+          <button onClick={()=>onLeerNotificacion?.(n.id)}
+            style={{padding:'5px 8px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:11,cursor:'pointer'}}>×</button>
+        </div>
+      ))}
+
+      {cargando ? <div style={{textAlign:'center',padding:40,color:C.muted}}>Cargando...</div> : (
+        <div style={{display:'flex',flexDirection:'column',gap:10}}>
+          {propuestas.map(p=>(
+            <div key={p.id} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:'14px 16px',display:'flex',alignItems:'center',gap:12}}>
+              <div style={{width:36,height:36,borderRadius:9,background:C.accentGlow,border:`1px solid ${C.accent}44`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>⚖️</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:13,fontWeight:600,color:C.text,marginBottom:2}}>{p.titulo||'Sin título'}</div>
+                <div style={{fontSize:11,color:C.muted}}>
+                  {p.paciente_nombre&&<span>{p.paciente_nombre} · </span>}
+                  {p.estado==='enviada'?<span style={{color:'#10b981'}}>✅ Enviado</span>:<span>Borrador</span>}
+                  {' · '}{new Date(p.actualizado_en).toLocaleDateString('es-AR',{day:'numeric',month:'short'})}
+                </div>
+              </div>
+              <div style={{display:'flex',gap:6,flexShrink:0}}>
+                <button onClick={()=>abrirEditor(p)} style={{padding:'5px 12px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:11,cursor:'pointer'}}>✏️ Editar</button>
+                <button onClick={()=>eliminar(p.id)} style={{padding:'5px 12px',borderRadius:6,border:'1px solid rgba(239,68,68,0.3)',background:'transparent',color:'#f87171',fontSize:11,cursor:'pointer'}}>🗑️</button>
+              </div>
+            </div>
+          ))}
+          {propuestas.length===0&&(
+            <div style={{textAlign:'center',padding:60,color:C.muted,fontSize:13}}>
+              <div style={{fontSize:36,marginBottom:12}}>⚖️</div>
+              <div style={{fontWeight:600,marginBottom:6}}>No hay presupuestos aún</div>
+              <div style={{fontSize:11}}>Creá el primer presupuesto de honorarios profesionales</div>
             </div>
           )}
         </div>
@@ -10165,7 +10544,7 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
   );
 }
 
-function PropuestaPreviewIframe({ contenido, cliente, propActual }) {
+function PropuestaPreviewIframe({ contenido, cliente, propActual, previewTick=0 }) {
   const iframeRef = React.useRef(null);
   React.useEffect(() => {
     if (!contenido || !iframeRef.current) return;
@@ -10183,7 +10562,7 @@ function PropuestaPreviewIframe({ contenido, cliente, propActual }) {
       } catch {}
     };
     fetchHtml();
-  }, [contenido, cliente]);
+  }, [contenido, cliente, previewTick]);
   return <iframe ref={iframeRef} style={{width:"100%",minHeight:700,border:"none",borderRadius:12,background:"#FAF8F5"}} title="Preview propuesta"/>;
 }
 

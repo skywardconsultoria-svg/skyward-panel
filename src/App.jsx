@@ -9774,6 +9774,7 @@ const SERVICIOS_POR_FUERO = {
   Otros:['Consultoría','Redacción de contratos','Asesoría general','Mediación','Otros'],
 };
 const PROVINCIAS_AR = ['Buenos Aires','CABA','Catamarca','Chaco','Chubut','Córdoba','Corrientes','Entre Ríos','Formosa','Jujuy','La Pampa','La Rioja','Mendoza','Misiones','Neuquén','Río Negro','Salta','San Juan','San Luis','Santa Cruz','Santa Fe','Santiago del Estero','Tierra del Fuego','Tucumán'];
+const GASTOS_PREDEFINIDOS = ['Tasa de justicia','Edictos','Peritos','Sellados','Gastos de inscripción','Honorarios del mediador','Honorarios del escribano','Gastos de notificación','Certificaciones','Impuesto de sellos','Gastos de correspondencia','Gastos de traslado'];
 
 function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], onLeerNotificacion }) {
   // ── Vista ─────────────────────────────────────────────────────────────────
@@ -9837,7 +9838,9 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
   const [b3Anticipo, setB3Anticipo] = useState('');
   const [b3FormaPago, setB3FormaPago] = useState([]);
   const [b3Cuotas, setB3Cuotas] = useState('');
-  const [b3GastosNoInc, setB3GastosNoInc] = useState(['Tasa de justicia','Edictos','Peritos','Sellados','Gastos de inscripción']);
+  const [b3GastosNoInc, setB3GastosNoInc] = useState([]);
+  const [b3GastoCustom, setB3GastoCustom] = useState('');
+  const [cotizacion, setCotizacion] = useState(null);
   const [b3Validez, setB3Validez] = useState('15');
   const [b3Condiciones, setB3Condiciones] = useState('');
 
@@ -9850,6 +9853,23 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
     const t = setTimeout(() => setPreviewTick(n => n + 1), 400);
     return () => clearTimeout(t);
   }, [contenidoGenerado]);
+
+  // ── Cotización USD/JUL (dolarapi.com) ─────────────────────────────────────
+  useEffect(() => {
+    const fetchCotizacion = async () => {
+      try {
+        const r = await fetch('https://dolarapi.com/v1/dolares');
+        if (!r.ok) return;
+        const data = await r.json();
+        const blue = data.find(d => d.casa === 'blue');
+        const oficial = data.find(d => d.casa === 'oficial');
+        const now = new Date();
+        const fecha = now.toLocaleDateString('es-AR',{day:'numeric',month:'short'}) + ' ' + now.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+        setCotizacion({ blue: blue?.venta, oficial: oficial?.venta, fecha });
+      } catch(e) {}
+    };
+    fetchCotizacion();
+  }, []);
 
   // ── Helpers de estilo ─────────────────────────────────────────────────────
   const inputSt = {width:'100%',background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:'8px 12px',color:C.text,fontSize:13,fontFamily:'inherit',boxSizing:'border-box'};
@@ -10033,7 +10053,7 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
     setB3Modalidad('fijo'); setB3Valor(''); setB3Moneda('ARS'); setB3Etapas([{nombre:'',valor:''}]);
     setB3ValorHora(''); setB3Horas(''); setB3CuotaLitisPct(''); setB3Anticipo('');
     setB3FormaPago([]); setB3Cuotas('');
-    setB3GastosNoInc(['Tasa de justicia','Edictos','Peritos','Sellados','Gastos de inscripción']);
+    setB3GastosNoInc([]); setB3GastoCustom('');
     setB3Validez('15'); setB3Condiciones(''); setSelectedPlantillaId('');
   };
 
@@ -10209,7 +10229,7 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
                 <div style={fieldSt}><label style={labelSt}>Teléfono</label><input value={b1Tel} onChange={e=>setB1Tel(e.target.value)} style={inputSt}/></div>
                 <div style={fieldSt}><label style={labelSt}>Calle</label><input value={b1Calle} onChange={e=>setB1Calle(e.target.value)} placeholder="Av. Corrientes" style={inputSt}/></div>
                 <div style={fieldSt}><label style={labelSt}>Número</label><input value={b1Numero} onChange={e=>setB1Numero(e.target.value)} style={inputSt}/></div>
-                <div style={fieldSt}><label style={labelSt}>Piso / Depto</label><input value={b1Piso} onChange={e=>setB1Piso(e.target.value)} style={inputSt}/></div>
+                <div style={fieldSt}><label style={labelSt}>Piso / Depto <span style={{color:C.muted,fontWeight:400,textTransform:'none'}}>(opcional)</span></label><input value={b1Piso} onChange={e=>setB1Piso(e.target.value)} placeholder="Ej: 3° B" style={inputSt}/></div>
                 <div style={fieldSt}><label style={labelSt}>Ciudad</label><input value={b1Ciudad} onChange={e=>setB1Ciudad(e.target.value)} style={inputSt}/></div>
                 <div style={fieldSt}>
                   <label style={labelSt}>Provincia</label>
@@ -10306,24 +10326,48 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
                 </div>
               </div>
               {b3Modalidad==='fijo' && (
-                <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:10}}>
-                  <div style={fieldSt}><label style={labelSt}>Valor</label><input value={b3Valor} onChange={e=>setB3Valor(e.target.value)} placeholder="500.000" style={inputSt}/></div>
-                  <div style={fieldSt}><label style={labelSt}>Moneda</label>
-                    <select value={b3Moneda} onChange={e=>setB3Moneda(e.target.value)} style={inputSt}>
-                      {['ARS','USD','UVA'].map(m=><option key={m} value={m}>{m}</option>)}
-                    </select>
+                <div>
+                  <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:10}}>
+                    <div style={fieldSt}><label style={labelSt}>Valor</label><input value={b3Valor} onChange={e=>setB3Valor(e.target.value)} placeholder="500.000" style={inputSt}/></div>
+                    <div style={fieldSt}><label style={labelSt}>Moneda</label>
+                      <select value={b3Moneda} onChange={e=>setB3Moneda(e.target.value)} style={inputSt}>
+                        {['ARS','USD','UVA','JUL'].map(m=><option key={m} value={m}>{m}</option>)}
+                      </select>
+                    </div>
                   </div>
+                  {cotizacion && (b3Moneda==='USD'||b3Moneda==='UVA'||b3Moneda==='JUL') && (
+                    <div style={{display:'inline-flex',alignItems:'center',gap:8,background:C.accentGlow,border:`1px solid ${C.accent}33`,borderRadius:20,padding:'4px 12px',fontSize:11,color:C.text,marginBottom:8}}>
+                      <span style={{color:C.accent,fontWeight:600}}>●</span>
+                      <span>USD blue <strong>${cotizacion.blue?.toLocaleString('es-AR')}</strong></span>
+                      <span style={{color:C.muted}}>·</span>
+                      <span>USD oficial <strong>${cotizacion.oficial?.toLocaleString('es-AR')}</strong></span>
+                      <span style={{color:C.muted}}>·</span>
+                      <span style={{color:C.muted}}>act. {cotizacion.fecha}</span>
+                    </div>
+                  )}
                 </div>
               )}
               {b3Modalidad==='hora' && (
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
-                  <div style={fieldSt}><label style={labelSt}>Valor / hora</label><input value={b3ValorHora} onChange={e=>setB3ValorHora(e.target.value)} style={inputSt}/></div>
-                  <div style={fieldSt}><label style={labelSt}>Horas estimadas</label><input value={b3Horas} onChange={e=>setB3Horas(e.target.value)} style={inputSt}/></div>
-                  <div style={fieldSt}><label style={labelSt}>Moneda</label>
-                    <select value={b3Moneda} onChange={e=>setB3Moneda(e.target.value)} style={inputSt}>
-                      {['ARS','USD'].map(m=><option key={m} value={m}>{m}</option>)}
-                    </select>
+                <div>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
+                    <div style={fieldSt}><label style={labelSt}>Valor / hora</label><input value={b3ValorHora} onChange={e=>setB3ValorHora(e.target.value)} style={inputSt}/></div>
+                    <div style={fieldSt}><label style={labelSt}>Horas estimadas</label><input value={b3Horas} onChange={e=>setB3Horas(e.target.value)} style={inputSt}/></div>
+                    <div style={fieldSt}><label style={labelSt}>Moneda</label>
+                      <select value={b3Moneda} onChange={e=>setB3Moneda(e.target.value)} style={inputSt}>
+                        {['ARS','USD','JUL'].map(m=><option key={m} value={m}>{m}</option>)}
+                      </select>
+                    </div>
                   </div>
+                  {cotizacion && b3Moneda==='USD' && (
+                    <div style={{display:'inline-flex',alignItems:'center',gap:8,background:C.accentGlow,border:`1px solid ${C.accent}33`,borderRadius:20,padding:'4px 12px',fontSize:11,color:C.text,marginBottom:8}}>
+                      <span style={{color:C.accent,fontWeight:600}}>●</span>
+                      <span>USD blue <strong>${cotizacion.blue?.toLocaleString('es-AR')}</strong></span>
+                      <span style={{color:C.muted}}>·</span>
+                      <span>USD oficial <strong>${cotizacion.oficial?.toLocaleString('es-AR')}</strong></span>
+                      <span style={{color:C.muted}}>·</span>
+                      <span style={{color:C.muted}}>act. {cotizacion.fecha}</span>
+                    </div>
+                  )}
                 </div>
               )}
               {b3Modalidad==='cuota_litis' && (
@@ -10367,13 +10411,29 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
               </div>
               <div style={fieldSt}>
                 <label style={labelSt}>Gastos no incluidos</label>
-                {b3GastosNoInc.map((g,i)=>(
-                  <div key={i} style={{display:'flex',gap:6,marginBottom:6}}>
-                    <input value={g} onChange={e=>setB3GastosNoInc(prev=>{const n=[...prev];n[i]=e.target.value;return n;})} style={{...inputSt,flex:1}}/>
-                    <button onClick={()=>setB3GastosNoInc(prev=>prev.filter((_,j)=>j!==i))} style={{padding:'4px 8px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,cursor:'pointer',fontSize:12}}>×</button>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:10,background:C.bg,borderRadius:8,padding:'10px 12px',border:`1px solid ${C.border}`}}>
+                  {GASTOS_PREDEFINIDOS.map(g=>(
+                    <label key={g} style={{display:'flex',alignItems:'center',gap:6,cursor:'pointer',fontSize:12,padding:'2px 0'}}>
+                      <input type="checkbox" checked={b3GastosNoInc.includes(g)}
+                        onChange={e=>setB3GastosNoInc(prev=>e.target.checked?[...prev,g]:prev.filter(x=>x!==g))}
+                        style={{accentColor:C.accent,flexShrink:0}}/>
+                      {g}
+                    </label>
+                  ))}
+                </div>
+                {b3GastosNoInc.filter(g=>!GASTOS_PREDEFINIDOS.includes(g)).map((g,i)=>(
+                  <div key={g} style={{display:'flex',gap:6,marginBottom:6}}>
+                    <input value={g} readOnly style={{...inputSt,flex:1,color:C.muted}}/>
+                    <button onClick={()=>setB3GastosNoInc(prev=>prev.filter(x=>x!==g))} style={{padding:'4px 8px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,cursor:'pointer',fontSize:12}}>×</button>
                   </div>
                 ))}
-                <button onClick={()=>setB3GastosNoInc(prev=>[...prev,''])} style={{fontSize:11,color:C.accent,background:'transparent',border:'none',cursor:'pointer',padding:0}}>+ Agregar gasto</button>
+                <div style={{display:'flex',gap:8,marginTop:4}}>
+                  <input value={b3GastoCustom} onChange={e=>setB3GastoCustom(e.target.value)}
+                    onKeyDown={e=>{if(e.key==='Enter'&&b3GastoCustom.trim()){setB3GastosNoInc(prev=>[...prev,b3GastoCustom.trim()]);setB3GastoCustom('');}}}
+                    placeholder="Agregar gasto personalizado..." style={{...inputSt,flex:1}}/>
+                  <button onClick={()=>{if(b3GastoCustom.trim()){setB3GastosNoInc(prev=>[...prev,b3GastoCustom.trim()]);setB3GastoCustom('');}}}
+                    style={{padding:'8px 14px',borderRadius:8,border:'none',background:C.accent,color:'white',fontSize:12,fontWeight:600,cursor:'pointer',flexShrink:0}}>+</button>
+                </div>
               </div>
               <div style={fieldSt}><label style={labelSt}>Condiciones adicionales</label><textarea value={b3Condiciones} onChange={e=>setB3Condiciones(e.target.value)} rows={2} style={{...inputSt,resize:'vertical',lineHeight:1.5}}/></div>
             </div>

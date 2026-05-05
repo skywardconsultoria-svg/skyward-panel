@@ -3291,7 +3291,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
   const [editTurnoData, setEditTurnoData] = useState(null);
   const [savingEditTurno, setSavingEditTurno] = useState(false);
   const [errEditTurno, setErrEditTurno] = useState(null);
-  const FORM_TURNO_INIT = { tratamiento_id:"", tratamiento_libre:"", profesional_id:"", fecha:"", hora_inicio:"", hora_fin:"", monto:"", moneda:"", forma_pago:(campos?.metodos_pago||"efectivo").split(",")[0]||"efectivo", cuotas:1, estado_pago:"pendiente", notas_pago:"", tipo_turno:"tratamiento" };
+  const FORM_TURNO_INIT = { tratamiento_id:"", tratamiento_libre:"", profesional_id:"", fecha:"", hora_inicio:"", hora_fin:"", monto:"", moneda:"", forma_pago:(campos?.metodos_pago||"efectivo").split(",")[0]||"efectivo", cuotas:1, estado_pago:"pendiente", notas_pago:"", tipo_turno:"tratamiento", tipo_consulta:"paga" };
   const FORM_PAC_INIT = { nombre:"", telefono:"", documento:"", email:"", notas:"", notas:"", fecha_nacimiento:"" };
   const [formTurno, setFormTurno] = useState(FORM_TURNO_INIT);
   const [savingTurno, setSavingTurno] = useState(false);
@@ -3629,6 +3629,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
         notas_pago: formTurno.notas_pago,
         duracion_minutos: trat?.duracion_minutos||60,
         tipo_turno: formTurno.tipo_turno || trat?.tipo || "tratamiento",
+        tipo_consulta: formTurno.tipo_consulta || "paga",
         tratamiento_id: formTurno.tratamiento_id || null,
         prospecto_id: selectedProspect?.id || null,
       })});
@@ -5833,14 +5834,26 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 ) : d ? (<>
 
                 <div style={{display:"flex",gap:12,marginBottom:12,flexWrap:"wrap"}}>
-                  <Card icon="📅" label="Turnos este mes" value={fmtNum(d.turnos.mes)} pct={d.turnos.pct_cambio}
-                    sub={`${d.turnos.hoy} hoy · ${d.turnos.pendientes} próximos`} color="#6366f1"/>
+                  {/* Consultas este mes con mini breakdown */}
+                  <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:isMobile?14:20,flex:1,minWidth:isMobile?"calc(50% - 6px)":200}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+                      <div style={{width:34,height:34,borderRadius:10,background:"#6366f122",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>⚖️</div>
+                      <div style={{fontSize:12,color:C.muted,fontWeight:500}}>Consultas este mes</div>
+                    </div>
+                    <div style={{fontSize:isMobile?18:24,fontWeight:700,color:C.text,lineHeight:1.2,marginBottom:4}}>{fmtNum(d.turnos.mes)}</div>
+                    {d.turnos.pct_cambio !== undefined && <div style={{marginBottom:8}}>{(() => { const v=parseFloat(d.turnos.pct_cambio)||0; return <span style={{fontSize:11,color:v>=0?"#10b981":"#ef4444",fontWeight:600}}>{v>=0?"^":"v"}{Math.abs(v)}%</span>; })()}</div>}
+                    <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                      {[{l:"💰 Paga",v:d.consultas_breakdown?.paga||0,c:"#10b981"},{l:"🆓 Gratis",v:d.consultas_breakdown?.gratis||0,c:C.muted},{l:"🤝 Seña",v:d.consultas_breakdown?.seña||0,c:C.accentLight}].map((t,i)=>(
+                        <div key={i} style={{fontSize:10,padding:"3px 8px",borderRadius:20,background:C.bg,border:`1px solid ${C.border}`,color:t.c,fontWeight:600,whiteSpace:"nowrap"}}>{t.l} {t.v}</div>
+                      ))}
+                    </div>
+                  </div>
                   <Card icon="💰" label="Facturado este mes" value={fmtMoney(d.facturacion.mes)} pct={d.facturacion.pct_cambio}
                     sub={`Total acumulado: ${fmtMoney(d.facturacion.total)}`} color="#10b981"/>
                   <Card icon="💬" label="Leads del bot" value={fmtNum(d.prospectos.mes)} pct={d.prospectos.pct_cambio}
                     sub={`${d.prospectos.convertidos} convertidos · ${d.prospectos.tasa_conversion}% conversión`} color="#f59e0b"/>
-                  <Card icon="👥" label="Pacientes nuevos" value={fmtNum(d.pacientes_nuevos_mes)}
-                    sub="Este mes" color="#8b5cf6"/>
+                  <Card icon="📁" label="Casos este mes" value={fmtNum(d.casos_nuevos_mes||d.pacientes_nuevos_mes)}
+                    sub="Nuevos clientes" color="#8b5cf6"/>
                 </div>
 
                 {/* Fila 2 - gráfico + próximos turnos */}
@@ -5848,7 +5861,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
                   {/* Gráfico turnos 30 dias */}
                   <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,flex:1,minWidth:280}}>
-                    <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>Turnos - últimos 30 dias</div>
+                    <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>Consultas - últimos 30 días</div>
                     <div style={{fontSize:11,color:C.muted,marginBottom:16}}>Barras diarias</div>
                     {dias.length === 0 ? (
                       <div style={{textAlign:"center",color:C.muted,fontSize:12,padding:"20px 0"}}>Sin datos</div>
@@ -5876,8 +5889,8 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
                   {/* Próximos turnos */}
                   <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,flex:1.4,minWidth:300}}>
-                    <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>Próximos 7 dias</div>
-                    <div style={{fontSize:11,color:C.muted,marginBottom:14}}>{d.proximos_turnos.length} turnos agendados</div>
+                    <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>Próximas consultas</div>
+                    <div style={{fontSize:11,color:C.muted,marginBottom:14}}>{d.proximos_turnos.length} consultas en los próximos 7 días</div>
                     {d.proximos_turnos.length === 0 ? (
                       <div style={{textAlign:"center",color:C.muted,fontSize:12,padding:"20px 0"}}>Sin turnos próximos</div>
                     ) : d.proximos_turnos.map((t,i) => {
@@ -8231,6 +8244,17 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                             {(campos?.metodos_pago||"efectivo,transferencia").split(",").filter(Boolean).map(v=><option key={v} value={v}>{METODOS_LABELS[v]||v}</option>)}
                           </select></div>
                       </div>
+                      <div style={{marginBottom:14}}>
+                        <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:6}}>Tipo de consulta</label>
+                        <div style={{display:"flex",gap:8}}>
+                          {[{v:"paga",l:"💰 Paga"},{v:"gratis",l:"🆓 Gratis"},{v:"seña",l:"🤝 Seña"}].map(t=>(
+                            <div key={t.v} onClick={()=>setFormTurno({...formTurno,tipo_consulta:t.v})}
+                              style={{flex:1,textAlign:"center",padding:"8px 4px",borderRadius:8,border:`1px solid ${formTurno.tipo_consulta===t.v?C.accent:C.border}`,background:formTurno.tipo_consulta===t.v?C.accentGlow:"transparent",cursor:"pointer",fontSize:12,fontWeight:formTurno.tipo_consulta===t.v?700:400,color:formTurno.tipo_consulta===t.v?C.accentLight:C.muted,transition:"all .15s"}}>
+                              {t.l}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                       <Field label="Notas" value={formTurno.notas_pago} onChange={v=>setFormTurno({...formTurno,notas_pago:v})} placeholder="Observaciones..." textarea/>
                       {errTurno && <div style={{background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,padding:"8px 12px",fontSize:12,color:C.red,marginBottom:12}}>{errTurno}</div>}
                       <div style={{display:"flex",gap:8,justifyContent:"flex-end",marginTop:12}}>
@@ -9607,7 +9631,6 @@ function HonorariosDashboard({ client, API, aH, jH }) {
 }
 
 function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], onLeerNotificacion }) {
-  const C = {bg:"#0a0a0f",surface:"#111827",border:"#1e2a38",text:"#e2e8f0",muted:"#64748b",accent:"#6366f1",accentLight:"#818cf8",accentGlow:"rgba(99,102,241,0.12)",green:"#10b981",red:"#ef4444"};
   const [vista, setVista] = useState('lista'); // lista | editor | preview
   const [propuestas, setPropuestas] = useState([]);
   const [plantillas, setPlantillas] = useState([]);
@@ -9950,10 +9973,10 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
     <div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
         <div>
-          <div style={{fontSize:16,fontWeight:700,marginBottom:2}}>📄 Propuestas</div>
-          <div style={{fontSize:12,color:C.muted}}>Generá propuestas visuales con IA</div>
+          <div style={{fontSize:16,fontWeight:700,marginBottom:2}}>⚖️ Honorarios</div>
+          <div style={{fontSize:12,color:C.muted}}>Presupuestos de honorarios con IA</div>
         </div>
-        <button onClick={()=>nueva()} style={{padding:"9px 18px",borderRadius:8,border:"none",background:C.accent,color:"white",fontSize:13,fontWeight:600,cursor:"pointer"}}>+ Nueva propuesta</button>
+        <button onClick={()=>nueva()} style={{padding:"9px 18px",borderRadius:8,border:"none",background:C.accent,color:"white",fontSize:13,fontWeight:600,cursor:"pointer"}}>+ Nuevo presupuesto</button>
       </div>
 
       {/* Banner propuestas pendientes de envío */}
@@ -9969,33 +9992,22 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
             if (prop) abrirEditor(prop);
             onLeerNotificacion?.(n.id);
           }} style={{padding:"5px 12px",borderRadius:6,border:"none",background:"#10b981",color:"white",fontSize:11,fontWeight:600,cursor:"pointer",flexShrink:0}}>
-            Ver propuesta
+            Ver presupuesto
           </button>
           <button onClick={()=>onLeerNotificacion?.(n.id)} style={{padding:"5px 8px",borderRadius:6,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:11,cursor:"pointer"}}>×</button>
         </div>
       ))}
 
-      {/* Tabs */}
-      <div style={{display:"flex",gap:8,marginBottom:20}}>
-        {[{v:'propuestas',l:`⚖️ Honorarios (${propuestas.length})`},{v:'plantillas',l:`📋 Plantillas (${plantillas.length})`}].map(t=>(
-          <button key={t.v} onClick={()=>setFiltro(t.v)}
-            style={{padding:"7px 16px",borderRadius:8,border:`1px solid ${filtro===t.v?C.accent:C.border}`,
-              background:filtro===t.v?"rgba(99,102,241,0.15)":C.surface,
-              color:filtro===t.v?C.accentLight:C.muted,fontSize:12,fontWeight:600,cursor:"pointer"}}>
-            {t.l}
-          </button>
-        ))}
-      </div>
-
       {cargando ? <div style={{textAlign:"center",padding:40,color:C.muted}}>Cargando...</div> : (
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
-          {(filtro==='plantillas' ? plantillas : propuestas).map(p => (
+          {propuestas.map(p => (
             <div key={p.id} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:"14px 16px",display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:36,height:36,borderRadius:9,background:C.accentGlow,border:`1px solid ${C.accent}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>⚖️</div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:13,fontWeight:600,color:C.text,marginBottom:2}}>{p.titulo||'Sin título'}</div>
                 <div style={{fontSize:11,color:C.muted}}>
                   {p.paciente_nombre && <span>{p.paciente_nombre} · </span>}
-                  {p.estado==='enviada' ? <span style={{color:"#10b981"}}>✅ Enviada</span> : <span>Borrador</span>}
+                  {p.estado==='enviada' ? <span style={{color:"#10b981"}}>✅ Enviado</span> : <span>Borrador</span>}
                   {' · '}{new Date(p.actualizado_en).toLocaleDateString('es-AR',{day:'numeric',month:'short'})}
                 </div>
               </div>
@@ -10006,9 +10018,11 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
               </div>
             </div>
           ))}
-          {(filtro==='plantillas' ? plantillas : propuestas).length === 0 && (
-            <div style={{textAlign:"center",padding:40,color:C.muted,fontSize:13}}>
-              {filtro==='plantillas' ? 'No hay plantillas guardadas aún' : 'No hay propuestas aún'}
+          {propuestas.length === 0 && (
+            <div style={{textAlign:"center",padding:60,color:C.muted,fontSize:13}}>
+              <div style={{fontSize:32,marginBottom:12}}>⚖️</div>
+              <div style={{fontWeight:600,marginBottom:4}}>No hay presupuestos aún</div>
+              <div style={{fontSize:11}}>Creá el primer presupuesto de honorarios</div>
             </div>
           )}
         </div>

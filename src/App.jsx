@@ -68,6 +68,10 @@ const _storedTheme = typeof localStorage !== 'undefined' ? localStorage.getItem(
 let C = _storedTheme === 'light' ? LIGHT_C : DARK_C;
 const _storedScale = typeof localStorage !== 'undefined' ? (localStorage.getItem('skyward_ui_scale')||'sm') : 'sm';
 const UI_SCALE = _storedScale === 'lg' ? 1.5 : _storedScale === 'md' ? 1.3 : 1;
+// Aplicar zoom al elemento raíz para que vh/vw escalen correctamente con los modales
+if (typeof document !== 'undefined' && UI_SCALE !== 1) {
+  document.documentElement.style.zoom = UI_SCALE;
+}
 
 function timeAgo(d) {
   const s = Math.floor((Date.now() - new Date(d)) / 1000);
@@ -4072,7 +4076,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
   const isMobile = useIsMobile();
 
   return (
-    <div style={{zoom:UI_SCALE,transformOrigin:"top left"}}>
+    <>
     {/* Banner solicitudes pendientes — fuera del overflow:hidden */}
     {solicitudesPendientes > 0 && (
       <div className="slide-down" onClick={()=>{
@@ -8241,7 +8245,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
           }}
         />
       )}
-    </div>
+    </>
   );
 }
 

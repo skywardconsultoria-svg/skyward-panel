@@ -4218,16 +4218,6 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 onMouseEnter={e=>e.currentTarget.style.color=C.text} onMouseLeave={e=>e.currentTarget.style.color=C.muted}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
               </div>
-              {/* Selector de tamaño de texto */}
-              <div style={{display:"flex",alignItems:"center",gap:2,height:44}}>
-                {[{k:'sm',l:'A',s:10},{k:'md',l:'A',s:13},{k:'lg',l:'A',s:16}].map(({k,l,s})=>(
-                  <button key={k} onClick={()=>{localStorage.setItem('skyward_ui_scale',k);window.location.reload();}}
-                    title={k==='sm'?'Tamaño normal':k==='md'?'Tamaño grande':'Tamaño muy grande'}
-                    style={{background:_storedScale===k?C.accentGlow:"transparent",border:`1px solid ${_storedScale===k?C.accent:C.border}`,borderRadius:5,width:22,height:22,cursor:"pointer",color:_storedScale===k?C.accentLight:C.muted,fontSize:s,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1,padding:0,fontFamily:"Georgia,serif"}}>
-                    {l}
-                  </button>
-                ))}
-              </div>
               <div onClick={()=>{const next=localStorage.getItem('skyward_theme')==='light'?'dark':'light';localStorage.setItem('skyward_theme',next);window.location.reload();}} title={localStorage.getItem('skyward_theme')==='light'?"Modo oscuro":"Modo claro"}
                 style={{height:44,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:C.muted,fontSize:16,transition:"color .15s"}}
                 onMouseEnter={e=>e.currentTarget.style.color=C.text} onMouseLeave={e=>e.currentTarget.style.color=C.muted}>
@@ -11481,6 +11471,16 @@ function EdgePanel({ token, user, onLogout }) {
             ))}
           </div>
           )}
+          {/* Selector de tamaño de texto */}
+          <div style={{display:"flex",alignItems:"center",gap:2,flexShrink:0}}>
+            {[{k:'sm',l:'A',s:10},{k:'md',l:'A',s:13},{k:'lg',l:'A',s:16}].map(({k,l,s})=>(
+              <button key={k} onClick={()=>{localStorage.setItem('skyward_ui_scale',k);window.location.reload();}}
+                title={k==='sm'?'Tamaño normal':k==='md'?'Tamaño grande':'Tamaño muy grande'}
+                style={{background:_storedScale===k?C.accentGlow:"transparent",border:`1px solid ${_storedScale===k?C.accent:C.border}`,borderRadius:5,width:22,height:22,cursor:"pointer",color:_storedScale===k?C.accentLight:C.muted,fontSize:s,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1,padding:0,fontFamily:"Georgia,serif"}}>
+                {l}
+              </button>
+            ))}
+          </div>
           <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
             <div style={{width:8,height:8,background:error?C.red:C.green,borderRadius:"50%",animation:"pulse 2s infinite",flexShrink:0}}/>
             <div style={{width:26,height:26,background:C.accentGlow,borderRadius:"50%",border:`1px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,flexShrink:0,color:C.accentLight,fontWeight:600}}>{user?.nombre?.[0]||"A"}</div>

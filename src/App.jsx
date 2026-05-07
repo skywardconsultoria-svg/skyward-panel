@@ -68,10 +68,15 @@ const _storedTheme = typeof localStorage !== 'undefined' ? localStorage.getItem(
 let C = _storedTheme === 'light' ? LIGHT_C : DARK_C;
 const _storedScale = typeof localStorage !== 'undefined' ? (localStorage.getItem('skyward_ui_scale')||'sm') : 'sm';
 const UI_SCALE = _storedScale === 'lg' ? 1.5 : _storedScale === 'md' ? 1.3 : 1;
-// Aplicar zoom al elemento raíz para que vh/vw escalen correctamente con los modales
+// Aplicar zoom al elemento raíz para escalar toda la UI
 if (typeof document !== 'undefined' && UI_SCALE !== 1) {
   document.documentElement.style.zoom = UI_SCALE;
 }
+// vh no se ajusta al zoom CSS, hay que calcular la altura de modales manualmente
+const _winH = typeof window !== 'undefined' ? window.innerHeight : 800;
+const MH92 = `${Math.floor(_winH * 0.92 / UI_SCALE)}px`;
+const MH90 = `${Math.floor(_winH * 0.90 / UI_SCALE)}px`;
+const MH85 = `${Math.floor(_winH * 0.85 / UI_SCALE)}px`;
 
 function timeAgo(d) {
   const s = Math.floor((Date.now() - new Date(d)) / 1000);
@@ -400,7 +405,7 @@ function OnboardingChecklist({ cliente, onClose, API, jH }) {
 
   return (
     <div style={{position:"fixed",inset:0,z:1000,background:"rgba(0,0,0,0.85)",backdropFilter:"blur(12px)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,zIndex:1000}} onClick={onClose}>
-      <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:20,width:"100%",maxWidth:720,maxHeight:"90vh",display:"flex",flexDirection:"column",overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
+      <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:20,width:"100%",maxWidth:720,maxHeight:MH90,display:"flex",flexDirection:"column",overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
 
         {/* Header */}
         <div style={{padding:"24px 28px",borderBottom:`1px solid ${C.border}`,flexShrink:0}}>
@@ -1463,7 +1468,7 @@ function FichaClinicaModal({ client, turno, paciente, onClose, onSaved }) {
 
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',zIndex:3000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
-      <div style={{background:C.surface,borderRadius:16,width:'100%',maxWidth:560,maxHeight:'90vh',display:'flex',flexDirection:'column',border:`1px solid ${C.border}`}}>
+      <div style={{background:C.surface,borderRadius:16,width:'100%',maxWidth:560,maxHeight:MH90,display:'flex',flexDirection:'column',border:`1px solid ${C.border}`}}>
 
         {/* Header */}
         <div style={{padding:'18px 22px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
@@ -1701,7 +1706,7 @@ function EnviarConsentimientoModal({ client, paciente, turno_id, onClose }) {
 
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',zIndex:3000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
-      <div style={{background:C.surface,borderRadius:16,width:'100%',maxWidth:500,maxHeight:'85vh',display:'flex',flexDirection:'column',border:`1px solid ${C.border}`}}>
+      <div style={{background:C.surface,borderRadius:16,width:'100%',maxWidth:500,maxHeight:MH85,display:'flex',flexDirection:'column',border:`1px solid ${C.border}`}}>
 
         <div style={{padding:'18px 22px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
           <div>
@@ -7650,7 +7655,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
       {/* Modal importación CSV/Excel */}
       {showImport && (
         <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}}>
-          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:28,width:620,maxWidth:"95vw",maxHeight:"92vh",overflowY:"auto"}}>
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:28,width:620,maxWidth:"95vw",maxHeight:MH92,overflowY:"auto"}}>
 
             {/* Header */}
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
@@ -7858,7 +7863,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
       {/* Modal nuevo resultado */}
       {showNuevoRes && (
         <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.8)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}}>
-          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:28,width:540,maxWidth:"95vw",maxHeight:"90vh",overflowY:"auto"}}>
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:28,width:540,maxWidth:"95vw",maxHeight:MH90,overflowY:"auto"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
               <div style={{fontSize:15,fontWeight:700}}>Agregar resultado</div>
               <button onClick={()=>setShowNuevoRes(false)} style={{background:"transparent",border:"none",color:C.muted,fontSize:20,cursor:"pointer"}}>×</button>
@@ -7944,7 +7949,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
         const pacienteActual = esEdicion ? (selPac || {nombre: editTurnoData?.paciente_nombre}) : turnoPaciente;
         return (
           <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.8)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}}>
-            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:28,width:560,maxWidth:"96vw",maxHeight:"92vh",overflowY:"auto"}}>
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:28,width:560,maxWidth:"96vw",maxHeight:MH92,overflowY:"auto"}}>
 
               {/* Header */}
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}>

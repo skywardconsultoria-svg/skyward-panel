@@ -5,6 +5,21 @@
 //   const _storedTheme = localStorage.getItem('skyward_theme');
 //   let C = _storedTheme === 'light' ? LIGHT_C : DARK_C;
 
+export const TYPE = {
+  serif: "'Playfair Display', Georgia, serif",
+  sans:  "'Inter', 'Segoe UI', system-ui, sans-serif",
+  mono:  "'DM Mono', 'Courier New', monospace",
+  scale: {
+    display: { fontSize: "3rem",     fontWeight: 700 },
+    h1:      { fontSize: "1.75rem",  fontWeight: 600 },
+    h2:      { fontSize: "1.25rem",  fontWeight: 600 },
+    h3:      { fontSize: "0.94rem",  fontWeight: 600 },
+    body:    { fontSize: "0.875rem", fontWeight: 400 },
+    caption: { fontSize: "0.75rem",  fontWeight: 400 },
+    label:   { fontSize: "0.69rem",  fontWeight: 500 },
+  },
+};
+
 export const DARK_C = {
   bg:"#0c0a07", surface:"#141109", surfaceHover:"#1c1710",
   border:"#2a2016", accent:"#E84E0F", accentLight:"#F39200",

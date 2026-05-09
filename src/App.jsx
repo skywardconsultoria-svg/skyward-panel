@@ -5675,7 +5675,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
         {/* -- MÓDULO DOCTOR -- */}
         {activeTab === "doctor" && (
-          <DoctorModule C={C} />
+          <DoctorModule C={C} clienteId={client?.id} />
         )}
 
         {/* -- DASHBOARD / INICIO -- */}
@@ -11404,7 +11404,7 @@ function EdgePanel({ token, user, onLogout }) {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
         html, body, #root { height: 100%; background: #0a0a0f; }
         body { overflow: hidden; }
@@ -11424,7 +11424,7 @@ function EdgePanel({ token, user, onLogout }) {
         * { -webkit-tap-highlight-color: transparent; }
       `}</style>
 
-      <div style={{fontFamily:"'DM Sans','Segoe UI',sans-serif",background:C.bg,height:APP_H,color:C.text,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <div style={{fontFamily:"'Inter','Segoe UI',system-ui,sans-serif",background:C.bg,height:APP_H,color:C.text,display:"flex",flexDirection:"column",overflow:"hidden"}}>
         {/* Banner global: prospectos listos para agendar */}
         {prospectos.filter(p => p.listo_para_cierre && !p.horario_elegido).length > 0 && (
           <div className="slide-down" style={{background:"linear-gradient(90deg,rgba(249,115,22,0.15),rgba(239,68,68,0.1))",borderBottom:"2px solid #f97316",padding:"7px 16px",display:"flex",alignItems:"center",gap:10,zIndex:200,flexShrink:0,flexWrap:"wrap"}}>

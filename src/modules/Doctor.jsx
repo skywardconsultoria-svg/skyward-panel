@@ -1,0 +1,929 @@
+/**
+ * modules/Doctor.jsx — Módulo de gestión jurídica
+ * Fase 1: Expedientes CRUD (lista/kanban, detalle, personas, movimientos)
+ * Fuente de verdad: DOCTOR.md
+ */
+import React, { useState, useEffect, useCallback } from "react";
+import { API, jH, aH } from "../utils/api";
+import { validarCUIT, validarDNI, formatCUIT } from "../lib/cuit";
+import {
+  FUEROS, JURISDICCIONES, TIPOS_PROCESO, ETAPAS_EXPEDIENTE,
+  ESTADOS_EXPEDIENTE, PRIORIDADES, ROLES_PERSONA, TIPOS_MOVIMIENTO,
+  DOC_TIPOS, CATEGORIAS_AFIP, MONEDAS,
+} from "../lib/catalogos";
+
+// ── Helpers ───────────────────────────────────────────────────
+
+function labelDe(catalogo, val) {
+  return catalogo.find((x) => x.value === val)?.label ?? val ?? "—";
+}
+
+function fmtFecha(iso) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+function Spinner({ C }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 40 }}>
+      <div style={{ width: 28, height: 28, border: `2px solid ${C.border}`, borderTop: `2px solid ${C.accent}`, borderRadius: "50%", animation: "spin .8s linear infinite" }} />
+    </div>
+  );
+}
+
+function EmptyState({ C, icon, title, sub }) {
+  return (
+    <div style={{ textAlign: "center", padding: "60px 20px", color: C.muted }}>
+      <div style={{ fontSize: 40, marginBottom: 12 }}>{icon}</div>
+      <div style={{ fontSize: 15, fontWeight: 600, color: C.text, marginBottom: 4 }}>{title}</div>
+      {sub && <div style={{ fontSize: 12 }}>{sub}</div>}
+    </div>
+  );
+}
+
+function Placeholder({ C, fase }) {
+  return (
+    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ textAlign: "center", padding: 40 }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>🚧</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 8 }}>Próximamente</div>
+        <div style={{ fontSize: 13, color: C.muted }}>Disponible en {fase}</div>
+      </div>
+    </div>
+  );
+}
+
+// Badge de etapa/estado con color
+const ETAPA_COLOR = {
+  inicial: "#6366f1", prueba: "#f59e0b", alegatos: "#8b5cf6",
+  sentencia: "#3b82f6", ejecucion: "#10b981", archivado: "#6b7280",
+};
+const ESTADO_COLOR = {
+  activo: "#10b981", suspendido: "#f59e0b", terminado: "#6366f1", archivado: "#6b7280",
+};
+const PRIORIDAD_COLOR = {
+  baja: "#6b7280", media: "#3b82f6", alta: "#f59e0b", urgente: "#ef4444",
+};
+
+function Chip({ label, color }) {
+  return (
+    <span style={{
+      display: "inline-block", padding: "2px 8px", borderRadius: 99,
+      fontSize: 11, fontWeight: 600, letterSpacing: ".3px",
+      background: `${color}22`, color, border: `1px solid ${color}44`,
+    }}>
+      {label}
+    </span>
+  );
+}
+
+// ── Input / Select helpers ────────────────────────────────────
+
+function Field({ C, label, required, children }) {
+  return (
+    <div>
+      <label style={{ display: "block", fontSize: 11, color: C.muted, marginBottom: 4, fontWeight: 500 }}>
+        {label}{required && <span style={{ color: C.accent }}> *</span>}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+const inputSt = (C) => ({
+  width: "100%", padding: "8px 10px", background: C.bg,
+  border: `1px solid ${C.border}`, borderRadius: 8, color: C.text,
+  fontSize: 13, fontFamily: "inherit", boxSizing: "border-box",
+});
+
+function Input({ C, ...props }) {
+  return <input style={inputSt(C)} {...props} />;
+}
+
+function Sel({ C, options, ...props }) {
+  return (
+    <select style={inputSt(C)} {...props}>
+      <option value="">— seleccionar —</option>
+      {options.map((o) => (
+        <option key={o.value} value={o.value}>{o.label}</option>
+      ))}
+    </select>
+  );
+}
+
+function Btn({ C, variant = "primary", style = {}, ...props }) {
+  const base = {
+    padding: "8px 16px", borderRadius: 8, border: "none",
+    cursor: "pointer", fontSize: 13, fontWeight: 600, fontFamily: "inherit",
+    transition: "opacity .15s",
+  };
+  const styles = {
+    primary: { background: C.accent, color: "white" },
+    ghost:   { background: "transparent", color: C.muted, border: `1px solid ${C.border}` },
+    danger:  { background: "#ef444420", color: "#ef4444", border: "1px solid #ef444440" },
+  };
+  return <button style={{ ...base, ...styles[variant], ...style }} {...props} />;
+}
+
+// ── Formulario: Persona inline ────────────────────────────────
+
+function PersonaForm({ C, onSave, onCancel }) {
+  const [f, setF] = useState({ tipo: "fisica", nombre: "", apellido: "", razon_social: "", doc_tipo: "DNI", doc_numero: "", cuit_validado: false, email: "", telefono: "", notas: "" });
+  const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
+
+  const validarDoc = () => {
+    if (!f.doc_numero) return { valido: true };
+    if (f.doc_tipo === "DNI") return validarDNI(f.doc_numero);
+    if (f.doc_tipo === "CUIT" || f.doc_tipo === "CUIL") return validarCUIT(f.doc_numero);
+    return { valido: true };
+  };
+
+  const handleSave = async () => {
+    if (f.tipo === "fisica" && !f.nombre) return setErr("El nombre es obligatorio");
+    if (f.tipo === "juridica" && !f.razon_social) return setErr("La razón social es obligatoria");
+
+    const docCheck = validarDoc();
+    if (!docCheck.valido) return setErr(docCheck.mensaje);
+
+    setLoading(true);
+    try {
+      const payload = { ...f, cuit_validado: docCheck.valido };
+      if (f.doc_tipo === "CUIT" || f.doc_tipo === "CUIL") {
+        payload.doc_numero = formatCUIT(f.doc_numero);
+      }
+      const res = await fetch(`${API}/api/doctor/personas`, { method: "POST", headers: jH(), body: JSON.stringify(payload) });
+      if (!res.ok) throw new Error((await res.json()).error);
+      const data = await res.json();
+      onSave(data);
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 20, marginTop: 12 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, color: C.text }}>Nueva persona</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field C={C} label="Tipo">
+          <Sel C={C} value={f.tipo} onChange={(e) => set("tipo", e.target.value)} options={[{ value: "fisica", label: "Persona física" }, { value: "juridica", label: "Persona jurídica" }]} />
+        </Field>
+        {f.tipo === "fisica" ? (
+          <>
+            <Field C={C} label="Nombre" required><Input C={C} value={f.nombre} onChange={(e) => set("nombre", e.target.value)} /></Field>
+            <Field C={C} label="Apellido"><Input C={C} value={f.apellido} onChange={(e) => set("apellido", e.target.value)} /></Field>
+          </>
+        ) : (
+          <Field C={C} label="Razón social" required style={{ gridColumn: "span 2" }}>
+            <Input C={C} value={f.razon_social} onChange={(e) => set("razon_social", e.target.value)} />
+          </Field>
+        )}
+        <Field C={C} label="Tipo documento">
+          <Sel C={C} value={f.doc_tipo} onChange={(e) => set("doc_tipo", e.target.value)} options={DOC_TIPOS} />
+        </Field>
+        <Field C={C} label="Número documento">
+          <Input C={C} value={f.doc_numero} onChange={(e) => set("doc_numero", e.target.value)} placeholder={f.doc_tipo === "DNI" ? "12345678" : "20-12345678-9"} />
+        </Field>
+        <Field C={C} label="Email"><Input C={C} type="email" value={f.email} onChange={(e) => set("email", e.target.value)} /></Field>
+        <Field C={C} label="Teléfono"><Input C={C} value={f.telefono} onChange={(e) => set("telefono", e.target.value)} /></Field>
+      </div>
+      {err && <div style={{ color: "#ef4444", fontSize: 12, marginTop: 8 }}>{err}</div>}
+      <div style={{ display: "flex", gap: 8, marginTop: 16, justifyContent: "flex-end" }}>
+        <Btn C={C} variant="ghost" onClick={onCancel}>Cancelar</Btn>
+        <Btn C={C} onClick={handleSave} disabled={loading}>{loading ? "Guardando…" : "Crear persona"}</Btn>
+      </div>
+    </div>
+  );
+}
+
+// ── Personas del expediente ───────────────────────────────────
+
+function PersonasTab({ C, expedienteId }) {
+  const [personas, setPersonas] = useState([]);
+  const [busqueda, setBusqueda] = useState("");
+  const [resultados, setResultados] = useState([]);
+  const [rolSel, setRolSel] = useState("");
+  const [personaSel, setPersonaSel] = useState(null);
+  const [showNueva, setShowNueva] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+
+  const load = useCallback(async () => {
+    try {
+      const r = await fetch(`${API}/api/doctor/expedientes/${expedienteId}/personas`, { headers: aH() });
+      if (r.ok) setPersonas(await r.json());
+    } catch (e) { /* silenciar */ } finally { setLoading(false); }
+  }, [expedienteId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const buscar = async (q) => {
+    setBusqueda(q);
+    if (q.length < 2) { setResultados([]); return; }
+    const r = await fetch(`${API}/api/doctor/personas?q=${encodeURIComponent(q)}`, { headers: aH() });
+    if (r.ok) setResultados(await r.json());
+  };
+
+  const asociar = async () => {
+    if (!personaSel || !rolSel) return setErr("Seleccioná una persona y un rol");
+    setErr("");
+    const r = await fetch(`${API}/api/doctor/expedientes/${expedienteId}/personas`, {
+      method: "POST", headers: jH(),
+      body: JSON.stringify({ persona_id: personaSel.id, rol: rolSel }),
+    });
+    if (r.ok) { setPersonaSel(null); setBusqueda(""); setResultados([]); setRolSel(""); load(); }
+    else { const d = await r.json(); setErr(d.error); }
+  };
+
+  const desasociar = async (personaId, rol) => {
+    await fetch(`${API}/api/doctor/expedientes/${expedienteId}/personas/${personaId}/${rol}`, { method: "DELETE", headers: aH() });
+    load();
+  };
+
+  const onPersonaCreada = (p) => { setPersonaSel(p); setShowNueva(false); setBusqueda(`${p.nombre || ""} ${p.apellido || p.razon_social || ""}`.trim()); };
+
+  if (loading) return <Spinner C={C} />;
+
+  return (
+    <div>
+      {/* Personas existentes */}
+      {personas.length === 0
+        ? <EmptyState C={C} icon="👥" title="Sin partes asociadas" sub="Asociá actores, demandados, peritos u otros intervinientes." />
+        : (
+          <div style={{ marginBottom: 24 }}>
+            {personas.map((p) => (
+              <div key={`${p.id}-${p.rol}`} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: `1px solid ${C.border}` }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>
+                    {p.tipo === "juridica" ? p.razon_social : `${p.nombre || ""} ${p.apellido || ""}`.trim() || "—"}
+                  </div>
+                  {p.doc_numero && <div style={{ fontSize: 11, color: C.muted }}>{p.doc_tipo}: {p.doc_numero}</div>}
+                </div>
+                <Chip label={labelDe(ROLES_PERSONA, p.rol)} color="#6366f1" />
+                <button onClick={() => desasociar(p.id, p.rol)} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 16, padding: 4 }} title="Desasociar">✕</button>
+              </div>
+            ))}
+          </div>
+        )
+      }
+
+      {/* Agregar persona */}
+      <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 12 }}>Asociar persona</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 8, alignItems: "end", marginBottom: 8 }}>
+        <Field C={C} label="Buscar persona (nombre, apellido, doc)">
+          <Input C={C} value={busqueda} onChange={(e) => buscar(e.target.value)} placeholder="Ej: García" />
+        </Field>
+        <Field C={C} label="Rol en el expediente">
+          <Sel C={C} value={rolSel} onChange={(e) => setRolSel(e.target.value)} options={ROLES_PERSONA} />
+        </Field>
+        <Btn C={C} onClick={asociar} style={{ height: 37 }}>Asociar</Btn>
+      </div>
+
+      {/* Resultados de búsqueda */}
+      {resultados.length > 0 && (
+        <div style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 8, marginBottom: 8, maxHeight: 180, overflowY: "auto" }}>
+          {resultados.map((p) => {
+            const label = p.tipo === "juridica" ? p.razon_social : `${p.nombre || ""} ${p.apellido || ""}`.trim();
+            const sel = personaSel?.id === p.id;
+            return (
+              <div key={p.id} onClick={() => { setPersonaSel(p); setBusqueda(label); setResultados([]); }}
+                style={{ padding: "8px 12px", cursor: "pointer", background: sel ? C.accentGlow : "transparent",
+                  borderBottom: `1px solid ${C.border}`, fontSize: 13 }}>
+                {label} {p.doc_numero && <span style={{ color: C.muted, fontSize: 11 }}>— {p.doc_tipo}: {p.doc_numero}</span>}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <button onClick={() => setShowNueva(!showNueva)}
+          style={{ fontSize: 12, color: C.accent, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+          {showNueva ? "▲ Cancelar nueva persona" : "+ Crear persona nueva inline"}
+        </button>
+      </div>
+
+      {showNueva && <PersonaForm C={C} onSave={onPersonaCreada} onCancel={() => setShowNueva(false)} />}
+      {err && <div style={{ color: "#ef4444", fontSize: 12, marginTop: 8 }}>{err}</div>}
+    </div>
+  );
+}
+
+// ── Movimientos ───────────────────────────────────────────────
+
+function MovimientosTab({ C, expedienteId }) {
+  const [movimientos, setMovimientos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [f, setF] = useState({ fecha: "", tipo: "", descripcion: "" });
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+
+  const load = useCallback(async () => {
+    try {
+      const r = await fetch(`${API}/api/doctor/expedientes/${expedienteId}/movimientos`, { headers: aH() });
+      if (r.ok) setMovimientos(await r.json());
+    } catch (e) { /* silenciar */ } finally { setLoading(false); }
+  }, [expedienteId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
+
+  const guardar = async () => {
+    if (!f.fecha) return setErr("La fecha es obligatoria");
+    setSaving(true); setErr("");
+    try {
+      const r = await fetch(`${API}/api/doctor/expedientes/${expedienteId}/movimientos`, {
+        method: "POST", headers: jH(), body: JSON.stringify(f),
+      });
+      if (!r.ok) throw new Error((await r.json()).error);
+      setF({ fecha: "", tipo: "", descripcion: "" });
+      setShowForm(false);
+      load();
+    } catch (e) { setErr(e.message); } finally { setSaving(false); }
+  };
+
+  const eliminar = async (id) => {
+    if (!confirm("¿Eliminar este movimiento?")) return;
+    await fetch(`${API}/api/doctor/movimientos/${id}`, { method: "DELETE", headers: aH() });
+    load();
+  };
+
+  if (loading) return <Spinner C={C} />;
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Timeline de movimientos</div>
+        <Btn C={C} onClick={() => setShowForm(!showForm)} style={{ fontSize: 12 }}>+ Agregar</Btn>
+      </div>
+
+      {/* Formulario */}
+      {showForm && (
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 16, marginBottom: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+            <Field C={C} label="Fecha" required><Input C={C} type="date" value={f.fecha} onChange={(e) => set("fecha", e.target.value)} /></Field>
+            <Field C={C} label="Tipo">
+              <Sel C={C} value={f.tipo} onChange={(e) => set("tipo", e.target.value)} options={TIPOS_MOVIMIENTO} />
+            </Field>
+          </div>
+          <Field C={C} label="Descripción">
+            <textarea value={f.descripcion} onChange={(e) => set("descripcion", e.target.value)}
+              style={{ ...inputSt(C), minHeight: 80, resize: "vertical" }} />
+          </Field>
+          {err && <div style={{ color: "#ef4444", fontSize: 12, marginTop: 8 }}>{err}</div>}
+          <div style={{ display: "flex", gap: 8, marginTop: 12, justifyContent: "flex-end" }}>
+            <Btn C={C} variant="ghost" onClick={() => setShowForm(false)}>Cancelar</Btn>
+            <Btn C={C} onClick={guardar} disabled={saving}>{saving ? "Guardando…" : "Guardar movimiento"}</Btn>
+          </div>
+        </div>
+      )}
+
+      {/* Timeline */}
+      {movimientos.length === 0
+        ? <EmptyState C={C} icon="📋" title="Sin movimientos" sub='Registrá el primer movimiento con "+ Agregar".' />
+        : (
+          <div style={{ position: "relative", paddingLeft: 24 }}>
+            <div style={{ position: "absolute", left: 8, top: 0, bottom: 0, width: 2, background: C.border, borderRadius: 1 }} />
+            {movimientos.map((m) => (
+              <div key={m.id} style={{ position: "relative", marginBottom: 20 }}>
+                <div style={{ position: "absolute", left: -20, top: 4, width: 10, height: 10, borderRadius: "50%", background: C.accent, border: `2px solid ${C.bg}` }} />
+                <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 12 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 4, flexWrap: "wrap" }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: C.text }}>{fmtFecha(m.fecha)}</span>
+                        {m.tipo && <Chip label={labelDe(TIPOS_MOVIMIENTO, m.tipo)} color={C.accent} />}
+                        {m.responsable_nombre && <span style={{ fontSize: 11, color: C.muted }}>— {m.responsable_nombre}</span>}
+                      </div>
+                      {m.descripcion && <div style={{ fontSize: 13, color: C.text, lineHeight: 1.5 }}>{m.descripcion}</div>}
+                    </div>
+                    <button onClick={() => eliminar(m.id)} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 14, flexShrink: 0 }} title="Eliminar">✕</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      }
+    </div>
+  );
+}
+
+// ── Ficha del expediente ──────────────────────────────────────
+
+function ExpedienteDetalle({ C, expedienteId, usuarios, onVolver }) {
+  const [exp, setExp] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState("datos");
+  const [editando, setEditando] = useState(false);
+  const [form, setForm] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [notas, setNotas] = useState("");
+  const [notasGuardando, setNotasGuardando] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const r = await fetch(`${API}/api/doctor/expedientes/${expedienteId}`, { headers: aH() });
+      if (r.ok) {
+        const d = await r.json();
+        setExp(d);
+        setForm(d);
+        setNotas(d.observaciones || "");
+      }
+    } catch (e) { /* silenciar */ } finally { setLoading(false); }
+  }, [expedienteId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
+
+  const guardar = async () => {
+    setSaving(true);
+    try {
+      const r = await fetch(`${API}/api/doctor/expedientes/${expedienteId}`, {
+        method: "PUT", headers: jH(), body: JSON.stringify(form),
+      });
+      if (r.ok) { setExp(await r.json()); setEditando(false); }
+    } catch (e) { /* silenciar */ } finally { setSaving(false); }
+  };
+
+  const guardarNotas = async () => {
+    setNotasGuardando(true);
+    await fetch(`${API}/api/doctor/expedientes/${expedienteId}`, {
+      method: "PUT", headers: jH(), body: JSON.stringify({ ...exp, observaciones: notas }),
+    });
+    setNotasGuardando(false);
+  };
+
+  const TABS = [
+    { key: "datos",       label: "Datos" },
+    { key: "movimientos", label: "Movimientos" },
+    { key: "documentos",  label: "Documentos" },
+    { key: "plazos",      label: "Plazos" },
+    { key: "notas",       label: "Notas" },
+  ];
+
+  if (loading) return <Spinner C={C} />;
+  if (!exp) return <EmptyState C={C} icon="❌" title="Expediente no encontrado" />;
+
+  return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+      {/* Header */}
+      <div style={{ padding: "16px 24px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "flex-start", gap: 12, flexShrink: 0 }}>
+        <button onClick={onVolver} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 20, padding: 0, lineHeight: 1 }}>←</button>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 4 }}>{exp.caratula}</div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {exp.fuero && <Chip label={labelDe(FUEROS, exp.fuero)} color="#6366f1" />}
+            {exp.etapa && <Chip label={labelDe(ETAPAS_EXPEDIENTE, exp.etapa)} color={ETAPA_COLOR[exp.etapa] || "#6366f1"} />}
+            {exp.estado && <Chip label={labelDe(ESTADOS_EXPEDIENTE, exp.estado)} color={ESTADO_COLOR[exp.estado] || "#6b7280"} />}
+            {exp.prioridad && <Chip label={labelDe(PRIORIDADES, exp.prioridad)} color={PRIORIDAD_COLOR[exp.prioridad] || "#6b7280"} />}
+          </div>
+        </div>
+        {!editando
+          ? <Btn C={C} variant="ghost" onClick={() => setEditando(true)} style={{ fontSize: 12 }}>✏ Editar</Btn>
+          : <div style={{ display: "flex", gap: 8 }}>
+              <Btn C={C} variant="ghost" onClick={() => { setEditando(false); setForm(exp); }}>Cancelar</Btn>
+              <Btn C={C} onClick={guardar} disabled={saving}>{saving ? "…" : "Guardar"}</Btn>
+            </div>
+        }
+      </div>
+
+      {/* Pestañas */}
+      <div style={{ display: "flex", borderBottom: `1px solid ${C.border}`, flexShrink: 0, padding: "0 24px" }}>
+        {TABS.map((t) => (
+          <div key={t.key} onClick={() => setTab(t.key)}
+            style={{ padding: "10px 16px", cursor: "pointer", fontSize: 13, fontWeight: tab === t.key ? 600 : 400,
+              color: tab === t.key ? C.accent : C.muted,
+              borderBottom: tab === t.key ? `2px solid ${C.accent}` : "2px solid transparent",
+              transition: "all .15s" }}>
+            {t.label}
+          </div>
+        ))}
+      </div>
+
+      {/* Contenido de tab */}
+      <div style={{ flex: 1, overflowY: "auto", padding: 24 }}>
+
+        {/* ── DATOS ── */}
+        {tab === "datos" && (
+          <div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
+              <Field C={C} label="Carátula" required>
+                {editando ? <Input C={C} value={form.caratula || ""} onChange={(e) => set("caratula", e.target.value)} />
+                  : <div style={{ fontSize: 13, color: C.text, padding: "8px 0" }}>{exp.caratula || "—"}</div>}
+              </Field>
+              <Field C={C} label="Tipo de proceso">
+                {editando ? <Sel C={C} value={form.tipo_proceso || ""} onChange={(e) => set("tipo_proceso", e.target.value)} options={TIPOS_PROCESO} />
+                  : <div style={{ fontSize: 13, color: C.text, padding: "8px 0" }}>{labelDe(TIPOS_PROCESO, exp.tipo_proceso)}</div>}
+              </Field>
+              <Field C={C} label="Fuero">
+                {editando ? <Sel C={C} value={form.fuero || ""} onChange={(e) => set("fuero", e.target.value)} options={FUEROS} />
+                  : <div style={{ fontSize: 13, color: C.text, padding: "8px 0" }}>{labelDe(FUEROS, exp.fuero)}</div>}
+              </Field>
+              <Field C={C} label="Jurisdicción">
+                {editando ? <Sel C={C} value={form.jurisdiccion || ""} onChange={(e) => set("jurisdiccion", e.target.value)} options={JURISDICCIONES} />
+                  : <div style={{ fontSize: 13, color: C.text, padding: "8px 0" }}>{labelDe(JURISDICCIONES, exp.jurisdiccion)}</div>}
+              </Field>
+              <Field C={C} label="Etapa">
+                {editando ? <Sel C={C} value={form.etapa || ""} onChange={(e) => set("etapa", e.target.value)} options={ETAPAS_EXPEDIENTE} />
+                  : <div style={{ fontSize: 13, color: C.text, padding: "8px 0" }}>{labelDe(ETAPAS_EXPEDIENTE, exp.etapa)}</div>}
+              </Field>
+              <Field C={C} label="Estado">
+                {editando ? <Sel C={C} value={form.estado || ""} onChange={(e) => set("estado", e.target.value)} options={ESTADOS_EXPEDIENTE} />
+                  : <div style={{ fontSize: 13, color: C.text, padding: "8px 0" }}>{labelDe(ESTADOS_EXPEDIENTE, exp.estado)}</div>}
+              </Field>
+              <Field C={C} label="Prioridad">
+                {editando ? <Sel C={C} value={form.prioridad || ""} onChange={(e) => set("prioridad", e.target.value)} options={PRIORIDADES} />
+                  : <div style={{ fontSize: 13, color: C.text, padding: "8px 0" }}>{labelDe(PRIORIDADES, exp.prioridad)}</div>}
+              </Field>
+              <Field C={C} label="Responsable">
+                {editando
+                  ? <select style={inputSt(C)} value={form.responsable_id || ""} onChange={(e) => set("responsable_id", e.target.value)}>
+                      <option value="">— sin asignar —</option>
+                      {usuarios.map((u) => <option key={u.id} value={u.id}>{u.nombre}</option>)}
+                    </select>
+                  : <div style={{ fontSize: 13, color: C.text, padding: "8px 0" }}>{exp.responsable_nombre || "—"}</div>}
+              </Field>
+              <Field C={C} label="N° carpeta interna">
+                {editando ? <Input C={C} value={form.num_carpeta_interna || ""} onChange={(e) => set("num_carpeta_interna", e.target.value)} />
+                  : <div style={{ fontSize: 13, color: C.text, padding: "8px 0" }}>{exp.num_carpeta_interna || "—"}</div>}
+              </Field>
+              <Field C={C} label="N° expediente judicial">
+                {editando ? <Input C={C} value={form.num_expediente_judicial || ""} onChange={(e) => set("num_expediente_judicial", e.target.value)} />
+                  : <div style={{ fontSize: 13, color: C.text, padding: "8px 0" }}>{exp.num_expediente_judicial || "—"}</div>}
+              </Field>
+              <Field C={C} label="Monto reclamado">
+                {editando
+                  ? <div style={{ display: "flex", gap: 8 }}>
+                      <Sel C={C} value={form.moneda || "ARS"} onChange={(e) => set("moneda", e.target.value)} options={MONEDAS} />
+                      <Input C={C} type="number" value={form.monto_reclamado || ""} onChange={(e) => set("monto_reclamado", e.target.value)} placeholder="0.00" />
+                    </div>
+                  : <div style={{ fontSize: 13, color: C.text, padding: "8px 0" }}>
+                      {exp.monto_reclamado ? `${exp.moneda} ${Number(exp.monto_reclamado).toLocaleString("es-AR")}` : "—"}
+                    </div>}
+              </Field>
+              <Field C={C} label="Creado el">
+                <div style={{ fontSize: 13, color: C.muted, padding: "8px 0" }}>{fmtFecha(exp.created_at)}</div>
+              </Field>
+            </div>
+
+            {/* Personas */}
+            <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 24 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 16 }}>Partes del expediente</div>
+              <PersonasTab C={C} expedienteId={expedienteId} />
+            </div>
+          </div>
+        )}
+
+        {/* ── MOVIMIENTOS ── */}
+        {tab === "movimientos" && <MovimientosTab C={C} expedienteId={expedienteId} />}
+
+        {/* ── DOCUMENTOS (placeholder) ── */}
+        {tab === "documentos" && <Placeholder C={C} fase="Fase 5 — Escritos y plantillas" />}
+
+        {/* ── PLAZOS (placeholder) ── */}
+        {tab === "plazos" && <Placeholder C={C} fase="Fase 3 — Agenda y calculadora de plazos" />}
+
+        {/* ── NOTAS ── */}
+        {tab === "notas" && (
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 12 }}>Notas internas del expediente</div>
+            <textarea
+              value={notas}
+              onChange={(e) => setNotas(e.target.value)}
+              style={{ ...inputSt(C), minHeight: 200, resize: "vertical" }}
+              placeholder="Anotaciones internas, recordatorios, estrategia procesal…"
+            />
+            <div style={{ marginTop: 8, display: "flex", justifyContent: "flex-end" }}>
+              <Btn C={C} onClick={guardarNotas} disabled={notasGuardando}>{notasGuardando ? "Guardando…" : "Guardar notas"}</Btn>
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
+
+// ── Formulario nuevo expediente ───────────────────────────────
+
+function NuevoExpedienteForm({ C, usuarios, onCreado, onCancelar }) {
+  const [f, setF] = useState({
+    caratula: "", tipo_proceso: "", num_carpeta_interna: "", num_expediente_judicial: "",
+    fuero: "", jurisdiccion: "", etapa: "inicial", estado: "activo", prioridad: "media",
+    responsable_id: "", observaciones: "", monto_reclamado: "", moneda: "ARS",
+  });
+  const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
+
+  const guardar = async () => {
+    if (!f.caratula.trim()) return setErr("La carátula es obligatoria");
+    setLoading(true); setErr("");
+    try {
+      const r = await fetch(`${API}/api/doctor/expedientes`, {
+        method: "POST", headers: jH(), body: JSON.stringify(f),
+      });
+      if (!r.ok) throw new Error((await r.json()).error);
+      onCreado(await r.json());
+    } catch (e) { setErr(e.message); } finally { setLoading(false); }
+  };
+
+  return (
+    <div style={{ flex: 1, overflowY: "auto", padding: 24 }}>
+      <div style={{ maxWidth: 760, margin: "0 auto" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+          <button onClick={onCancelar} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 20 }}>←</button>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>Nuevo expediente</div>
+            <div style={{ fontSize: 12, color: C.muted }}>Completá los campos del expediente</div>
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div style={{ gridColumn: "span 2" }}>
+            <Field C={C} label="Carátula" required>
+              <Input C={C} value={f.caratula} onChange={(e) => set("caratula", e.target.value)} placeholder="Ej: García Juan c/ Pérez María s/ Daños y Perjuicios" />
+            </Field>
+          </div>
+          <Field C={C} label="Tipo de proceso"><Sel C={C} value={f.tipo_proceso} onChange={(e) => set("tipo_proceso", e.target.value)} options={TIPOS_PROCESO} /></Field>
+          <Field C={C} label="Fuero"><Sel C={C} value={f.fuero} onChange={(e) => set("fuero", e.target.value)} options={FUEROS} /></Field>
+          <Field C={C} label="Jurisdicción"><Sel C={C} value={f.jurisdiccion} onChange={(e) => set("jurisdiccion", e.target.value)} options={JURISDICCIONES} /></Field>
+          <Field C={C} label="Etapa"><Sel C={C} value={f.etapa} onChange={(e) => set("etapa", e.target.value)} options={ETAPAS_EXPEDIENTE} /></Field>
+          <Field C={C} label="Estado"><Sel C={C} value={f.estado} onChange={(e) => set("estado", e.target.value)} options={ESTADOS_EXPEDIENTE} /></Field>
+          <Field C={C} label="Prioridad"><Sel C={C} value={f.prioridad} onChange={(e) => set("prioridad", e.target.value)} options={PRIORIDADES} /></Field>
+          <Field C={C} label="Responsable">
+            <select style={inputSt(C)} value={f.responsable_id} onChange={(e) => set("responsable_id", e.target.value)}>
+              <option value="">— sin asignar —</option>
+              {usuarios.map((u) => <option key={u.id} value={u.id}>{u.nombre}</option>)}
+            </select>
+          </Field>
+          <Field C={C} label="N° carpeta interna"><Input C={C} value={f.num_carpeta_interna} onChange={(e) => set("num_carpeta_interna", e.target.value)} /></Field>
+          <Field C={C} label="N° expediente judicial"><Input C={C} value={f.num_expediente_judicial} onChange={(e) => set("num_expediente_judicial", e.target.value)} /></Field>
+          <Field C={C} label="Moneda">
+            <Sel C={C} value={f.moneda} onChange={(e) => set("moneda", e.target.value)} options={MONEDAS} />
+          </Field>
+          <Field C={C} label="Monto reclamado">
+            <Input C={C} type="number" value={f.monto_reclamado} onChange={(e) => set("monto_reclamado", e.target.value)} placeholder="0.00" />
+          </Field>
+          <div style={{ gridColumn: "span 2" }}>
+            <Field C={C} label="Observaciones">
+              <textarea value={f.observaciones} onChange={(e) => set("observaciones", e.target.value)}
+                style={{ ...inputSt(C), minHeight: 80, resize: "vertical" }} />
+            </Field>
+          </div>
+        </div>
+
+        {err && <div style={{ color: "#ef4444", fontSize: 12, marginTop: 12 }}>{err}</div>}
+
+        <div style={{ display: "flex", gap: 8, marginTop: 20, justifyContent: "flex-end" }}>
+          <Btn C={C} variant="ghost" onClick={onCancelar}>Cancelar</Btn>
+          <Btn C={C} onClick={guardar} disabled={loading}>{loading ? "Guardando…" : "Crear expediente"}</Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Vista lista + kanban ──────────────────────────────────────
+
+function ExpedientesLista({ C, onNuevo, onVer }) {
+  const [expedientes, setExpedientes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [vista, setVista] = useState("tabla"); // 'tabla' | 'kanban'
+  const [filtros, setFiltros] = useState({ etapa: "", fuero: "", estado: "", q: "" });
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const params = new URLSearchParams();
+    if (filtros.etapa) params.set("etapa", filtros.etapa);
+    if (filtros.fuero)  params.set("fuero",  filtros.fuero);
+    if (filtros.estado) params.set("estado", filtros.estado);
+    if (filtros.q)      params.set("q",      filtros.q);
+    try {
+      const r = await fetch(`${API}/api/doctor/expedientes?${params}`, { headers: aH() });
+      if (r.ok) setExpedientes(await r.json());
+    } catch (e) { /* silenciar */ } finally { setLoading(false); }
+  }, [filtros]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const setFiltro = (k, v) => setFiltros((p) => ({ ...p, [k]: v }));
+
+  // Vista Kanban
+  const kanban = () => {
+    const cols = ETAPAS_EXPEDIENTE.map((e) => ({
+      ...e, items: expedientes.filter((x) => x.etapa === e.value),
+    }));
+    return (
+      <div style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 8 }}>
+        {cols.map((col) => (
+          <div key={col.value} style={{ minWidth: 240, flex: "0 0 240px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: ETAPA_COLOR[col.value] || C.muted }}>
+                {col.label.toUpperCase()}
+              </div>
+              <span style={{ fontSize: 11, color: C.muted, background: C.surface, borderRadius: 99, padding: "1px 7px" }}>{col.items.length}</span>
+            </div>
+            {col.items.length === 0
+              ? <div style={{ fontSize: 11, color: C.muted, padding: "12px 0", textAlign: "center" }}>—</div>
+              : col.items.map((exp) => (
+                <div key={exp.id} onClick={() => onVer(exp.id)}
+                  style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 12,
+                    marginBottom: 8, cursor: "pointer", transition: "border-color .15s" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = C.accent)}
+                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = C.border)}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: C.text, marginBottom: 4, lineHeight: 1.4 }}>{exp.caratula}</div>
+                  {exp.fuero && <div style={{ fontSize: 11, color: C.muted }}>{labelDe(FUEROS, exp.fuero)}</div>}
+                  {exp.responsable_nombre && <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>👤 {exp.responsable_nombre}</div>}
+                </div>
+              ))
+            }
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // Vista tabla
+  const tabla = () => (
+    <div style={{ overflowX: "auto" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+        <thead>
+          <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+            {["Carátula", "Tipo", "Fuero", "Etapa", "Estado", "Responsable", "Creado"].map((h) => (
+              <th key={h} style={{ textAlign: "left", padding: "8px 12px", fontSize: 11, color: C.muted, fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {expedientes.map((exp) => (
+            <tr key={exp.id} onClick={() => onVer(exp.id)}
+              style={{ borderBottom: `1px solid ${C.border}`, cursor: "pointer", transition: "background .1s" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = C.surfaceHover)}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+              <td style={{ padding: "10px 12px", fontWeight: 500, maxWidth: 280 }}>
+                <div style={{ color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{exp.caratula}</div>
+                {exp.num_carpeta_interna && <div style={{ fontSize: 10, color: C.muted }}>Carpeta: {exp.num_carpeta_interna}</div>}
+              </td>
+              <td style={{ padding: "10px 12px", color: C.muted, whiteSpace: "nowrap" }}>{labelDe(TIPOS_PROCESO, exp.tipo_proceso) || "—"}</td>
+              <td style={{ padding: "10px 12px", whiteSpace: "nowrap" }}>{exp.fuero ? <Chip label={labelDe(FUEROS, exp.fuero)} color="#6366f1" /> : "—"}</td>
+              <td style={{ padding: "10px 12px", whiteSpace: "nowrap" }}>{exp.etapa ? <Chip label={labelDe(ETAPAS_EXPEDIENTE, exp.etapa)} color={ETAPA_COLOR[exp.etapa] || "#6366f1"} /> : "—"}</td>
+              <td style={{ padding: "10px 12px", whiteSpace: "nowrap" }}>{exp.estado ? <Chip label={labelDe(ESTADOS_EXPEDIENTE, exp.estado)} color={ESTADO_COLOR[exp.estado] || "#6b7280"} /> : "—"}</td>
+              <td style={{ padding: "10px 12px", color: C.muted, whiteSpace: "nowrap" }}>{exp.responsable_nombre || "—"}</td>
+              <td style={{ padding: "10px 12px", color: C.muted, whiteSpace: "nowrap" }}>{fmtFecha(exp.created_at)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {expedientes.length === 0 && !loading && (
+        <EmptyState C={C} icon="📁" title="Sin expedientes" sub='Creá el primero con "Nuevo expediente".' />
+      )}
+    </div>
+  );
+
+  return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+      {/* Header */}
+      <div style={{ padding: "16px 24px", borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, flexWrap: "wrap", gap: 8 }}>
+        <div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>Expedientes</div>
+          <div style={{ fontSize: 12, color: C.muted }}>{expedientes.length} expediente{expedientes.length !== 1 ? "s" : ""}</div>
+        </div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          {/* Toggle vista */}
+          <div style={{ display: "flex", background: C.bg, borderRadius: 8, border: `1px solid ${C.border}`, overflow: "hidden" }}>
+            {[{ v: "tabla", l: "Tabla" }, { v: "kanban", l: "Kanban" }].map(({ v, l }) => (
+              <div key={v} onClick={() => setVista(v)}
+                style={{ padding: "6px 12px", cursor: "pointer", fontSize: 12, fontWeight: vista === v ? 700 : 400,
+                  background: vista === v ? C.accent : "transparent", color: vista === v ? "white" : C.muted }}>
+                {l}
+              </div>
+            ))}
+          </div>
+          <Btn C={C} onClick={onNuevo}>+ Nuevo expediente</Btn>
+        </div>
+      </div>
+
+      {/* Filtros */}
+      <div style={{ padding: "12px 24px", borderBottom: `1px solid ${C.border}`, display: "flex", gap: 8, flexWrap: "wrap", flexShrink: 0 }}>
+        <input value={filtros.q} onChange={(e) => setFiltro("q", e.target.value)} placeholder="Buscar carátula…"
+          style={{ ...inputSt(C), width: 200 }} />
+        <select style={{ ...inputSt(C), width: 140 }} value={filtros.etapa} onChange={(e) => setFiltro("etapa", e.target.value)}>
+          <option value="">Etapa: todas</option>
+          {ETAPAS_EXPEDIENTE.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        <select style={{ ...inputSt(C), width: 160 }} value={filtros.fuero} onChange={(e) => setFiltro("fuero", e.target.value)}>
+          <option value="">Fuero: todos</option>
+          {FUEROS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        <select style={{ ...inputSt(C), width: 150 }} value={filtros.estado} onChange={(e) => setFiltro("estado", e.target.value)}>
+          <option value="">Estado: todos</option>
+          {ESTADOS_EXPEDIENTE.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        {(filtros.q || filtros.etapa || filtros.fuero || filtros.estado) && (
+          <button onClick={() => setFiltros({ etapa: "", fuero: "", estado: "", q: "" })}
+            style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 12 }}>
+            ✕ Limpiar
+          </button>
+        )}
+      </div>
+
+      {/* Contenido */}
+      <div style={{ flex: 1, overflowY: "auto", overflowX: vista === "kanban" ? "auto" : "hidden", padding: 24 }}>
+        {loading ? <Spinner C={C} /> : vista === "kanban" ? kanban() : tabla()}
+      </div>
+    </div>
+  );
+}
+
+// ── Sub-navegación Doctor ─────────────────────────────────────
+
+const SUB_NAV = [
+  { key: "expedientes", label: "📁 Expedientes",  fase: null },
+  { key: "agenda",      label: "📅 Agenda",        fase: "Fase 3" },
+  { key: "personas",    label: "👥 Personas",       fase: "Fase 4" },
+  { key: "escritos",    label: "📄 Escritos",       fase: "Fase 5" },
+  { key: "cuentas",     label: "💰 Cuentas",        fase: "Fase 6" },
+  { key: "ia",          label: "🤖 Doctor IA",      fase: "Fase 2" },
+  { key: "procuracion", label: "⚖️ Procuración",    fase: "Fase 7" },
+  { key: "biblioteca",  label: "📚 Biblioteca",     fase: "Fase 8" },
+  { key: "bandeja",     label: "🔔 Bandeja",        fase: "Fase 9" },
+  { key: "config",      label: "⚙️ Config",         fase: "Fase 10" },
+];
+
+// ── Componente principal ──────────────────────────────────────
+
+export default function DoctorModule({ C }) {
+  const [subTab, setSubTab]       = useState("expedientes");
+  const [view, setView]           = useState("lista");   // 'lista' | 'nuevo' | 'detalle'
+  const [expId, setExpId]         = useState(null);
+  const [usuarios, setUsuarios]   = useState([]);
+
+  // Cargar usuarios para selects de responsable
+  useEffect(() => {
+    fetch(`${API}/api/doctor/usuarios`, { headers: aH() })
+      .then((r) => r.ok ? r.json() : [])
+      .then(setUsuarios)
+      .catch(() => {});
+  }, []);
+
+  const irALista   = () => { setView("lista");   setExpId(null); };
+  const irANuevo   = () => { setView("nuevo"); };
+  const irADetalle = (id) => { setExpId(id);  setView("detalle"); };
+  const onCreado   = (exp) => { irADetalle(exp.id); };
+
+  return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+
+      {/* Sub-nav horizontal */}
+      <div style={{ display: "flex", borderBottom: `1px solid ${C.border}`, flexShrink: 0, overflowX: "auto", background: C.surface }}>
+        {SUB_NAV.map((item) => {
+          const active = subTab === item.key;
+          return (
+            <div key={item.key}
+              onClick={() => { setSubTab(item.key); if (item.key === "expedientes") irALista(); }}
+              style={{ padding: "12px 16px", cursor: "pointer", whiteSpace: "nowrap", fontSize: 13,
+                fontWeight: active ? 600 : 400, color: active ? C.accent : C.muted,
+                borderBottom: active ? `2px solid ${C.accent}` : "2px solid transparent",
+                transition: "all .15s", flexShrink: 0 }}>
+              {item.label}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Contenido del sub-tab activo */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+
+        {/* Submódulos con placeholder */}
+        {SUB_NAV.filter((x) => x.fase !== null).map((item) =>
+          subTab === item.key
+            ? <Placeholder key={item.key} C={C} fase={item.fase} />
+            : null
+        )}
+
+        {/* Expedientes — con sub-vistas */}
+        {subTab === "expedientes" && view === "lista" && (
+          <ExpedientesLista C={C} onNuevo={irANuevo} onVer={irADetalle} />
+        )}
+        {subTab === "expedientes" && view === "nuevo" && (
+          <NuevoExpedienteForm C={C} usuarios={usuarios} onCreado={onCreado} onCancelar={irALista} />
+        )}
+        {subTab === "expedientes" && view === "detalle" && expId && (
+          <ExpedienteDetalle C={C} expedienteId={expId} usuarios={usuarios} onVolver={irALista} />
+        )}
+
+      </div>
+    </div>
+  );
+}

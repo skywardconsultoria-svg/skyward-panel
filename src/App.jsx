@@ -105,7 +105,7 @@ function Badge({ etapa }) {
 function Btn({ onClick, disabled, children, secondary=false, small=false, style:xStyle }) {
   return (
     <button onClick={onClick} disabled={disabled} style={{
-      background: secondary ? "transparent" : `linear-gradient(135deg,${C.accent},#4f46e5)`,
+      background: secondary ? "transparent" : C.accent,
       border: secondary ? `1px solid ${C.border}` : "none",
       borderRadius:8, color: secondary ? C.muted : "white",
       padding: small ? "5px 12px" : "8px 16px",
@@ -6226,7 +6226,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 </div>
                 <div style={{padding:16,flex:1,overflowY:"auto"}}>
                   <button onClick={()=>abrirNuevoTurnoFecha(calDrawer,"")}
-                    style={{width:"100%",marginBottom:16,padding:"8px 0",background:`linear-gradient(135deg,${C.accent},#4f46e5)`,border:"none",borderRadius:8,color:"white",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
+                    style={{width:"100%",marginBottom:16,padding:"8px 0",background:C.accent,border:"none",borderRadius:8,color:"white",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
                     + Nueva cita
                   </button>
                   {calTurnos.filter(t=>t.fecha?.toString().slice(0,10)===calDrawer).sort((a,b)=>a.hora>b.hora?1:-1).map((t,i)=>{
@@ -11032,11 +11032,11 @@ function AsistenteIA({ API, aH, jH, plan, rango, nombre, activeTab }) {
       <div onClick={()=>setAbierto(!abierto)} style={{
         position:'fixed', bottom:24, right:24, zIndex:9999,
         width:48, height:48, borderRadius:'50%',
-        background:abierto?'#4f46e5':C.accent,
-        border:'1px solid rgba(99,102,241,0.4)',
+        background:abierto?C.accentHover:C.accent,
+        border:`1px solid rgba(232,78,15,0.4)`,
         display:'flex', alignItems:'center', justifyContent:'center',
         cursor:'pointer', transition:'all .2s',
-        boxShadow:'0 4px 20px rgba(99,102,241,0.3)'
+        boxShadow:'0 4px 20px rgba(232,78,15,0.3)'
       }}>
         {abierto ? (
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -74,6 +74,10 @@ if (typeof document !== 'undefined' && UI_SCALE !== 1) {
 }
 // vh no se ajusta al zoom CSS, hay que calcular la altura de modales manualmente
 const _winH = typeof window !== 'undefined' ? window.innerHeight : 800;
+// Altura del app root: compensar el zoom CSS para que no exceda el viewport físico.
+// Con zoom:1.3, 100% da 900px CSS que rinden 1170px físico (excede el viewport de 900px).
+// Usando _winH/UI_SCALE obtenemos los px CSS que × zoom = exactamente el viewport.
+const APP_H = UI_SCALE !== 1 ? `${Math.floor(_winH / UI_SCALE)}px` : '100%';
 const MH92 = `${Math.floor(_winH * 0.92 / UI_SCALE)}px`;
 const MH90 = `${Math.floor(_winH * 0.90 / UI_SCALE)}px`;
 const MH85 = `${Math.floor(_winH * 0.85 / UI_SCALE)}px`;
@@ -753,7 +757,7 @@ function PropuestasComerciales() {
             style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
           <Btn onClick={()=>{if(chatInput.trim()){generar(chatInput.trim());setChatInput('');}}} small disabled={generando}>{generando?'Ajustando...':'Ajustar'}</Btn>
         </div>
-        <div style={{background:"#F5F0E8",borderRadius:12,overflow:"hidden",border:`1px solid ${C.border}`,height:"calc(100vh - 250px)"}}>
+        <div style={{background:"#F5F0E8",borderRadius:12,overflow:"hidden",border:`1px solid ${C.border}`,height:`${Math.floor(_winH * 0.72 / UI_SCALE)}px`}}>
           {previewLoading || generando ? <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100%",color:"#7A6E62",fontSize:14}}>{generando?'Regenerando propuesta...':'Cargando preview...'}</div> :
           <iframe srcDoc={previewHtml} style={{width:"100%",height:"100%",border:"none"}} sandbox="allow-scripts"/>}
         </div>
@@ -11413,7 +11417,7 @@ function EdgePanel({ token, user, onLogout }) {
         * { -webkit-tap-highlight-color: transparent; }
       `}</style>
 
-      <div style={{fontFamily:"'DM Sans','Segoe UI',sans-serif",background:C.bg,height:"100%",color:C.text,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <div style={{fontFamily:"'DM Sans','Segoe UI',sans-serif",background:C.bg,height:APP_H,color:C.text,display:"flex",flexDirection:"column",overflow:"hidden"}}>
         {/* Banner global: prospectos listos para agendar */}
         {prospectos.filter(p => p.listo_para_cierre && !p.horario_elegido).length > 0 && (
           <div className="slide-down" style={{background:"linear-gradient(90deg,rgba(249,115,22,0.15),rgba(239,68,68,0.1))",borderBottom:"2px solid #f97316",padding:"7px 16px",display:"flex",alignItems:"center",gap:10,zIndex:200,flexShrink:0,flexWrap:"wrap"}}>
@@ -11613,7 +11617,7 @@ function LoginForm({ onLogin }) {
   };
 
   return (
-    <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:C.bg,backgroundImage:'radial-gradient(ellipse at 60% 20%, rgba(232,78,15,0.06) 0%, transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(251,186,0,0.04) 0%, transparent 50%)'}}>
+    <div style={{height:APP_H,overflowY:'auto',display:'flex',alignItems:'center',justifyContent:'center',background:C.bg,backgroundImage:'radial-gradient(ellipse at 60% 20%, rgba(232,78,15,0.06) 0%, transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(251,186,0,0.04) 0%, transparent 50%)'}}>
       <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:20,padding:'40px 44px',width:400,maxWidth:'94vw',boxShadow:'0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(232,78,15,0.08)'}}>
         {/* Logo + Brand */}
         <div style={{textAlign:'center',marginBottom:36}}>
@@ -11666,7 +11670,7 @@ export default function App() {
   }, []);
 
   if (checking) return (
-    <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:C.bg}}>
+    <div style={{height:APP_H,display:'flex',alignItems:'center',justifyContent:'center',background:C.bg}}>
       <div style={{color:C.muted,fontSize:14}}>Cargando...</div>
     </div>
   );

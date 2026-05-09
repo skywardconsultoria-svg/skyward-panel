@@ -855,6 +855,18 @@ function ExpedientesLista({ C, clienteId, onNuevo, onVer }) {
 
 // ── Helper: streaming SSE desde /api/doctor/ai/chat ──────────
 
+// Convierte errores crudos de la API en mensajes amigables para el usuario final
+function humanizarErrorIA(raw = "") {
+  const msg = String(raw).toLowerCase();
+  if (msg.includes("credit balance") || msg.includes("too low") || msg.includes("billing"))
+    return "Sin créditos disponibles en Doctor IA. Contactá al administrador para recargar.";
+  if (msg.includes("invalid_api_key") || msg.includes("authentication") || msg.includes("api key"))
+    return "API key de Doctor IA inválida. Contactá al administrador.";
+  // Si ya es un mensaje amigable del backend (empieza en mayúscula, sin llaves JSON), pasarlo tal cual
+  if (!msg.includes("{") && !msg.includes("http") && raw.length < 200) return raw;
+  return "Doctor IA no está disponible en este momento. Intentá de nuevo en unos minutos.";
+}
+
 async function streamIA(payload, onToken, onDone, onError) {
   try {
     const res = await fetch(`${API}/api/doctor/ai/chat`, {
@@ -871,10 +883,10 @@ async function streamIA(payload, onToken, onDone, onError) {
     if (!res.ok) {
       if (res.status === 429) {
         const d = await res.json().catch(() => ({}));
-        return onError(d.error || "Límite diario alcanzado.");
+        return onError(d.error || "Límite diario alcanzado. Volvé mañana.");
       }
       const d = await res.json().catch(() => ({}));
-      return onError(d.error || `Error ${res.status}`);
+      return onError(humanizarErrorIA(d.error || `Error ${res.status}`));
     }
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
@@ -891,11 +903,11 @@ async function streamIA(payload, onToken, onDone, onError) {
           const data = JSON.parse(line.slice(6));
           if (data.text)  onToken(data.text);
           if (data.done)  onDone(data);
-          if (data.error) onError(data.error);
+          if (data.error) onError(humanizarErrorIA(data.error));
         } catch { /* ignorar líneas malformadas */ }
       }
     }
-  } catch (e) { onError(e.message); }
+  } catch (e) { onError(humanizarErrorIA(e.message)); }
 }
 
 // ── Panel lateral IA ──────────────────────────────────────────

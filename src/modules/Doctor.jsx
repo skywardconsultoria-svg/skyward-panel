@@ -1,11 +1,16 @@
 /**
  * modules/Doctor.jsx — Módulo de gestión jurídica
  * Fase 1: Expedientes CRUD (lista/kanban, detalle, personas, movimientos)
+ * Fase 2: Doctor IA — panel lateral + página dedicada + streaming SSE
  * Fuente de verdad: DOCTOR.md
+ *
+ * cliente_id se pasa explícitamente en cada request (patrón del CRM,
+ * igual que POST /api/pacientes). No se usa req.user.cliente_id en backend.
  */
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { API, jH, aH } from "../utils/api";
 import { validarCUIT, validarDNI, formatCUIT } from "../lib/cuit";
+import { calcularPlazo } from "../lib/plazos";
 import {
   FUEROS, JURISDICCIONES, TIPOS_PROCESO, ETAPAS_EXPEDIENTE,
   ESTADOS_EXPEDIENTE, PRIORIDADES, ROLES_PERSONA, TIPOS_MOVIMIENTO,
@@ -53,7 +58,6 @@ function Placeholder({ C, fase }) {
   );
 }
 
-// Badge de etapa/estado con color
 const ETAPA_COLOR = {
   inicial: "#6366f1", prueba: "#f59e0b", alegatos: "#8b5cf6",
   sentencia: "#3b82f6", ejecucion: "#10b981", archivado: "#6b7280",
@@ -127,7 +131,7 @@ function Btn({ C, variant = "primary", style = {}, ...props }) {
 
 // ── Formulario: Persona inline ────────────────────────────────
 
-function PersonaForm({ C, onSave, onCancel }) {
+function PersonaForm({ C, clienteId, onSave, onCancel }) {
   const [f, setF] = useState({ tipo: "fisica", nombre: "", apellido: "", razon_social: "", doc_tipo: "DNI", doc_numero: "", cuit_validado: false, email: "", telefono: "", notas: "" });
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
@@ -150,7 +154,7 @@ function PersonaForm({ C, onSave, onCancel }) {
 
     setLoading(true);
     try {
-      const payload = { ...f, cuit_validado: docCheck.valido };
+      const payload = { ...f, cliente_id: clienteId, cuit_validado: docCheck.valido };
       if (f.doc_tipo === "CUIT" || f.doc_tipo === "CUIL") {
         payload.doc_numero = formatCUIT(f.doc_numero);
       }
@@ -202,7 +206,7 @@ function PersonaForm({ C, onSave, onCancel }) {
 
 // ── Personas del expediente ───────────────────────────────────
 
-function PersonasTab({ C, expedienteId }) {
+function PersonasTab({ C, clienteId, expedienteId }) {
   const [personas, setPersonas] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [resultados, setResultados] = useState([]);
@@ -214,17 +218,17 @@ function PersonasTab({ C, expedienteId }) {
 
   const load = useCallback(async () => {
     try {
-      const r = await fetch(`${API}/api/doctor/expedientes/${expedienteId}/personas`, { headers: aH() });
+      const r = await fetch(`${API}/api/doctor/expedientes/${expedienteId}/personas?cliente_id=${clienteId}`, { headers: aH() });
       if (r.ok) setPersonas(await r.json());
     } catch (e) { /* silenciar */ } finally { setLoading(false); }
-  }, [expedienteId]);
+  }, [expedienteId, clienteId]);
 
   useEffect(() => { load(); }, [load]);
 
   const buscar = async (q) => {
     setBusqueda(q);
     if (q.length < 2) { setResultados([]); return; }
-    const r = await fetch(`${API}/api/doctor/personas?q=${encodeURIComponent(q)}`, { headers: aH() });
+    const r = await fetch(`${API}/api/doctor/personas?cliente_id=${clienteId}&q=${encodeURIComponent(q)}`, { headers: aH() });
     if (r.ok) setResultados(await r.json());
   };
 
@@ -233,14 +237,14 @@ function PersonasTab({ C, expedienteId }) {
     setErr("");
     const r = await fetch(`${API}/api/doctor/expedientes/${expedienteId}/personas`, {
       method: "POST", headers: jH(),
-      body: JSON.stringify({ persona_id: personaSel.id, rol: rolSel }),
+      body: JSON.stringify({ cliente_id: clienteId, persona_id: personaSel.id, rol: rolSel }),
     });
     if (r.ok) { setPersonaSel(null); setBusqueda(""); setResultados([]); setRolSel(""); load(); }
     else { const d = await r.json(); setErr(d.error); }
   };
 
   const desasociar = async (personaId, rol) => {
-    await fetch(`${API}/api/doctor/expedientes/${expedienteId}/personas/${personaId}/${rol}`, { method: "DELETE", headers: aH() });
+    await fetch(`${API}/api/doctor/expedientes/${expedienteId}/personas/${personaId}/${rol}?cliente_id=${clienteId}`, { method: "DELETE", headers: aH() });
     load();
   };
 
@@ -307,7 +311,7 @@ function PersonasTab({ C, expedienteId }) {
         </button>
       </div>
 
-      {showNueva && <PersonaForm C={C} onSave={onPersonaCreada} onCancel={() => setShowNueva(false)} />}
+      {showNueva && <PersonaForm C={C} clienteId={clienteId} onSave={onPersonaCreada} onCancel={() => setShowNueva(false)} />}
       {err && <div style={{ color: "#ef4444", fontSize: 12, marginTop: 8 }}>{err}</div>}
     </div>
   );
@@ -315,7 +319,7 @@ function PersonasTab({ C, expedienteId }) {
 
 // ── Movimientos ───────────────────────────────────────────────
 
-function MovimientosTab({ C, expedienteId }) {
+function MovimientosTab({ C, clienteId, expedienteId }) {
   const [movimientos, setMovimientos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -325,10 +329,10 @@ function MovimientosTab({ C, expedienteId }) {
 
   const load = useCallback(async () => {
     try {
-      const r = await fetch(`${API}/api/doctor/expedientes/${expedienteId}/movimientos`, { headers: aH() });
+      const r = await fetch(`${API}/api/doctor/expedientes/${expedienteId}/movimientos?cliente_id=${clienteId}`, { headers: aH() });
       if (r.ok) setMovimientos(await r.json());
     } catch (e) { /* silenciar */ } finally { setLoading(false); }
-  }, [expedienteId]);
+  }, [expedienteId, clienteId]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -339,7 +343,7 @@ function MovimientosTab({ C, expedienteId }) {
     setSaving(true); setErr("");
     try {
       const r = await fetch(`${API}/api/doctor/expedientes/${expedienteId}/movimientos`, {
-        method: "POST", headers: jH(), body: JSON.stringify(f),
+        method: "POST", headers: jH(), body: JSON.stringify({ ...f, cliente_id: clienteId }),
       });
       if (!r.ok) throw new Error((await r.json()).error);
       setF({ fecha: "", tipo: "", descripcion: "" });
@@ -350,7 +354,7 @@ function MovimientosTab({ C, expedienteId }) {
 
   const eliminar = async (id) => {
     if (!confirm("¿Eliminar este movimiento?")) return;
-    await fetch(`${API}/api/doctor/movimientos/${id}`, { method: "DELETE", headers: aH() });
+    await fetch(`${API}/api/doctor/movimientos/${id}?cliente_id=${clienteId}`, { method: "DELETE", headers: aH() });
     load();
   };
 
@@ -417,7 +421,7 @@ function MovimientosTab({ C, expedienteId }) {
 
 // ── Ficha del expediente ──────────────────────────────────────
 
-function ExpedienteDetalle({ C, expedienteId, usuarios, onVolver }) {
+function ExpedienteDetalle({ C, clienteId, expedienteId, usuarios, onVolver, onResumirIA }) {
   const [exp, setExp] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("datos");
@@ -430,7 +434,7 @@ function ExpedienteDetalle({ C, expedienteId, usuarios, onVolver }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const r = await fetch(`${API}/api/doctor/expedientes/${expedienteId}`, { headers: aH() });
+      const r = await fetch(`${API}/api/doctor/expedientes/${expedienteId}?cliente_id=${clienteId}`, { headers: aH() });
       if (r.ok) {
         const d = await r.json();
         setExp(d);
@@ -438,7 +442,7 @@ function ExpedienteDetalle({ C, expedienteId, usuarios, onVolver }) {
         setNotas(d.observaciones || "");
       }
     } catch (e) { /* silenciar */ } finally { setLoading(false); }
-  }, [expedienteId]);
+  }, [expedienteId, clienteId]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -448,7 +452,7 @@ function ExpedienteDetalle({ C, expedienteId, usuarios, onVolver }) {
     setSaving(true);
     try {
       const r = await fetch(`${API}/api/doctor/expedientes/${expedienteId}`, {
-        method: "PUT", headers: jH(), body: JSON.stringify(form),
+        method: "PUT", headers: jH(), body: JSON.stringify({ ...form, cliente_id: clienteId }),
       });
       if (r.ok) { setExp(await r.json()); setEditando(false); }
     } catch (e) { /* silenciar */ } finally { setSaving(false); }
@@ -457,7 +461,7 @@ function ExpedienteDetalle({ C, expedienteId, usuarios, onVolver }) {
   const guardarNotas = async () => {
     setNotasGuardando(true);
     await fetch(`${API}/api/doctor/expedientes/${expedienteId}`, {
-      method: "PUT", headers: jH(), body: JSON.stringify({ ...exp, observaciones: notas }),
+      method: "PUT", headers: jH(), body: JSON.stringify({ ...exp, cliente_id: clienteId, observaciones: notas }),
     });
     setNotasGuardando(false);
   };
@@ -487,6 +491,9 @@ function ExpedienteDetalle({ C, expedienteId, usuarios, onVolver }) {
             {exp.prioridad && <Chip label={labelDe(PRIORIDADES, exp.prioridad)} color={PRIORIDAD_COLOR[exp.prioridad] || "#6b7280"} />}
           </div>
         </div>
+        {onResumirIA && (
+          <Btn C={C} variant="ghost" onClick={onResumirIA} style={{ fontSize: 12 }}>✨ Resumir con IA</Btn>
+        )}
         {!editando
           ? <Btn C={C} variant="ghost" onClick={() => setEditando(true)} style={{ fontSize: 12 }}>✏ Editar</Btn>
           : <div style={{ display: "flex", gap: 8 }}>
@@ -578,13 +585,13 @@ function ExpedienteDetalle({ C, expedienteId, usuarios, onVolver }) {
             {/* Personas */}
             <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 24 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 16 }}>Partes del expediente</div>
-              <PersonasTab C={C} expedienteId={expedienteId} />
+              <PersonasTab C={C} clienteId={clienteId} expedienteId={expedienteId} />
             </div>
           </div>
         )}
 
         {/* ── MOVIMIENTOS ── */}
-        {tab === "movimientos" && <MovimientosTab C={C} expedienteId={expedienteId} />}
+        {tab === "movimientos" && <MovimientosTab C={C} clienteId={clienteId} expedienteId={expedienteId} />}
 
         {/* ── DOCUMENTOS (placeholder) ── */}
         {tab === "documentos" && <Placeholder C={C} fase="Fase 5 — Escritos y plantillas" />}
@@ -615,7 +622,7 @@ function ExpedienteDetalle({ C, expedienteId, usuarios, onVolver }) {
 
 // ── Formulario nuevo expediente ───────────────────────────────
 
-function NuevoExpedienteForm({ C, usuarios, onCreado, onCancelar }) {
+function NuevoExpedienteForm({ C, clienteId, usuarios, onCreado, onCancelar }) {
   const [f, setF] = useState({
     caratula: "", tipo_proceso: "", num_carpeta_interna: "", num_expediente_judicial: "",
     fuero: "", jurisdiccion: "", etapa: "inicial", estado: "activo", prioridad: "media",
@@ -631,7 +638,7 @@ function NuevoExpedienteForm({ C, usuarios, onCreado, onCancelar }) {
     setLoading(true); setErr("");
     try {
       const r = await fetch(`${API}/api/doctor/expedientes`, {
-        method: "POST", headers: jH(), body: JSON.stringify(f),
+        method: "POST", headers: jH(), body: JSON.stringify({ ...f, cliente_id: clienteId }),
       });
       if (!r.ok) throw new Error((await r.json()).error);
       onCreado(await r.json());
@@ -696,15 +703,16 @@ function NuevoExpedienteForm({ C, usuarios, onCreado, onCancelar }) {
 
 // ── Vista lista + kanban ──────────────────────────────────────
 
-function ExpedientesLista({ C, onNuevo, onVer }) {
+function ExpedientesLista({ C, clienteId, onNuevo, onVer }) {
   const [expedientes, setExpedientes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [vista, setVista] = useState("tabla"); // 'tabla' | 'kanban'
+  const [vista, setVista] = useState("tabla");
   const [filtros, setFiltros] = useState({ etapa: "", fuero: "", estado: "", q: "" });
 
   const load = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
+    params.set("cliente_id", clienteId);
     if (filtros.etapa) params.set("etapa", filtros.etapa);
     if (filtros.fuero)  params.set("fuero",  filtros.fuero);
     if (filtros.estado) params.set("estado", filtros.estado);
@@ -713,7 +721,7 @@ function ExpedientesLista({ C, onNuevo, onVer }) {
       const r = await fetch(`${API}/api/doctor/expedientes?${params}`, { headers: aH() });
       if (r.ok) setExpedientes(await r.json());
     } catch (e) { /* silenciar */ } finally { setLoading(false); }
-  }, [filtros]);
+  }, [filtros, clienteId]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -800,7 +808,6 @@ function ExpedientesLista({ C, onNuevo, onVer }) {
           <div style={{ fontSize: 12, color: C.muted }}>{expedientes.length} expediente{expedientes.length !== 1 ? "s" : ""}</div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          {/* Toggle vista */}
           <div style={{ display: "flex", background: C.bg, borderRadius: 8, border: `1px solid ${C.border}`, overflow: "hidden" }}>
             {[{ v: "tabla", l: "Tabla" }, { v: "kanban", l: "Kanban" }].map(({ v, l }) => (
               <div key={v} onClick={() => setVista(v)}
@@ -846,6 +853,406 @@ function ExpedientesLista({ C, onNuevo, onVer }) {
   );
 }
 
+// ── Helper: streaming SSE desde /api/doctor/ai/chat ──────────
+
+async function streamIA(payload, onToken, onDone, onError) {
+  try {
+    const res = await fetch(`${API}/api/doctor/ai/chat`, {
+      method: "POST", headers: jH(),
+      body: JSON.stringify({
+        cliente_id:    payload.clienteId,
+        capacidad:     payload.capacidad,
+        expediente_id: payload.expedienteId,
+        mensaje:       payload.mensaje,
+        historial:     payload.historial,
+        plazo_input:   payload.plazoInput,
+      }),
+    });
+    if (!res.ok) {
+      if (res.status === 429) {
+        const d = await res.json().catch(() => ({}));
+        return onError(d.error || "Límite diario alcanzado.");
+      }
+      const d = await res.json().catch(() => ({}));
+      return onError(d.error || `Error ${res.status}`);
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n\n");
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        try {
+          const data = JSON.parse(line.slice(6));
+          if (data.text)  onToken(data.text);
+          if (data.done)  onDone(data);
+          if (data.error) onError(data.error);
+        } catch { /* ignorar líneas malformadas */ }
+      }
+    }
+  } catch (e) { onError(e.message); }
+}
+
+// ── Panel lateral IA ──────────────────────────────────────────
+
+function DoctorIAPanel({ C, clienteId, expedienteId, iaOpen, setIaOpen, triggerResumir }) {
+  const [iaTab, setIaTab]             = useState("resumir");
+  const [resumirOut, setResumirOut]   = useState("");
+  const [streaming, setStreaming]     = useState(false);
+  const [err, setErr]                 = useState("");
+
+  // Chat states
+  const [chatHistory, setChatHistory]   = useState([]);
+  const [chatInput, setChatInput]       = useState("");
+  const [streamingMsg, setStreamingMsg] = useState(""); // mensaje IA en construcción
+
+  // Plazos states
+  const [plazoForm, setPlazoForm]       = useState({ fecha_inicio: "", cantidad: "", tipo: "dias_habiles_judiciales" });
+  const [plazoResult, setPlazoResult]   = useState(null);
+  const [plazoExpl, setPlazoExpl]       = useState("");
+
+  const scrollRef = useRef(null);
+
+  // Auto-scroll
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [resumirOut, chatHistory, streamingMsg, plazoExpl]);
+
+  // Reset contexto cuando cambia el expediente
+  useEffect(() => {
+    setChatHistory([]);
+    setStreamingMsg("");
+    setResumirOut("");
+    setPlazoResult(null);
+    setPlazoExpl("");
+    setErr("");
+  }, [expedienteId]);
+
+  // Trigger externo: cuando llega un nuevo valor de triggerResumir, resumir
+  useEffect(() => {
+    if (triggerResumir && iaOpen && expedienteId) handleResumir();
+  }, [triggerResumir]); // eslint-disable-line
+
+  const handleResumir = async () => {
+    if (!expedienteId) return setErr("Abrí un expediente para usar esta función.");
+    setIaTab("resumir");
+    setResumirOut(""); setErr(""); setStreaming(true);
+    await streamIA(
+      { clienteId, capacidad: "resumir_expediente", expedienteId },
+      (t) => setResumirOut((p) => p + t),
+      () => setStreaming(false),
+      (e) => { setErr(e); setStreaming(false); }
+    );
+  };
+
+  const handlePlazo = async () => {
+    const { fecha_inicio, cantidad, tipo } = plazoForm;
+    if (!fecha_inicio || !cantidad) return setErr("Completá fecha y cantidad.");
+    setErr(""); setPlazoResult(null); setPlazoExpl("");
+    let local;
+    try { local = calcularPlazo(fecha_inicio, parseInt(cantidad), tipo); }
+    catch (e) { return setErr(e.message); }
+    setPlazoResult(local);
+    setStreaming(true);
+    await streamIA(
+      { clienteId, capacidad: "calcular_plazo", expedienteId,
+        plazoInput: { fecha_inicio, cantidad, tipo, resultado_calculo: local.explicacion } },
+      (t) => setPlazoExpl((p) => p + t),
+      () => setStreaming(false),
+      (e) => { setErr(e); setStreaming(false); }
+    );
+  };
+
+  const handleChat = async () => {
+    if (!chatInput.trim() || streaming) return;
+    const userMsg = chatInput.trim();
+    setChatInput("");
+    const snapshot = [...chatHistory];
+    setChatHistory((p) => [...p, { role: "user", content: userMsg }]);
+    setStreamingMsg(""); setStreaming(true); setErr("");
+    let acc = "";
+    await streamIA(
+      { clienteId, capacidad: "chat", expedienteId, mensaje: userMsg, historial: snapshot },
+      (t) => { acc += t; setStreamingMsg(acc); },
+      () => {
+        setChatHistory((p) => [...p, { role: "assistant", content: acc }]);
+        setStreamingMsg(""); setStreaming(false);
+      },
+      (e) => { setErr(e); setStreaming(false); }
+    );
+  };
+
+  if (!iaOpen) return null;
+
+  const TABS_IA = [
+    { key: "resumir", label: "📋 Resumir" },
+    { key: "plazos",  label: "⏱ Plazos" },
+    { key: "chat",    label: "💬 Chat" },
+  ];
+
+  return (
+    <div style={{
+      position: "fixed", right: 0, top: 0, bottom: 0, width: 390,
+      background: C.surface, borderLeft: `1px solid ${C.border}`,
+      display: "flex", flexDirection: "column", zIndex: 1000,
+      boxShadow: "-6px 0 24px rgba(0,0,0,.18)",
+    }}>
+      {/* Header */}
+      <div style={{ padding: "14px 16px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+        <span style={{ fontSize: 20 }}>🤖</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>Doctor IA</div>
+          <div style={{ fontSize: 10, color: C.muted }}>
+            {expedienteId ? "Contexto del expediente cargado ✓" : "Sin expediente activo"}{" "}
+            <span style={{ opacity: .5 }}>· Ctrl/⌘ I para cerrar</span>
+          </div>
+        </div>
+        <button onClick={() => setIaOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 20, lineHeight: 1, padding: 4 }}>×</button>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: "flex", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+        {TABS_IA.map((t) => (
+          <div key={t.key} onClick={() => setIaTab(t.key)}
+            style={{ flex: 1, padding: "9px 4px", textAlign: "center", cursor: "pointer", fontSize: 12,
+              fontWeight: iaTab === t.key ? 700 : 400, color: iaTab === t.key ? C.accent : C.muted,
+              borderBottom: iaTab === t.key ? `2px solid ${C.accent}` : "2px solid transparent" }}>
+            {t.label}
+          </div>
+        ))}
+      </div>
+
+      {/* ── RESUMIR ── */}
+      {iaTab === "resumir" && (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, padding: 16, gap: 12 }}>
+          <Btn C={C} onClick={handleResumir} disabled={streaming || !expedienteId}
+            style={{ opacity: !expedienteId ? .45 : 1, background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "white", border: "none" }}>
+            {streaming ? "⏳ Generando…" : "✨ Resumir este expediente"}
+          </Btn>
+          {!expedienteId && <div style={{ fontSize: 11, color: C.muted, textAlign: "center" }}>Abrí un expediente para usar esta función.</div>}
+          {err && <div style={{ fontSize: 11, color: "#ef4444" }}>{err}</div>}
+          {resumirOut && (
+            <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 14, fontSize: 12, color: C.text, lineHeight: 1.75, whiteSpace: "pre-wrap", fontFamily: "inherit" }}>
+              {resumirOut}
+              {streaming && <span style={{ color: C.accent }}>▌</span>}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── PLAZOS ── */}
+      {iaTab === "plazos" && (
+        <div style={{ flex: 1, overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <Field C={C} label="Fecha de inicio">
+              <Input C={C} type="date" value={plazoForm.fecha_inicio} onChange={(e) => setPlazoForm((p) => ({ ...p, fecha_inicio: e.target.value }))} />
+            </Field>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <Field C={C} label="Cantidad">
+                <Input C={C} type="number" min="1" value={plazoForm.cantidad} onChange={(e) => setPlazoForm((p) => ({ ...p, cantidad: e.target.value }))} placeholder="5" />
+              </Field>
+              <Field C={C} label="Tipo">
+                <Sel C={C} value={plazoForm.tipo} onChange={(e) => setPlazoForm((p) => ({ ...p, tipo: e.target.value }))}
+                  options={[
+                    { value: "dias_habiles_judiciales",      label: "Hábiles judiciales" },
+                    { value: "dias_habiles_administrativos", label: "Hábiles admin." },
+                    { value: "dias_corridos",                label: "Corridos" },
+                    { value: "meses",                        label: "Meses" },
+                    { value: "anios",                        label: "Años" },
+                  ]} />
+              </Field>
+            </div>
+            <Btn C={C} onClick={handlePlazo} disabled={streaming}>
+              {streaming ? "⏳ Calculando…" : "⚡ Calcular y explicar con IA"}
+            </Btn>
+          </div>
+
+          {err && <div style={{ fontSize: 11, color: "#ef4444" }}>{err}</div>}
+
+          {plazoResult && (
+            <div style={{ background: `${C.accent}18`, border: `1px solid ${C.accent}44`, borderRadius: 12, padding: 14 }}>
+              <div style={{ fontSize: 10, color: C.muted, letterSpacing: 1, marginBottom: 4 }}>VENCIMIENTO</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: C.accent, marginBottom: 6 }}>{plazoResult.fechaVencimientoDisplay}</div>
+              {plazoResult.diasExcluidos.length > 0 && (
+                <div style={{ fontSize: 11, color: C.muted }}>
+                  {plazoResult.diasExcluidos.length} día{plazoResult.diasExcluidos.length > 1 ? "s" : ""} excluido{plazoResult.diasExcluidos.length > 1 ? "s" : ""}:
+                  {" "}{plazoResult.diasExcluidos.slice(0, 3).map((d) => d.display).join(", ")}
+                  {plazoResult.diasExcluidos.length > 3 ? "…" : ""}
+                </div>
+              )}
+            </div>
+          )}
+
+          {plazoExpl && (
+            <div style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 14, fontSize: 12, color: C.text, lineHeight: 1.75, whiteSpace: "pre-wrap" }}>
+              {plazoExpl}
+              {streaming && <span style={{ color: C.accent }}>▌</span>}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── CHAT ── */}
+      {iaTab === "chat" && (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+          <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+            {chatHistory.length === 0 && !streamingMsg && (
+              <div style={{ fontSize: 12, color: C.muted, textAlign: "center", padding: "24px 8px" }}>
+                {expedienteId ? "Consultá sobre el expediente activo." : "Abrí un expediente para consultas contextualizadas, o consultá libremente."}
+              </div>
+            )}
+            {chatHistory.map((msg, i) => (
+              <div key={i} style={{
+                alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
+                maxWidth: "88%", padding: "8px 12px",
+                borderRadius: msg.role === "user" ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
+                background: msg.role === "user" ? C.accent : C.bg,
+                color: msg.role === "user" ? "white" : C.text,
+                fontSize: 12, lineHeight: 1.65, whiteSpace: "pre-wrap",
+                border: msg.role === "assistant" ? `1px solid ${C.border}` : "none",
+              }}>
+                {msg.content}
+              </div>
+            ))}
+            {streamingMsg && (
+              <div style={{ alignSelf: "flex-start", maxWidth: "88%", padding: "8px 12px", borderRadius: "12px 12px 12px 2px", background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 12, lineHeight: 1.65, whiteSpace: "pre-wrap" }}>
+                {streamingMsg}<span style={{ color: C.accent }}>▌</span>
+              </div>
+            )}
+            {streaming && !streamingMsg && (
+              <div style={{ alignSelf: "flex-start", padding: "8px 12px", background: C.bg, border: `1px solid ${C.border}`, borderRadius: "12px 12px 12px 2px", fontSize: 12, color: C.muted }}>●●●</div>
+            )}
+          </div>
+          {err && <div style={{ fontSize: 11, color: "#ef4444", padding: "0 14px 6px" }}>{err}</div>}
+          <div style={{ padding: "8px 12px", borderTop: `1px solid ${C.border}`, display: "flex", gap: 8, alignItems: "flex-end", flexShrink: 0 }}>
+            <textarea
+              value={chatInput} onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleChat(); } }}
+              placeholder="Consultá… (Enter enviar, Shift+Enter nueva línea)"
+              style={{ ...inputSt(C), flex: 1, minHeight: 56, maxHeight: 112, resize: "none", fontSize: 12 }}
+              disabled={streaming}
+            />
+            <Btn C={C} onClick={handleChat} disabled={streaming || !chatInput.trim()} style={{ height: 56, minWidth: 40, fontSize: 16, padding: "0 12px" }}>↑</Btn>
+          </div>
+        </div>
+      )}
+
+      {/* Footer disclaimer */}
+      <div style={{ padding: "6px 12px", borderTop: `1px solid ${C.border}`, fontSize: 10, color: C.muted, lineHeight: 1.4, flexShrink: 0 }}>
+        Esta herramienta es un asistente. La responsabilidad profesional es del abogado matriculado.
+      </div>
+    </div>
+  );
+}
+
+// ── Página Doctor IA (pantalla completa, sub-tab "ia") ────────
+
+function DoctorIAPage({ C, clienteId, expedienteId }) {
+  const [chatHistory, setChatHistory]   = useState([]);
+  const [chatInput, setChatInput]       = useState("");
+  const [streaming, setStreaming]       = useState(false);
+  const [streamingMsg, setStreamingMsg] = useState("");
+  const [err, setErr]                   = useState("");
+  const bottomRef = useRef(null);
+
+  useEffect(() => {
+    if (bottomRef.current) bottomRef.current.scrollIntoView({ behavior: "smooth" });
+  }, [chatHistory, streamingMsg]);
+
+  // Reset al cambiar expediente
+  useEffect(() => {
+    setChatHistory([]); setStreamingMsg(""); setErr("");
+  }, [expedienteId]);
+
+  const handleChat = async () => {
+    if (!chatInput.trim() || streaming) return;
+    const userMsg = chatInput.trim();
+    setChatInput("");
+    const snapshot = [...chatHistory];
+    setChatHistory((p) => [...p, { role: "user", content: userMsg }]);
+    setStreamingMsg(""); setStreaming(true); setErr("");
+    let acc = "";
+    await streamIA(
+      { clienteId, capacidad: "chat", expedienteId, mensaje: userMsg, historial: snapshot },
+      (t) => { acc += t; setStreamingMsg(acc); },
+      () => {
+        setChatHistory((p) => [...p, { role: "assistant", content: acc }]);
+        setStreamingMsg(""); setStreaming(false);
+      },
+      (e) => { setErr(e); setStreaming(false); }
+    );
+  };
+
+  return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+      {/* Header */}
+      <div style={{ padding: "16px 24px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+        <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>🤖 Doctor IA — Chat</div>
+        <div style={{ fontSize: 12, color: C.muted }}>
+          {expedienteId ? "Contexto del expediente activo cargado." : "Sin expediente abierto — modo libre."}
+          {" · "}Historial de sesión (no persiste al refrescar)
+        </div>
+      </div>
+
+      {/* Mensajes */}
+      <div style={{ flex: 1, overflowY: "auto", padding: 24, display: "flex", flexDirection: "column", gap: 14 }}>
+        {chatHistory.length === 0 && !streamingMsg && (
+          <EmptyState C={C} icon="🤖" title="Doctor IA listo"
+            sub={expedienteId ? "El expediente activo está cargado como contexto. Hacé tu consulta jurídica." : "Hacé una consulta jurídica libre o abrí un expediente para contexto."}
+          />
+        )}
+        {chatHistory.map((msg, i) => (
+          <div key={i} style={{
+            alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
+            maxWidth: "68%", padding: "12px 18px",
+            borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+            background: msg.role === "user" ? C.accent : C.surface,
+            color: msg.role === "user" ? "white" : C.text,
+            fontSize: 13, lineHeight: 1.75, whiteSpace: "pre-wrap",
+            border: msg.role === "assistant" ? `1px solid ${C.border}` : "none",
+          }}>
+            {msg.content}
+          </div>
+        ))}
+        {streamingMsg && (
+          <div style={{ alignSelf: "flex-start", maxWidth: "68%", padding: "12px 18px", borderRadius: "18px 18px 18px 4px", background: C.surface, border: `1px solid ${C.border}`, color: C.text, fontSize: 13, lineHeight: 1.75, whiteSpace: "pre-wrap" }}>
+            {streamingMsg}<span style={{ color: C.accent }}>▌</span>
+          </div>
+        )}
+        {streaming && !streamingMsg && (
+          <div style={{ alignSelf: "flex-start", padding: "12px 18px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: "18px 18px 18px 4px", fontSize: 13, color: C.muted }}>
+            ●●● generando…
+          </div>
+        )}
+        <div ref={bottomRef} />
+      </div>
+
+      {err && <div style={{ padding: "0 24px 8px", fontSize: 12, color: "#ef4444" }}>{err}</div>}
+
+      {/* Input */}
+      <div style={{ padding: "16px 24px", borderTop: `1px solid ${C.border}`, display: "flex", gap: 12, alignItems: "flex-end", flexShrink: 0 }}>
+        <textarea
+          value={chatInput} onChange={(e) => setChatInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleChat(); } }}
+          placeholder="Consultá sobre el expediente, cita de artículos, estrategia… (Enter = enviar, Shift+Enter = nueva línea)"
+          style={{ ...inputSt(C), flex: 1, minHeight: 72, maxHeight: 160, resize: "none" }}
+          disabled={streaming}
+        />
+        <Btn C={C} onClick={handleChat} disabled={streaming || !chatInput.trim()} style={{ height: 72, minWidth: 56, fontSize: 20, padding: "0 16px" }}>↑</Btn>
+      </div>
+
+      <div style={{ padding: "8px 24px 10px", fontSize: 10, color: C.muted, flexShrink: 0 }}>
+        Esta herramienta es un asistente. La responsabilidad profesional es del abogado matriculado.
+      </div>
+    </div>
+  );
+}
+
 // ── Sub-navegación Doctor ─────────────────────────────────────
 
 const SUB_NAV = [
@@ -854,7 +1261,7 @@ const SUB_NAV = [
   { key: "personas",    label: "👥 Personas",       fase: "Fase 4" },
   { key: "escritos",    label: "📄 Escritos",       fase: "Fase 5" },
   { key: "cuentas",     label: "💰 Cuentas",        fase: "Fase 6" },
-  { key: "ia",          label: "🤖 Doctor IA",      fase: "Fase 2" },
+  { key: "ia",          label: "🤖 Doctor IA",      fase: null },
   { key: "procuracion", label: "⚖️ Procuración",    fase: "Fase 7" },
   { key: "biblioteca",  label: "📚 Biblioteca",     fase: "Fase 8" },
   { key: "bandeja",     label: "🔔 Bandeja",        fase: "Fase 9" },
@@ -863,27 +1270,58 @@ const SUB_NAV = [
 
 // ── Componente principal ──────────────────────────────────────
 
-export default function DoctorModule({ C }) {
-  const [subTab, setSubTab]       = useState("expedientes");
-  const [view, setView]           = useState("lista");   // 'lista' | 'nuevo' | 'detalle'
-  const [expId, setExpId]         = useState(null);
-  const [usuarios, setUsuarios]   = useState([]);
+export default function DoctorModule({ C, clienteId }) {
+  const [subTab, setSubTab]             = useState("expedientes");
+  const [view, setView]                 = useState("lista");
+  const [expId, setExpId]               = useState(null);
+  const [usuarios, setUsuarios]         = useState([]);
+  const [iaOpen, setIaOpen]             = useState(false);
+  const [triggerResumir, setTriggerResumir] = useState(0);
 
   // Cargar usuarios para selects de responsable
   useEffect(() => {
-    fetch(`${API}/api/doctor/usuarios`, { headers: aH() })
+    if (!clienteId) return;
+    fetch(`${API}/api/doctor/usuarios?cliente_id=${clienteId}`, { headers: aH() })
       .then((r) => r.ok ? r.json() : [])
       .then(setUsuarios)
       .catch(() => {});
+  }, [clienteId]);
+
+  // Atajo de teclado Cmd/Ctrl+I → toggle panel IA
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "i") {
+        e.preventDefault();
+        setIaOpen((p) => !p);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  const irALista   = () => { setView("lista");   setExpId(null); };
+  // Guard: admin sin cliente seleccionado
+  if (!clienteId) {
+    return (
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ textAlign: "center", padding: 40 }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>⚖️</div>
+          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Seleccioná un cliente</div>
+          <div style={{ fontSize: 13, color: C.muted }}>Andá a Admin → elegí un cliente → volvé a Doctor</div>
+        </div>
+      </div>
+    );
+  }
+
+  const irALista   = () => { setView("lista"); setExpId(null); };
   const irANuevo   = () => { setView("nuevo"); };
-  const irADetalle = (id) => { setExpId(id);  setView("detalle"); };
+  const irADetalle = (id) => { setExpId(id); setView("detalle"); };
   const onCreado   = (exp) => { irADetalle(exp.id); };
 
+  // expedienteId activo para el panel IA
+  const activeExpId = view === "detalle" ? expId : null;
+
   return (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, position: "relative" }}>
 
       {/* Sub-nav horizontal */}
       <div style={{ display: "flex", borderBottom: `1px solid ${C.border}`, flexShrink: 0, overflowX: "auto", background: C.surface }}>
@@ -905,25 +1343,49 @@ export default function DoctorModule({ C }) {
       {/* Contenido del sub-tab activo */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
 
-        {/* Submódulos con placeholder */}
+        {/* Submódulos con placeholder (solo los que tienen fase asignada) */}
         {SUB_NAV.filter((x) => x.fase !== null).map((item) =>
           subTab === item.key
             ? <Placeholder key={item.key} C={C} fase={item.fase} />
             : null
         )}
 
+        {/* Doctor IA — página completa */}
+        {subTab === "ia" && (
+          <DoctorIAPage C={C} clienteId={clienteId} expedienteId={activeExpId} />
+        )}
+
         {/* Expedientes — con sub-vistas */}
         {subTab === "expedientes" && view === "lista" && (
-          <ExpedientesLista C={C} onNuevo={irANuevo} onVer={irADetalle} />
+          <ExpedientesLista C={C} clienteId={clienteId} onNuevo={irANuevo} onVer={irADetalle} />
         )}
         {subTab === "expedientes" && view === "nuevo" && (
-          <NuevoExpedienteForm C={C} usuarios={usuarios} onCreado={onCreado} onCancelar={irALista} />
+          <NuevoExpedienteForm C={C} clienteId={clienteId} usuarios={usuarios} onCreado={onCreado} onCancelar={irALista} />
         )}
         {subTab === "expedientes" && view === "detalle" && expId && (
-          <ExpedienteDetalle C={C} expedienteId={expId} usuarios={usuarios} onVolver={irALista} />
+          <ExpedienteDetalle
+            C={C}
+            clienteId={clienteId}
+            expedienteId={expId}
+            usuarios={usuarios}
+            onVolver={irALista}
+            onResumirIA={() => { setIaOpen(true); setTriggerResumir((p) => p + 1); }}
+          />
         )}
 
       </div>
+
+      {/* Panel IA flotante (solo fuera de sub-tab ia) */}
+      {subTab !== "ia" && (
+        <DoctorIAPanel
+          C={C}
+          clienteId={clienteId}
+          expedienteId={activeExpId}
+          iaOpen={iaOpen}
+          setIaOpen={setIaOpen}
+          triggerResumir={triggerResumir}
+        />
+      )}
     </div>
   );
 }

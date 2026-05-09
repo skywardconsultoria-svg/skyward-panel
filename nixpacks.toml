@@ -1,0 +1,7 @@
+# Nixpacks config para Railway — skyward-panel
+# dist/ se commitea pre-buildeado; Railway solo instala deps y sirve.
+[phases.build]
+cmds = ["npm ci --omit=dev"]
+
+[start]
+cmd = "node server.js"

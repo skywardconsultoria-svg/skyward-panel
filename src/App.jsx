@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { DARK_C, LIGHT_C } from "./theme";
+import { DARK_C, LIGHT_C, TYPOGRAPHY } from "./theme";
 import { STAGES, FUNNEL_ORDER, PROF_COLORS, MONEDAS_MUNDO } from "./constants";
 import { API, tok, aH, jH } from "./utils/api";
 import { useIsMobile } from "./hooks/useIsMobile";
@@ -103,16 +103,25 @@ function Badge({ etapa }) {
 }
 
 function Btn({ onClick, disabled, children, secondary=false, small=false, style:xStyle }) {
+  const [hov, setHov] = React.useState(false);
+  const [act, setAct] = React.useState(false);
+  const bg = secondary ? "transparent" : act ? C.accentActive : hov ? C.accentHover : C.accent;
   return (
-    <button onClick={onClick} disabled={disabled} style={{
-      background: secondary ? "transparent" : C.accent,
-      border: secondary ? `1px solid ${C.border}` : "none",
-      borderRadius:4, color: secondary ? C.muted : "white",
-      padding: small ? "5px 12px" : "8px 16px",
-      fontSize: small ? 11 : 13, fontWeight:600, cursor:"pointer",
-      fontFamily:"inherit", opacity: disabled ? 0.6 : 1,
-      ...(xStyle||{})
-    }}>{children}</button>
+    <button onClick={onClick} disabled={disabled}
+      onMouseEnter={() => !disabled && setHov(true)}
+      onMouseLeave={() => { setHov(false); setAct(false); }}
+      onMouseDown={() => !disabled && setAct(true)}
+      onMouseUp={() => setAct(false)}
+      style={{
+        background: bg,
+        border: secondary ? `1px solid ${C.border}` : "none",
+        borderRadius:4, color: secondary ? C.muted : "white",
+        padding: small ? "5px 12px" : "8px 16px",
+        fontSize: small ? 11 : 13, fontWeight:600, cursor: disabled ? "not-allowed" : "pointer",
+        fontFamily:"inherit", opacity: disabled ? 0.6 : 1,
+        transition: "background 200ms ease",
+        ...(xStyle||{})
+      }}>{children}</button>
   );
 }
 
@@ -848,17 +857,17 @@ function AdminView({ stats, clientes, onSelectClient, onRefresh, onCrearUsuario,
             <tbody>
               {clientes.map(c => (
                 <tr key={c.id} className="hr" style={{borderBottom:`1px solid ${C.border}`}} onClick={()=>onSelectClient(c)}>
-                  <td style={{padding:"12px 16px",fontWeight:500,fontSize:13}}>{c.nombre}<div style={{fontSize:11,color:C.muted}}>{c.numero_whatsapp||"-"}</div></td>
-                  <td style={{padding:"12px 16px"}} onClick={e=>e.stopPropagation()}>
+                  <td style={{padding:"14px 16px",fontWeight:500,fontSize:14,color:C.text}}>{c.nombre}<div style={{fontSize:11,color:C.textMuted,marginTop:2}}>{c.numero_whatsapp||"-"}</div></td>
+                  <td style={{padding:"14px 16px"}} onClick={e=>e.stopPropagation()}>
                     <select value={c.plan||"pro"}
                       onChange={async e=>{const plan=e.target.value;await fetch(`${API}/api/clientes/${c.id}/plan`,{method:"PUT",headers:{"Content-Type":"application/json","Authorization":`Bearer ${tok()}`},body:JSON.stringify({plan})});if(onPlanChange)onPlanChange(c.id,plan);else onRefresh();}}
                       style={{background:c.plan==="base"?"rgba(251,191,36,0.15)":c.plan==="plus"?"rgba(20,184,166,0.15)":C.accentGlow,border:`1px solid ${c.plan==="base"?"#f59e0b":c.plan==="plus"?"#14b8a6":C.accent}`,borderRadius:4,padding:"4px 8px",fontSize:11,fontWeight:600,color:c.plan==="base"?"#f59e0b":c.plan==="plus"?"#14b8a6":C.accent,cursor:"pointer",fontFamily:"inherit"}}>
                       <option value="pro">Pro</option><option value="plus">Plus</option><option value="base">Básico</option>
                     </select>
                   </td>
-                  <td style={{padding:"12px 16px",fontSize:13}}>{c.total_prospectos||0}</td>
-                  <td style={{padding:"12px 16px",fontSize:13}}>{c.agendados||0}</td>
-                  <td style={{padding:"12px 16px",fontSize:13}}>{c.tasa_conversion||0}%</td>
+                  <td style={{padding:"14px 16px",fontSize:13,color:C.textMuted,fontVariantNumeric:"tabular-nums"}}>{c.total_prospectos||0}</td>
+                  <td style={{padding:"14px 16px",fontSize:13,color:C.textMuted,fontVariantNumeric:"tabular-nums"}}>{c.agendados||0}</td>
+                  <td style={{padding:"14px 16px",fontSize:13,color:C.textMuted,fontVariantNumeric:"tabular-nums"}}>{c.tasa_conversion||0}%</td>
                   <td style={{padding:"12px 16px",textAlign:"right"}}>
                     <span style={{display:"flex",gap:6,justifyContent:"flex-end",alignItems:"center"}}>
                       <Btn onClick={e=>{e.stopPropagation();setOnboardingCliente(c);}} secondary small>📋 Setup</Btn>
@@ -4166,7 +4175,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
             // Ocultar cuando hay chat abierto en mobile para no tapar el input
             transform:(activeTab==="conversations" && selectedProspect)?"translateY(100%)":"translateY(0)",
             transition:"transform .2s ease"
-          } : {width:76,background:C.surface,borderRight:`1px solid ${C.border}`,display:"flex",flexDirection:"column",flexShrink:0,zIndex:10}}>
+          } : {width:52,background:C.bg,borderRight:`1px solid ${C.border}`,display:"flex",flexDirection:"column",flexShrink:0,zIndex:10}}>
             {/* Logo / cliente */}
             {!isMobile && <div style={{height:56,display:"flex",alignItems:"center",justifyContent:"center",borderBottom:`1px solid ${C.border}`,flexShrink:0}}>
               <div title={client?.nombre} style={{width:34,height:34,borderRadius:2,background:C.accentGlow,border:`1px solid ${C.accent}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:C.accent,cursor:"default",userSelect:"none",overflow:"hidden"}}>
@@ -4179,8 +4188,8 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 const active = activeTab===item.key;
                 return (
                   <div key={item.key} onClick={()=>setActiveTab(item.key)} title={item.label}
-                    onMouseEnter={e=>{if(!active){e.currentTarget.style.background=C.accentGlow;const s=e.currentTarget.querySelectorAll('span');if(s[0]){s[0].style.color=C.accentLight;s[0].style.filter='drop-shadow(0 0 6px #f39200)';}if(s[1])s[1].style.color=C.accentLight;}}}
-                    onMouseLeave={e=>{if(!active){e.currentTarget.style.background='transparent';const s=e.currentTarget.querySelectorAll('span');if(s[0]){s[0].style.color=C.muted;s[0].style.filter='none';}if(s[1])s[1].style.color=C.muted;}}}
+                    onMouseEnter={e=>{if(!active){const s=e.currentTarget.querySelectorAll('span');if(s[0])s[0].style.color=C.text;if(s[1])s[1].style.color=C.text;}}}
+                    onMouseLeave={e=>{if(!active){const s=e.currentTarget.querySelectorAll('span');if(s[0])s[0].style.color=C.muted;if(s[1])s[1].style.color=C.muted;}}}
                     style={isMobile ? {
                       flex:"0 0 auto",minWidth:60,height:56,display:"flex",flexDirection:"column",
                       alignItems:"center",justifyContent:"center",gap:2,cursor:"pointer",position:"relative",
@@ -4191,11 +4200,11 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       width:"100%",minHeight:52,display:"flex",flexDirection:"column",alignItems:"center",
                       justifyContent:"center",gap:3,cursor:"pointer",position:"relative",
                       padding:"6px 4px",
-                      background:active?C.accentGlow:"transparent",
-                      borderRight:active?`2px solid ${C.accent}`:"2px solid transparent",
+                      background:"transparent",
+                      boxShadow:active?`inset 2px 0 0 ${C.accent}`:"none",
                       transition:"all .15s"
                     }}>
-                    <span style={{color:active?C.accentLight:C.muted,lineHeight:1,position:"relative",display:"inline-flex",alignItems:"center",justifyContent:"center",transition:"color .15s, filter .15s",filter:active?'drop-shadow(0 0 8px #f39200)':'none'}}>
+                    <span style={{color:active?C.accentWarm:C.muted,lineHeight:1,position:"relative",display:"inline-flex",alignItems:"center",justifyContent:"center",transition:"color .15s"}}>
                       {item.icon}
                       {item.badge > 0 && (
                         <div className={item.badgeUrgente?"pulso-naranja":""} style={{position:"absolute",top:-5,right:-7,background:item.badgeUrgente?"#f97316":"#ef4444",borderRadius:"50%",width:15,height:15,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:700,color:"white"}}>
@@ -4203,7 +4212,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         </div>
                       )}
                     </span>
-                    <span style={{fontSize:9,color:active?C.accent:C.muted,fontWeight:active?600:400,letterSpacing:".3px",textAlign:"center",lineHeight:1.2,maxWidth:72,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",padding:"0 2px"}}>
+                    <span style={{fontSize:9,color:active?C.accentWarm:C.muted,fontWeight:active?600:400,letterSpacing:".3px",textAlign:"center",lineHeight:1.2,maxWidth:52,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",padding:"0 2px"}}>
                       {item.label}
                     </span>
                   </div>
@@ -5692,16 +5701,14 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
           };
 
           const Card = ({icon,label,value,sub,pct,color}) => (
-            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:isMobile?14:20,flex:1,minWidth:isMobile?"calc(50% - 6px)":160}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
-                <div style={{width:34,height:34,borderRadius:4,background:`${color}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>{icon}</div>
-                <div style={{fontSize:12,color:C.muted,fontWeight:500}}>{label}</div>
-              </div>
-              <div style={{fontSize:isMobile?18:24,fontWeight:700,color:C.text,lineHeight:1.2,marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:isMobile?"14px 16px":"24px 28px",flex:1,minWidth:isMobile?"calc(50% - 6px)":160}}>
+              <div style={{fontSize:11,fontWeight:500,color:C.textMuted,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:8}}>{label}</div>
+              <div style={{width:32,height:1,background:C.accent,marginBottom:12}}/>
+              <div style={{fontSize:isMobile?24:48,fontWeight:700,color:C.text,lineHeight:1.1,marginBottom:8,fontFamily:TYPOGRAPHY.fontDisplay,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                 {value}
               </div>
-              {pct !== undefined && <div style={{marginBottom:2}}>{pctBadge(pct)}</div>}
-              {sub && <div style={{fontSize:11,color:C.muted,marginTop:4}}>{sub}</div>}
+              {pct !== undefined && <div style={{marginBottom:4}}>{pctBadge(pct)}</div>}
+              {sub && <div style={{fontSize:11,color:C.textMuted,marginTop:4}}>{sub}</div>}
             </div>
           );
 
@@ -5715,10 +5722,10 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               <div style={{maxWidth:1000,margin:"0 auto"}}>
 
                 {/* Header */}
-                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:8}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:8,minHeight:56,borderBottom:`1px solid ${C.border}`,paddingBottom:16}}>
                   <div>
-                    <div style={{fontSize:isMobile?16:20,fontWeight:700}}>📊 Dashboard</div>
-                    <div style={{fontSize:11,color:C.muted,marginTop:2}}>{mes} · {client?.nombre}</div>
+                    <div style={{fontSize:isMobile?16:20,fontWeight:600,fontFamily:TYPOGRAPHY.fontDisplay,color:C.text}}>Dashboard</div>
+                    <div style={{fontSize:11,color:C.textMuted,marginTop:2}}>{mes} · {client?.nombre}</div>
                   </div>
                   <button onClick={fetchDashboard} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:"7px 14px",color:C.muted,fontSize:12,cursor:"pointer"}}>
                     {loadingDash ? "..." : "↻"}

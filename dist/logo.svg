@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 260">
+  <defs>
+    <linearGradient id="pinGrad" x1="0.85" y1="0.05" x2="0.15" y2="0.95">
+      <stop offset="0%" stop-color="#F9B200"/>
+      <stop offset="45%" stop-color="#F07800"/>
+      <stop offset="100%" stop-color="#E84E0F"/>
+    </linearGradient>
+    <linearGradient id="gearGrad" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0%" stop-color="#b0b0b0"/>
+      <stop offset="50%" stop-color="#707070"/>
+      <stop offset="100%" stop-color="#454545"/>
+    </linearGradient>
+    <clipPath id="gearClip">
+      <!-- Only show gear on the left/upper-left portion -->
+      <path d="M0,0 L130,0 L130,145 L70,200 L0,200 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- Orange location pin -->
+  <path d="M105.0,16.0 A82,82 0 1,1 54.5,162.6 L105,245 L155.5,162.6 A82,82 0 0,1 105.0,16.0 Z"
+        fill="url(#pinGrad)"/>
+
+  <!-- Gray gear (clipped to left/upper portion) -->
+  <g clip-path="url(#gearClip)">
+    <path d="M76.19,22.12 L73.01,5.42 L102.99,5.42 L99.81,22.12 L123.41,31.89 L132.97,17.83 L154.17,39.03 L140.11,48.59 L149.88,72.19 L166.58,69.01 L166.58,98.99 L149.88,95.81 L140.11,119.41 L154.17,128.97 L132.97,150.17 L123.41,136.11 L99.81,145.88 L102.99,162.58 L73.01,162.58 L76.19,145.88 L52.59,136.11 L43.03,150.17 L21.83,128.97 L35.89,119.41 L26.12,95.81 L9.42,98.99 L9.42,69.01 L26.12,72.19 L35.89,48.59 L21.83,39.03 L43.03,17.83 L52.59,31.89 Z" fill="url(#gearGrad)"/>
+    <circle cx="88" cy="84" r="63" fill="url(#gearGrad)"/>
+  </g>
+
+  <!-- White center circle (gear bore / pin ring) -->
+  <circle cx="105" cy="98" r="30" fill="white"/>
+</svg>

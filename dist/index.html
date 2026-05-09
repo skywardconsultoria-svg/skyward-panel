@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <title>skywardjuridicacrm.com</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <link rel="manifest" href="/assets/manifest-BjIOlCpA.json">
+    <meta name="theme-color" content="#E84E0F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="skywardjuridicacrm.com">
+    <style>
+      html, body {
+        overscroll-behavior: none;
+        overflow-x: hidden;
+        max-width: 100vw;
+        touch-action: pan-y;
+        background-color: #0c0a07;
+        height: 100%;
+      }
+      #root {
+        background-color: #0c0a07;
+        min-height: 100vh;
+        min-height: 100dvh;
+      }
+      * { box-sizing: border-box; }
+    </style>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
+    </script>
+    <script type="module" crossorigin src="/assets/index-BunPBtXF.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

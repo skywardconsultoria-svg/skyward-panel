@@ -3,6 +3,7 @@ import { DARK_C, LIGHT_C } from "./theme";
 import { STAGES, FUNNEL_ORDER, PROF_COLORS, MONEDAS_MUNDO } from "./constants";
 import { API, tok, aH, jH } from "./utils/api";
 import { useIsMobile } from "./hooks/useIsMobile";
+import DoctorModule from "./modules/Doctor";
 
 // -- Componente de reproducción de audio --
 function AudioBubble({ audioUrl }) {
@@ -4145,6 +4146,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
       {(() => {
         const navItems = [
           {key:"inicio",     icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></>, label:"Inicio",       rangos:["admin","dueno"],         planes:["base","plus","pro"]},
+          {key:"doctor",     icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></>, label:"Doctor",       rangos:["admin","dueno","staff","profesional"], planes:["base","plus","pro"]},
           {key:"calendario", icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></>, label:"Agenda",       rangos:["admin","dueno","staff","profesional"], planes:["base","plus","pro"]},
           {key:"conversations",icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></>,label:"Conversación",rangos:["admin","dueno","staff"], planes:["base","plus","pro"], badge: solicitudesPendientes + (prospectos||[]).filter(p=>p.insistencia_notificada&&p.modo_humano).length + (prospectos||[]).filter(p=>p.listo_para_cierre&&!p.horario_elegido).length, badgeUrgente: (prospectos||[]).filter(p=>p.listo_para_cierre&&!p.horario_elegido).length > 0},
           {key:"prospectos",  icon:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></>, label:"Clientes",    rangos:["admin","dueno","staff","profesional"], planes:["base","plus","pro"]},
@@ -5669,6 +5671,11 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
 
           </div>
+        )}
+
+        {/* -- MÓDULO DOCTOR -- */}
+        {activeTab === "doctor" && (
+          <DoctorModule C={C} />
         )}
 
         {/* -- DASHBOARD / INICIO -- */}

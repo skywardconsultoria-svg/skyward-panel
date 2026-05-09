@@ -21,6 +21,16 @@ export const TYPOGRAPHY = {
   numeric: { fontVariantNumeric: 'tabular-nums lining-nums', fontFeatureSettings: '"tnum" 1' },
 };
 
+export const RADIUS = {
+  card:    2,   // cards, panels, modales — editorial, luxury
+  input:   4,   // inputs, selects, textareas
+  button:  4,   // botones primarios y secundarios
+  badge:   2,   // badges, chips, pills — rectangular
+  tooltip: 4,   // tooltips y dropdowns
+  modal:   2,   // modales y drawers
+  sidebar: 0,   // sidebar — flush contra el borde
+};
+
 export const DARK_C = {
   // Fondos
   bg:              '#0c0a07',

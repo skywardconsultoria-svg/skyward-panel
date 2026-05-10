@@ -1309,11 +1309,537 @@ function DoctorIAPage({ C, clienteId, expedienteId }) {
   );
 }
 
+// ── Agenda ────────────────────────────────────────────────────
+
+const TIPO_AGENDA_COLOR = {
+  audiencia:    "#E84E0F",
+  vencimiento:  "#FBBA00",
+  reunion:      "#F39200",
+  tarea:        "#646464",
+  recordatorio: "#10B981",
+};
+const TIPOS_AGENDA = [
+  { value: "audiencia",    label: "Audiencia" },
+  { value: "vencimiento",  label: "Vencimiento" },
+  { value: "reunion",      label: "Reunión" },
+  { value: "tarea",        label: "Tarea" },
+  { value: "recordatorio", label: "Recordatorio" },
+];
+const ESTADOS_AGENDA = [
+  { value: "pendiente",  label: "Pendiente" },
+  { value: "completado", label: "Completado" },
+  { value: "cancelado",  label: "Cancelado" },
+];
+const DIAS_SEMANA_AG = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+const MESES_ES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+
+function fmtDatetimeLocal(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}T${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+}
+
+// ── EventoModal ────────────────────────────────────────────────
+function EventoModal({ C, clienteId, evento, fechaInicio, expedienteIdPreset, expedientes, onSave, onDelete, onClose }) {
+  const isNew = !evento;
+  const initFecha = fechaInicio ? fmtDatetimeLocal(fechaInicio) : "";
+  const [form, setForm] = useState({
+    titulo:        evento?.titulo || "",
+    tipo:          evento?.tipo || "tarea",
+    fecha_inicio:  evento ? fmtDatetimeLocal(evento.fecha_inicio) : initFecha,
+    fecha_fin:     evento ? fmtDatetimeLocal(evento.fecha_fin) : "",
+    todo_el_dia:   evento?.todo_el_dia || false,
+    descripcion:   evento?.descripcion || "",
+    expediente_id: evento?.expediente_id || expedienteIdPreset || "",
+    estado:        evento?.estado || "pendiente",
+  });
+  const [saving, setSaving]   = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [err, setErr]         = useState("");
+  const [plazoOpen, setPlazoOpen] = useState(false);
+  const [plazoForm, setPlazoForm] = useState({ fecha_inicio: "", cantidad: "5", tipo: "dias_habiles_judiciales" });
+  const [plazoResult, setPlazoResult] = useState(null);
+
+  const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  const handlePlazo = () => {
+    if (!plazoForm.fecha_inicio || !plazoForm.cantidad) return;
+    try { setPlazoResult(calcularPlazo(plazoForm.fecha_inicio, parseInt(plazoForm.cantidad), plazoForm.tipo)); }
+    catch { setPlazoResult(null); }
+  };
+
+  const aplicarPlazo = () => {
+    if (!plazoResult) return;
+    const d = plazoResult.fechaVencimiento;
+    set("fecha_fin", `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}T23:59`);
+    setPlazoOpen(false);
+  };
+
+  const handleSave = async () => {
+    if (!form.titulo.trim()) return setErr("El título es obligatorio.");
+    if (!form.fecha_inicio)  return setErr("La fecha de inicio es obligatoria.");
+    setSaving(true); setErr("");
+    try {
+      const body = { cliente_id: clienteId, ...form, expediente_id: form.expediente_id || null, asignados: [] };
+      const r = await fetch(
+        isNew ? `${API}/api/doctor/agenda` : `${API}/api/doctor/agenda/${evento.id}`,
+        { method: isNew ? "POST" : "PUT", headers: jH(), body: JSON.stringify(body) }
+      );
+      if (!r.ok) throw new Error((await r.json()).error);
+      onSave(await r.json());
+    } catch (e) { setErr(e.message); } finally { setSaving(false); }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm("¿Eliminar este evento?")) return;
+    setDeleting(true);
+    try {
+      await fetch(`${API}/api/doctor/agenda/${evento.id}?cliente_id=${clienteId}`, { method: "DELETE", headers: aH() });
+      onDelete(evento.id);
+    } catch (e) { setErr(e.message); } finally { setDeleting(false); }
+  };
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.6)", zIndex:2000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }} onClick={onClose}>
+      <div style={{ background:C.surface, border:`1px solid ${C.border}`, borderRadius:14, width:"100%", maxWidth:520, maxHeight:"90vh", overflowY:"auto", padding:24 }} onClick={e=>e.stopPropagation()}>
+        <div style={{ display:"flex", alignItems:"center", marginBottom:20 }}>
+          <div style={{ fontSize:16, fontWeight:700, color:C.text, flex:1 }}>{isNew ? "Nuevo evento" : "Editar evento"}</div>
+          <button onClick={onClose} style={{ background:"none", border:"none", cursor:"pointer", fontSize:22, color:C.muted, padding:0, lineHeight:1 }}>×</button>
+        </div>
+
+        {/* Tipo */}
+        <div style={{ marginBottom:14 }}>
+          <div style={{ fontSize:11, color:C.muted, marginBottom:6, fontWeight:600, letterSpacing:".5px" }}>TIPO</div>
+          <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+            {TIPOS_AGENDA.map(t => (
+              <div key={t.value} onClick={() => set("tipo", t.value)} style={{
+                padding:"5px 12px", borderRadius:99, cursor:"pointer", fontSize:12, fontWeight:600,
+                background: form.tipo===t.value ? TIPO_AGENDA_COLOR[t.value] : C.bg,
+                color:      form.tipo===t.value ? "white" : C.muted,
+                border:     `1px solid ${form.tipo===t.value ? TIPO_AGENDA_COLOR[t.value] : C.border}`,
+                transition:"all .15s",
+              }}>{t.label}</div>
+            ))}
+          </div>
+        </div>
+
+        <Field C={C} label="Título *">
+          <Input C={C} value={form.titulo} onChange={e=>set("titulo",e.target.value)} placeholder="Ej: Audiencia preliminar" />
+        </Field>
+
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:14 }}>
+          <Field C={C} label="Fecha inicio *">
+            <input type="datetime-local" value={form.fecha_inicio} onChange={e=>set("fecha_inicio",e.target.value)}
+              style={{ ...inputSt(C), width:"100%", boxSizing:"border-box" }} />
+          </Field>
+          <Field C={C} label="Fecha fin">
+            <input type="datetime-local" value={form.fecha_fin} onChange={e=>set("fecha_fin",e.target.value)}
+              style={{ ...inputSt(C), width:"100%", boxSizing:"border-box" }} />
+          </Field>
+        </div>
+
+        {/* Calcular con plazos.js */}
+        <div style={{ marginBottom:14, background:C.bg, borderRadius:8, border:`1px solid ${C.border}`, overflow:"hidden" }}>
+          <div onClick={() => setPlazoOpen(p=>!p)} style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 12px", cursor:"pointer", color:C.accent, fontSize:12, fontWeight:600 }}>
+            <span style={{ fontSize:10 }}>{plazoOpen?"▼":"▶"}</span> Calcular fecha fin con plazos.js
+          </div>
+          {plazoOpen && (
+            <div style={{ padding:"0 12px 12px", borderTop:`1px solid ${C.border}` }}>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 72px 1fr", gap:8, alignItems:"flex-end", marginBottom:8, marginTop:10 }}>
+                <Field C={C} label="Fecha base">
+                  <input type="date" value={plazoForm.fecha_inicio} onChange={e=>setPlazoForm(p=>({...p,fecha_inicio:e.target.value}))}
+                    style={{ ...inputSt(C), width:"100%", boxSizing:"border-box" }} />
+                </Field>
+                <Field C={C} label="Cant.">
+                  <input type="number" min="1" value={plazoForm.cantidad} onChange={e=>setPlazoForm(p=>({...p,cantidad:e.target.value}))}
+                    style={{ ...inputSt(C), width:"100%", boxSizing:"border-box" }} />
+                </Field>
+                <Field C={C} label="Tipo">
+                  <Sel C={C} value={plazoForm.tipo} onChange={e=>setPlazoForm(p=>({...p,tipo:e.target.value}))} options={[
+                    { value:"dias_habiles_judiciales",      label:"Háb. judiciales" },
+                    { value:"dias_habiles_administrativos", label:"Háb. admin." },
+                    { value:"dias_corridos",                label:"Corridos" },
+                    { value:"meses",                        label:"Meses" },
+                    { value:"anios",                        label:"Años" },
+                  ]} />
+                </Field>
+              </div>
+              <div style={{ display:"flex", alignItems:"center", gap:10, flexWrap:"wrap" }}>
+                <Btn C={C} onClick={handlePlazo} style={{ fontSize:12 }}>⚡ Calcular</Btn>
+                {plazoResult && <>
+                  <span style={{ fontSize:13, fontWeight:700, color:C.accent }}>→ {plazoResult.fechaVencimientoDisplay}</span>
+                  <Btn C={C} onClick={aplicarPlazo} style={{ fontSize:12 }}>Aplicar como fecha fin</Btn>
+                </>}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}>
+          <input type="checkbox" id="ag_todo_dia" checked={form.todo_el_dia} onChange={e=>set("todo_el_dia",e.target.checked)} />
+          <label htmlFor="ag_todo_dia" style={{ fontSize:13, color:C.text, cursor:"pointer" }}>Todo el día</label>
+        </div>
+
+        <Field C={C} label="Expediente vinculado (opcional)">
+          <Sel C={C} value={form.expediente_id} onChange={e=>set("expediente_id",e.target.value)}
+            options={[{ value:"", label:"— Sin expediente —" }, ...expedientes.map(e=>({ value:e.id, label:e.caratula }))]} />
+        </Field>
+        <Field C={C} label="Estado">
+          <Sel C={C} value={form.estado} onChange={e=>set("estado",e.target.value)} options={ESTADOS_AGENDA} />
+        </Field>
+        <Field C={C} label="Descripción">
+          <textarea value={form.descripcion} onChange={e=>set("descripcion",e.target.value)} placeholder="Detalles adicionales..."
+            style={{ ...inputSt(C), width:"100%", boxSizing:"border-box", minHeight:60, resize:"vertical" }} />
+        </Field>
+
+        {err && <div style={{ color:"#ef4444", fontSize:12, marginBottom:12 }}>{err}</div>}
+
+        <div style={{ display:"flex", gap:10, justifyContent:"flex-end" }}>
+          {!isNew && <Btn C={C} variant="ghost" onClick={handleDelete} disabled={deleting} style={{ color:"#ef4444", marginRight:"auto" }}>{deleting?"…":"🗑 Eliminar"}</Btn>}
+          <Btn C={C} variant="ghost" onClick={onClose}>Cancelar</Btn>
+          <Btn C={C} onClick={handleSave} disabled={saving}>{saving?"Guardando…":isNew?"Crear evento":"Guardar"}</Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Vistas del calendario ──────────────────────────────────────
+
+function VistaMes({ C, fechaRef, eventos, onDiaClick, onEventoClick }) {
+  const año = fechaRef.getFullYear();
+  const mes = fechaRef.getMonth();
+  const primerDia = new Date(año, mes, 1);
+  const offsetLun = (primerDia.getDay() + 6) % 7;
+  const diasMes = new Date(año, mes + 1, 0).getDate();
+  const hoy = new Date();
+
+  const celdas = [];
+  for (let i = 0; i < offsetLun; i++) celdas.push({ fecha: new Date(año, mes, -(offsetLun - i - 1)), esEsteMes: false });
+  for (let d = 1; d <= diasMes; d++) celdas.push({ fecha: new Date(año, mes, d), esEsteMes: true });
+  while (celdas.length % 7 !== 0) {
+    const ult = celdas[celdas.length - 1].fecha;
+    celdas.push({ fecha: new Date(ult.getFullYear(), ult.getMonth(), ult.getDate() + 1), esEsteMes: false });
+  }
+
+  const evsByDay = {};
+  eventos.forEach(ev => {
+    const k = new Date(ev.fecha_inicio).toLocaleDateString("sv-SE");
+    if (!evsByDay[k]) evsByDay[k] = [];
+    evsByDay[k].push(ev);
+  });
+
+  return (
+    <div style={{ flex:1, display:"flex", flexDirection:"column", minHeight:0 }}>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", borderBottom:`1px solid ${C.border}`, flexShrink:0 }}>
+        {DIAS_SEMANA_AG.map(d => (
+          <div key={d} style={{ textAlign:"center", padding:"7px 4px", fontSize:11, fontWeight:600, color:C.muted, letterSpacing:".5px" }}>{d}</div>
+        ))}
+      </div>
+      <div style={{ flex:1, display:"grid", gridTemplateColumns:"repeat(7,1fr)", gridAutoRows:"1fr", overflow:"hidden" }}>
+        {celdas.map(({ fecha, esEsteMes }, i) => {
+          const k = fecha.toLocaleDateString("sv-SE");
+          const evs = evsByDay[k] || [];
+          const esHoy = fecha.toDateString() === hoy.toDateString();
+          return (
+            <div key={i} onClick={() => onDiaClick(fecha)}
+              style={{ border:`1px solid ${C.border}`, padding:"5px 4px", cursor:"pointer", overflow:"hidden",
+                background: esHoy ? `${C.accent}12` : C.surface, opacity: esEsteMes ? 1 : .4, transition:"background .1s" }}
+              onMouseEnter={e => e.currentTarget.style.background = `${C.accent}14`}
+              onMouseLeave={e => e.currentTarget.style.background = esHoy ? `${C.accent}12` : C.surface}>
+              <div style={{ display:"inline-flex", alignItems:"center", justifyContent:"center", width:22, height:22, borderRadius:"50%", fontSize:12,
+                fontWeight: esHoy ? 700 : 400, color: esHoy ? "white" : esEsteMes ? C.text : C.muted,
+                background: esHoy ? C.accent : "none", marginBottom:2 }}>
+                {fecha.getDate()}
+              </div>
+              {evs.slice(0, 3).map(ev => (
+                <div key={ev.id} onClick={e => { e.stopPropagation(); onEventoClick(ev); }}
+                  style={{ fontSize:10, padding:"1px 5px", borderRadius:4, marginBottom:2, cursor:"pointer",
+                    background:`${TIPO_AGENDA_COLOR[ev.tipo]||"#646464"}22`,
+                    color: TIPO_AGENDA_COLOR[ev.tipo]||"#646464",
+                    border:`1px solid ${TIPO_AGENDA_COLOR[ev.tipo]||"#646464"}44`,
+                    whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
+                  {ev.titulo}
+                </div>
+              ))}
+              {evs.length > 3 && <div style={{ fontSize:10, color:C.muted }}>+{evs.length - 3} más</div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function VistaSemana({ C, fechaRef, eventos, onEventoClick, onSlotClick }) {
+  const lunes = new Date(fechaRef);
+  lunes.setDate(fechaRef.getDate() - ((fechaRef.getDay() + 6) % 7));
+  const dias = Array.from({ length: 7 }, (_, i) => { const d = new Date(lunes); d.setDate(lunes.getDate() + i); return d; });
+  const horas = Array.from({ length: 16 }, (_, i) => i + 7);
+  const hoy = new Date();
+  return (
+    <div style={{ flex:1, display:"flex", flexDirection:"column", minHeight:0, overflowY:"auto" }}>
+      <div style={{ display:"grid", gridTemplateColumns:"48px repeat(7,1fr)", borderBottom:`1px solid ${C.border}`, flexShrink:0, position:"sticky", top:0, background:C.surface, zIndex:1 }}>
+        <div />
+        {dias.map((d, i) => (
+          <div key={i} style={{ textAlign:"center", padding:"7px 4px", borderLeft:`1px solid ${C.border}` }}>
+            <div style={{ fontSize:10, color:C.muted }}>{DIAS_SEMANA_AG[i]}</div>
+            <div style={{ display:"inline-flex", alignItems:"center", justifyContent:"center", width:26, height:26, borderRadius:"50%", fontSize:13, fontWeight:600,
+              background: d.toDateString()===hoy.toDateString() ? C.accent : "none",
+              color:      d.toDateString()===hoy.toDateString() ? "white" : C.text }}>
+              {d.getDate()}
+            </div>
+          </div>
+        ))}
+      </div>
+      {horas.map(h => (
+        <div key={h} style={{ display:"grid", gridTemplateColumns:"48px repeat(7,1fr)", minHeight:52, borderBottom:`1px solid ${C.border}40` }}>
+          <div style={{ fontSize:10, color:C.muted, padding:"4px 6px", textAlign:"right" }}>{String(h).padStart(2,"0")}:00</div>
+          {dias.map((d, di) => {
+            const clave = d.toLocaleDateString("sv-SE");
+            const evsSlot = eventos.filter(ev => {
+              const fi = new Date(ev.fecha_inicio);
+              return fi.toLocaleDateString("sv-SE") === clave && fi.getHours() === h;
+            });
+            return (
+              <div key={di} onClick={() => { const f = new Date(d); f.setHours(h,0,0); onSlotClick(f); }}
+                style={{ borderLeft:`1px solid ${C.border}`, padding:"2px 3px", cursor:"pointer" }}
+                onMouseEnter={e => e.currentTarget.style.background = `${C.accent}08`}
+                onMouseLeave={e => e.currentTarget.style.background = ""}>
+                {evsSlot.map(ev => (
+                  <div key={ev.id} onClick={e => { e.stopPropagation(); onEventoClick(ev); }}
+                    style={{ fontSize:10, padding:"2px 5px", borderRadius:4, marginBottom:2, cursor:"pointer",
+                      background: TIPO_AGENDA_COLOR[ev.tipo]||"#646464", color:"white",
+                      whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
+                    {String(new Date(ev.fecha_inicio).getHours()).padStart(2,"0")}:{String(new Date(ev.fecha_inicio).getMinutes()).padStart(2,"0")} {ev.titulo}
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function VistaDia({ C, fechaRef, eventos, onEventoClick, onSlotClick }) {
+  const clave = fechaRef.toLocaleDateString("sv-SE");
+  const evsDia = eventos.filter(ev => new Date(ev.fecha_inicio).toLocaleDateString("sv-SE") === clave);
+  return (
+    <div style={{ flex:1, overflowY:"auto" }}>
+      <div style={{ padding:"12px 16px", borderBottom:`1px solid ${C.border}`, fontWeight:700, color:C.text, fontSize:14, flexShrink:0 }}>
+        {DIAS_SEMANA_AG[(fechaRef.getDay()+6)%7]}, {fechaRef.getDate()} de {MESES_ES[fechaRef.getMonth()]} {fechaRef.getFullYear()}
+      </div>
+      {Array.from({ length:24 }, (_,h) => {
+        const evsHora = evsDia.filter(ev => new Date(ev.fecha_inicio).getHours() === h);
+        return (
+          <div key={h} onClick={() => { const f = new Date(fechaRef); f.setHours(h,0,0); onSlotClick(f); }}
+            style={{ display:"flex", minHeight:52, borderBottom:`1px solid ${C.border}40`, cursor:"pointer" }}
+            onMouseEnter={e => e.currentTarget.style.background = `${C.accent}08`}
+            onMouseLeave={e => e.currentTarget.style.background = ""}>
+            <div style={{ width:52, flexShrink:0, fontSize:11, color:C.muted, padding:"6px 8px", textAlign:"right" }}>{String(h).padStart(2,"0")}:00</div>
+            <div style={{ flex:1, padding:"4px 8px", borderLeft:`1px solid ${C.border}` }}>
+              {evsHora.map(ev => (
+                <div key={ev.id} onClick={e => { e.stopPropagation(); onEventoClick(ev); }}
+                  style={{ display:"inline-flex", gap:8, alignItems:"center", padding:"4px 10px", borderRadius:6, marginBottom:4, cursor:"pointer",
+                    background: TIPO_AGENDA_COLOR[ev.tipo]||"#646464", color:"white", fontSize:12 }}>
+                  <span>{String(new Date(ev.fecha_inicio).getHours()).padStart(2,"0")}:{String(new Date(ev.fecha_inicio).getMinutes()).padStart(2,"0")}</span>
+                  <span>{ev.titulo}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function VistaAgenda({ C, fechaRef, eventos, onEventoClick }) {
+  const base = new Date(fechaRef); base.setHours(0,0,0,0);
+  const futuros = [...eventos].filter(ev => new Date(ev.fecha_inicio) >= base)
+    .sort((a,b) => new Date(a.fecha_inicio) - new Date(b.fecha_inicio));
+  const grupos = {};
+  futuros.forEach(ev => {
+    const k = new Date(ev.fecha_inicio).toLocaleDateString("sv-SE");
+    if (!grupos[k]) grupos[k] = [];
+    grupos[k].push(ev);
+  });
+  if (!futuros.length) return <EmptyState C={C} icon="📅" title="Sin eventos" sub="No hay eventos en este período." />;
+  return (
+    <div style={{ flex:1, overflowY:"auto", padding:16 }}>
+      {Object.entries(grupos).map(([k, evs]) => {
+        const f = new Date(k + "T12:00:00");
+        return (
+          <div key={k} style={{ marginBottom:20 }}>
+            <div style={{ fontSize:12, fontWeight:700, color:C.muted, letterSpacing:".5px", marginBottom:8, paddingBottom:4, borderBottom:`1px solid ${C.border}` }}>
+              {DIAS_SEMANA_AG[(f.getDay()+6)%7]}, {f.getDate()} de {MESES_ES[f.getMonth()]} {f.getFullYear()}
+            </div>
+            {evs.map(ev => (
+              <div key={ev.id} onClick={() => onEventoClick(ev)}
+                style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 12px", borderRadius:8, marginBottom:6, cursor:"pointer", background:C.bg, border:`1px solid ${C.border}` }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = TIPO_AGENDA_COLOR[ev.tipo]||C.accent}
+                onMouseLeave={e => e.currentTarget.style.borderColor = C.border}>
+                <div style={{ width:4, height:36, borderRadius:2, background:TIPO_AGENDA_COLOR[ev.tipo]||"#646464", flexShrink:0 }} />
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13, fontWeight:600, color:C.text }}>{ev.titulo}</div>
+                  <div style={{ fontSize:11, color:C.muted }}>
+                    {!ev.todo_el_dia && new Date(ev.fecha_inicio).toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})}
+                    {ev.expediente_caratula && <span> · {ev.expediente_caratula}</span>}
+                  </div>
+                </div>
+                <Chip label={TIPOS_AGENDA.find(t=>t.value===ev.tipo)?.label||ev.tipo} color={TIPO_AGENDA_COLOR[ev.tipo]||"#646464"} />
+              </div>
+            ))}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── ProximosVencimientos ──────────────────────────────────────
+function ProximosVencimientos({ C, clienteId, onEventoClick }) {
+  const [eventos, setEventos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    if (!clienteId) return;
+    setLoading(true);
+    fetch(`${API}/api/doctor/agenda/proximos?cliente_id=${clienteId}&dias=30`, { headers: aH() })
+      .then(r => r.ok ? r.json() : []).then(setEventos).catch(() => {}).finally(() => setLoading(false));
+  }, [clienteId]);
+  const colorDias = d => d <= 3 ? "#ef4444" : d <= 7 ? "#FBBA00" : "#10B981";
+  return (
+    <div style={{ width:252, flexShrink:0, borderLeft:`1px solid ${C.border}`, display:"flex", flexDirection:"column", minHeight:0 }}>
+      <div style={{ padding:"11px 14px", borderBottom:`1px solid ${C.border}`, fontSize:12, fontWeight:700, color:C.text, flexShrink:0 }}>📌 Próximos 30 días</div>
+      <div style={{ flex:1, overflowY:"auto", padding:8 }}>
+        {loading && <Spinner C={C} />}
+        {!loading && !eventos.length && <div style={{ textAlign:"center", padding:20, fontSize:12, color:C.muted }}>Sin vencimientos próximos</div>}
+        {eventos.map(ev => {
+          const diasR = Math.max(0, Math.ceil(parseFloat(ev.dias_restantes)));
+          return (
+            <div key={ev.id} onClick={() => onEventoClick(ev)}
+              style={{ padding:"8px 10px", borderRadius:8, marginBottom:6, cursor:"pointer", background:C.bg, border:`1px solid ${C.border}` }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = TIPO_AGENDA_COLOR[ev.tipo]||C.accent}
+              onMouseLeave={e => e.currentTarget.style.borderColor = C.border}>
+              <div style={{ display:"flex", gap:6 }}>
+                <div style={{ width:3, borderRadius:2, background:TIPO_AGENDA_COLOR[ev.tipo]||"#646464", flexShrink:0 }} />
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:12, fontWeight:600, color:C.text, lineHeight:1.3 }}>{ev.titulo}</div>
+                  {ev.expediente_caratula && <div style={{ fontSize:10, color:C.muted }}>{ev.expediente_caratula}</div>}
+                  <div style={{ fontSize:11, fontWeight:700, color:colorDias(diasR), marginTop:2 }}>
+                    {diasR <= 0 ? "¡Hoy!" : diasR === 1 ? "Mañana" : `En ${diasR} días`}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── AgendaModule ──────────────────────────────────────────────
+function AgendaModule({ C, clienteId }) {
+  const hoy = new Date();
+  const [vista, setVista]       = useState("mes");
+  const [fechaRef, setFechaRef] = useState(new Date(hoy.getFullYear(), hoy.getMonth(), 1));
+  const [eventos, setEventos]   = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [modalOpen, setModalOpen]   = useState(false);
+  const [eventoSel, setEventoSel]   = useState(null);
+  const [fechaModal, setFechaModal] = useState(null);
+  const [expedientes, setExpedientes] = useState([]);
+
+  useEffect(() => {
+    if (!clienteId) return;
+    fetch(`${API}/api/doctor/expedientes?cliente_id=${clienteId}`, { headers: aH() })
+      .then(r => r.ok ? r.json() : []).then(d => setExpedientes(Array.isArray(d) ? d : [])).catch(() => {});
+  }, [clienteId]);
+
+  const cargarEventos = useCallback(() => {
+    if (!clienteId) return;
+    setLoading(true);
+    const mes = fechaRef.getMonth() + 1, anio = fechaRef.getFullYear();
+    fetch(`${API}/api/doctor/agenda?cliente_id=${clienteId}&mes=${mes}&anio=${anio}`, { headers: aH() })
+      .then(r => r.ok ? r.json() : []).then(setEventos).catch(() => {}).finally(() => setLoading(false));
+  }, [clienteId, fechaRef]);
+
+  useEffect(() => { cargarEventos(); }, [cargarEventos]);
+
+  const nav = (dir) => {
+    setFechaRef(prev => {
+      const f = new Date(prev);
+      if (vista === "mes")    f.setMonth(f.getMonth() + dir);
+      else if (vista === "semana") f.setDate(f.getDate() + dir * 7);
+      else f.setDate(f.getDate() + dir);
+      return f;
+    });
+  };
+  const irHoy = () => setFechaRef(vista === "mes" ? new Date(hoy.getFullYear(), hoy.getMonth(), 1) : new Date());
+
+  const titulo = () => {
+    if (vista === "mes") return `${MESES_ES[fechaRef.getMonth()]} ${fechaRef.getFullYear()}`;
+    if (vista === "semana") {
+      const lu = new Date(fechaRef); lu.setDate(fechaRef.getDate() - ((fechaRef.getDay()+6)%7));
+      const do_ = new Date(lu); do_.setDate(lu.getDate()+6);
+      return `${lu.getDate()} ${MESES_ES[lu.getMonth()]} — ${do_.getDate()} ${MESES_ES[do_.getMonth()]} ${do_.getFullYear()}`;
+    }
+    return `${DIAS_SEMANA_AG[(fechaRef.getDay()+6)%7]} ${fechaRef.getDate()} de ${MESES_ES[fechaRef.getMonth()]} ${fechaRef.getFullYear()}`;
+  };
+
+  const abrirCrear  = (fecha) => { setEventoSel(null); setFechaModal(fecha || new Date()); setModalOpen(true); };
+  const abrirEditar = (ev)    => { setEventoSel(ev);   setFechaModal(null); setModalOpen(true); };
+  const cerrar      = ()      => { setModalOpen(false); setEventoSel(null); setFechaModal(null); };
+  const onSave = (ev) => { setEventos(prev => { const i = prev.findIndex(e=>e.id===ev.id); return i>=0?prev.map(e=>e.id===ev.id?ev:e):[...prev,ev]; }); cerrar(); };
+  const onDelete = (id) => { setEventos(prev => prev.filter(e=>e.id!==id)); cerrar(); };
+
+  const VISTAS_BTN = [{ key:"mes",label:"Mes"},{ key:"semana",label:"Semana"},{ key:"dia",label:"Día"},{ key:"agenda",label:"Agenda"}];
+
+  return (
+    <div style={{ flex:1, display:"flex", minHeight:0 }}>
+      <div style={{ flex:1, display:"flex", flexDirection:"column", minHeight:0 }}>
+        {/* Toolbar */}
+        <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", borderBottom:`1px solid ${C.border}`, flexShrink:0, flexWrap:"wrap" }}>
+          <Btn C={C} variant="ghost" onClick={irHoy} style={{ fontSize:12 }}>Hoy</Btn>
+          <div style={{ display:"flex" }}>
+            <button onClick={() => nav(-1)} style={{ background:"none", border:`1px solid ${C.border}`, borderRadius:"6px 0 0 6px", padding:"4px 10px", cursor:"pointer", color:C.text }}>‹</button>
+            <button onClick={() => nav(1)}  style={{ background:"none", border:`1px solid ${C.border}`, borderLeft:"none", borderRadius:"0 6px 6px 0", padding:"4px 10px", cursor:"pointer", color:C.text }}>›</button>
+          </div>
+          <div style={{ fontSize:15, fontWeight:700, color:C.text, flex:1 }}>{titulo()}{loading&&<span style={{ fontSize:11,color:C.muted,marginLeft:8 }}>…</span>}</div>
+          <div style={{ display:"flex", background:C.bg, borderRadius:8, border:`1px solid ${C.border}`, overflow:"hidden" }}>
+            {VISTAS_BTN.map(v => (
+              <div key={v.key} onClick={() => setVista(v.key)}
+                style={{ padding:"6px 11px", fontSize:12, cursor:"pointer", fontWeight: vista===v.key?600:400,
+                  color: vista===v.key?C.accent:C.muted, background: vista===v.key?`${C.accent}14`:"none", transition:"all .15s" }}>
+                {v.label}
+              </div>
+            ))}
+          </div>
+          <Btn C={C} onClick={() => abrirCrear(new Date())} style={{ fontSize:12 }}>+ Evento</Btn>
+        </div>
+        {vista==="mes"    && <VistaMes    C={C} fechaRef={fechaRef} eventos={eventos} onDiaClick={abrirCrear} onEventoClick={abrirEditar} />}
+        {vista==="semana" && <VistaSemana C={C} fechaRef={fechaRef} eventos={eventos} onEventoClick={abrirEditar} onSlotClick={abrirCrear} />}
+        {vista==="dia"    && <VistaDia    C={C} fechaRef={fechaRef} eventos={eventos} onEventoClick={abrirEditar} onSlotClick={abrirCrear} />}
+        {vista==="agenda" && <VistaAgenda C={C} fechaRef={fechaRef} eventos={eventos} onEventoClick={abrirEditar} />}
+      </div>
+      <ProximosVencimientos C={C} clienteId={clienteId} onEventoClick={abrirEditar} />
+      {modalOpen && (
+        <EventoModal C={C} clienteId={clienteId} evento={eventoSel} fechaInicio={fechaModal}
+          expedienteIdPreset={null} expedientes={expedientes}
+          onSave={onSave} onDelete={onDelete} onClose={cerrar} />
+      )}
+    </div>
+  );
+}
+
 // ── Sub-navegación Doctor ─────────────────────────────────────
 
 const SUB_NAV = [
   { key: "expedientes", label: "📁 Expedientes",  fase: null },
-  { key: "agenda",      label: "📅 Agenda",        fase: "Fase 3" },
+  { key: "agenda",      label: "📅 Agenda",        fase: null },
   { key: "personas",    label: "👥 Personas",       fase: "Fase 4" },
   { key: "escritos",    label: "📄 Escritos",       fase: "Fase 5" },
   { key: "cuentas",     label: "💰 Cuentas",        fase: "Fase 6" },
@@ -1409,6 +1935,11 @@ export default function DoctorModule({ C, clienteId }) {
         {/* Doctor IA — página completa */}
         {subTab === "ia" && (
           <DoctorIAPage C={C} clienteId={clienteId} expedienteId={activeExpId} />
+        )}
+
+        {/* Agenda */}
+        {subTab === "agenda" && (
+          <AgendaModule C={C} clienteId={clienteId} />
         )}
 
         {/* Expedientes — con sub-vistas */}

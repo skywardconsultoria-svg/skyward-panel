@@ -105,7 +105,7 @@ function Badge({ etapa }) {
 function Btn({ onClick, disabled, children, secondary=false, small=false, style:xStyle }) {
   return (
     <button onClick={onClick} disabled={disabled} style={{
-      background: secondary ? "transparent" : C.accent,
+      background: secondary ? "transparent" : `linear-gradient(135deg,${C.accent},#4f46e5)`,
       border: secondary ? `1px solid ${C.border}` : "none",
       borderRadius:8, color: secondary ? C.muted : "white",
       padding: small ? "5px 12px" : "8px 16px",
@@ -6226,7 +6226,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 </div>
                 <div style={{padding:16,flex:1,overflowY:"auto"}}>
                   <button onClick={()=>abrirNuevoTurnoFecha(calDrawer,"")}
-                    style={{width:"100%",marginBottom:16,padding:"8px 0",background:C.accent,border:"none",borderRadius:8,color:"white",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
+                    style={{width:"100%",marginBottom:16,padding:"8px 0",background:`linear-gradient(135deg,${C.accent},#4f46e5)`,border:"none",borderRadius:8,color:"white",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
                     + Nueva cita
                   </button>
                   {calTurnos.filter(t=>t.fecha?.toString().slice(0,10)===calDrawer).sort((a,b)=>a.hora>b.hora?1:-1).map((t,i)=>{

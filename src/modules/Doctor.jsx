@@ -11,6 +11,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { API, jH, aH } from "../utils/api";
 import { validarCUIT, validarDNI, formatCUIT } from "../lib/cuit";
 import { calcularPlazo } from "../lib/plazos";
+import { marked } from "marked";
 import {
   FUEROS, JURISDICCIONES, TIPOS_PROCESO, ETAPAS_EXPEDIENTE,
   ESTADOS_EXPEDIENTE, PRIORIDADES, ROLES_PERSONA, TIPOS_MOVIMIENTO,
@@ -855,6 +856,33 @@ function ExpedientesLista({ C, clienteId, onNuevo, onVer }) {
 
 // ── Helper: streaming SSE desde /api/doctor/ai/chat ──────────
 
+// Configurar marked: saltos de línea GFM, sin HTML arbitrario del backend
+marked.use({ breaks: true, gfm: true });
+function mdHtml(text) {
+  return text ? marked(text) : "";
+}
+
+// CSS mínimo para markdown dentro de la paleta del CRM
+function mdStyles(C) {
+  return `
+    .md-ia h1,.md-ia h2,.md-ia h3{color:${C.text};font-weight:600;margin:10px 0 4px;line-height:1.3}
+    .md-ia h1{font-size:1.1em} .md-ia h2{font-size:1.05em} .md-ia h3{font-size:1em}
+    .md-ia strong,.md-ia b{color:${C.text};font-weight:700}
+    .md-ia p{margin:0 0 8px}
+    .md-ia ul,.md-ia ol{padding-left:18px;margin:0 0 8px}
+    .md-ia li{margin-bottom:2px}
+    .md-ia table{border-collapse:collapse;width:100%;margin-bottom:8px}
+    .md-ia td,.md-ia th{padding:5px 9px;border:1px solid ${C.border};font-size:inherit}
+    .md-ia th{font-weight:600;background:${C.border}22}
+    .md-ia hr{border:none;border-top:1px solid ${C.border};margin:10px 0}
+    .md-ia code{background:${C.border}44;padding:1px 5px;border-radius:3px;font-size:.92em;font-family:monospace}
+    .md-ia pre{background:${C.border}44;padding:10px 12px;border-radius:6px;overflow-x:auto;margin-bottom:8px}
+    .md-ia pre code{background:none;padding:0}
+    .md-ia blockquote{border-left:3px solid ${C.accent};margin:0 0 8px;padding:4px 12px;color:${C.muted}}
+    .md-ia a{color:${C.accent};text-decoration:underline}
+  `;
+}
+
 // Convierte errores crudos de la API en mensajes amigables para el usuario final
 function humanizarErrorIA(raw = "") {
   const msg = String(raw).toLowerCase();
@@ -1014,6 +1042,7 @@ function DoctorIAPanel({ C, clienteId, expedienteId, iaOpen, setIaOpen, triggerR
       display: "flex", flexDirection: "column", zIndex: 1000,
       boxShadow: "-6px 0 24px rgba(0,0,0,.18)",
     }}>
+      <style>{mdStyles(C)}</style>
       {/* Header */}
       <div style={{ padding: "14px 16px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
         <span style={{ fontSize: 20 }}>🤖</span>
@@ -1049,8 +1078,9 @@ function DoctorIAPanel({ C, clienteId, expedienteId, iaOpen, setIaOpen, triggerR
           {!expedienteId && <div style={{ fontSize: 11, color: C.muted, textAlign: "center" }}>Abrí un expediente para usar esta función.</div>}
           {err && <div style={{ fontSize: 11, color: "#ef4444" }}>{err}</div>}
           {resumirOut && (
-            <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 14, fontSize: 12, color: C.text, lineHeight: 1.75, whiteSpace: "pre-wrap", fontFamily: "inherit" }}>
-              {resumirOut}
+            <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 14, fontFamily: "inherit" }}>
+              <div className="md-ia" style={{ fontSize: 12, color: C.text, lineHeight: 1.75 }}
+                dangerouslySetInnerHTML={{ __html: mdHtml(resumirOut) }} />
               {streaming && <span style={{ color: C.accent }}>▌</span>}
             </div>
           )}
@@ -1101,8 +1131,9 @@ function DoctorIAPanel({ C, clienteId, expedienteId, iaOpen, setIaOpen, triggerR
           )}
 
           {plazoExpl && (
-            <div style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 14, fontSize: 12, color: C.text, lineHeight: 1.75, whiteSpace: "pre-wrap" }}>
-              {plazoExpl}
+            <div style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 14 }}>
+              <div className="md-ia" style={{ fontSize: 12, color: C.text, lineHeight: 1.75 }}
+                dangerouslySetInnerHTML={{ __html: mdHtml(plazoExpl) }} />
               {streaming && <span style={{ color: C.accent }}>▌</span>}
             </div>
           )}
@@ -1119,17 +1150,23 @@ function DoctorIAPanel({ C, clienteId, expedienteId, iaOpen, setIaOpen, triggerR
               </div>
             )}
             {chatHistory.map((msg, i) => (
-              <div key={i} style={{
-                alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
-                maxWidth: "88%", padding: "8px 12px",
-                borderRadius: msg.role === "user" ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
-                background: msg.role === "user" ? C.accent : C.bg,
-                color: msg.role === "user" ? "white" : C.text,
-                fontSize: 12, lineHeight: 1.65, whiteSpace: "pre-wrap",
-                border: msg.role === "assistant" ? `1px solid ${C.border}` : "none",
-              }}>
-                {msg.content}
-              </div>
+              msg.role === "user" ? (
+                <div key={i} style={{
+                  alignSelf: "flex-end", maxWidth: "88%", padding: "8px 12px",
+                  borderRadius: "12px 12px 2px 12px", background: C.accent,
+                  color: "white", fontSize: 12, lineHeight: 1.65, whiteSpace: "pre-wrap",
+                }}>
+                  {msg.content}
+                </div>
+              ) : (
+                <div key={i} className="md-ia" style={{
+                  alignSelf: "flex-start", maxWidth: "88%", padding: "8px 12px",
+                  borderRadius: "12px 12px 12px 2px", background: C.bg,
+                  color: C.text, fontSize: 12, lineHeight: 1.65,
+                  border: `1px solid ${C.border}`,
+                }}
+                  dangerouslySetInnerHTML={{ __html: mdHtml(msg.content) }} />
+              )
             ))}
             {streamingMsg && (
               <div style={{ alignSelf: "flex-start", maxWidth: "88%", padding: "8px 12px", borderRadius: "12px 12px 12px 2px", background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 12, lineHeight: 1.65, whiteSpace: "pre-wrap" }}>
@@ -1202,6 +1239,7 @@ function DoctorIAPage({ C, clienteId, expedienteId }) {
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+      <style>{mdStyles(C)}</style>
       {/* Header */}
       <div style={{ padding: "16px 24px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
         <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>🤖 Doctor IA — Chat</div>
@@ -1219,17 +1257,23 @@ function DoctorIAPage({ C, clienteId, expedienteId }) {
           />
         )}
         {chatHistory.map((msg, i) => (
-          <div key={i} style={{
-            alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
-            maxWidth: "68%", padding: "12px 18px",
-            borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
-            background: msg.role === "user" ? C.accent : C.surface,
-            color: msg.role === "user" ? "white" : C.text,
-            fontSize: 13, lineHeight: 1.75, whiteSpace: "pre-wrap",
-            border: msg.role === "assistant" ? `1px solid ${C.border}` : "none",
-          }}>
-            {msg.content}
-          </div>
+          msg.role === "user" ? (
+            <div key={i} style={{
+              alignSelf: "flex-end", maxWidth: "68%", padding: "12px 18px",
+              borderRadius: "18px 18px 4px 18px", background: C.accent,
+              color: "white", fontSize: 13, lineHeight: 1.75, whiteSpace: "pre-wrap",
+            }}>
+              {msg.content}
+            </div>
+          ) : (
+            <div key={i} className="md-ia" style={{
+              alignSelf: "flex-start", maxWidth: "68%", padding: "12px 18px",
+              borderRadius: "18px 18px 18px 4px", background: C.surface,
+              color: C.text, fontSize: 13, lineHeight: 1.75,
+              border: `1px solid ${C.border}`,
+            }}
+              dangerouslySetInnerHTML={{ __html: mdHtml(msg.content) }} />
+          )
         ))}
         {streamingMsg && (
           <div style={{ alignSelf: "flex-start", maxWidth: "68%", padding: "12px 18px", borderRadius: "18px 18px 18px 4px", background: C.surface, border: `1px solid ${C.border}`, color: C.text, fontSize: 13, lineHeight: 1.75, whiteSpace: "pre-wrap" }}>

@@ -5,20 +5,19 @@
 //   const _storedTheme = localStorage.getItem('skyward_theme');
 //   let C = _storedTheme === 'light' ? LIGHT_C : DARK_C;
 
-export const TYPOGRAPHY = {
-  fontDisplay:  "'Playfair Display', Georgia, serif",
-  fontBody:     "'Inter', system-ui, sans-serif",
-  fontMono:     "'Inter', system-ui, sans-serif", // tabular-nums vía font-feature
-
-  // Escala
-  display: { fontSize: '48px', fontWeight: 700, fontFamily: "'Playfair Display', Georgia, serif", lineHeight: 1.1, letterSpacing: '-0.02em' },
-  h1:      { fontSize: '28px', fontWeight: 600, fontFamily: "'Playfair Display', Georgia, serif", lineHeight: 1.2, letterSpacing: '-0.01em' },
-  h2:      { fontSize: '20px', fontWeight: 600, fontFamily: "'Inter', system-ui, sans-serif",     lineHeight: 1.3 },
-  h3:      { fontSize: '15px', fontWeight: 600, fontFamily: "'Inter', system-ui, sans-serif",     lineHeight: 1.4 },
-  body:    { fontSize: '14px', fontWeight: 400, fontFamily: "'Inter', system-ui, sans-serif",     lineHeight: 1.6 },
-  caption: { fontSize: '12px', fontWeight: 400, fontFamily: "'Inter', system-ui, sans-serif",     lineHeight: 1.5 },
-  label:   { fontSize: '11px', fontWeight: 500, fontFamily: "'Inter', system-ui, sans-serif",     lineHeight: 1.4, letterSpacing: '0.06em', textTransform: 'uppercase' },
-  numeric: { fontVariantNumeric: 'tabular-nums lining-nums', fontFeatureSettings: '"tnum" 1' },
+export const TYPE = {
+  serif: "'Playfair Display', Georgia, serif",
+  sans:  "'Inter', 'Segoe UI', system-ui, sans-serif",
+  mono:  "'DM Mono', 'Courier New', monospace",
+  scale: {
+    display: { fontSize: "3rem",     fontWeight: 700 },
+    h1:      { fontSize: "1.75rem",  fontWeight: 600 },
+    h2:      { fontSize: "1.25rem",  fontWeight: 600 },
+    h3:      { fontSize: "0.94rem",  fontWeight: 600 },
+    body:    { fontSize: "0.875rem", fontWeight: 400 },
+    caption: { fontSize: "0.75rem",  fontWeight: 400 },
+    label:   { fontSize: "0.69rem",  fontWeight: 500 },
+  },
 };
 
 export const DARK_C = {

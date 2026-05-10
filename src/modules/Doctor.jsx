@@ -130,9 +130,9 @@ function Btn({ C, variant = "primary", style = {}, ...props }) {
   return <button style={{ ...base, ...styles[variant], ...style }} {...props} />;
 }
 
-// ── Formulario: Persona inline ────────────────────────────────
+// ── Formulario: Persona inline (para añadir al expediente) ───────────────────────────────────
 
-function PersonaForm({ C, clienteId, onSave, onCancel }) {
+function PersonaFormInline({ C, clienteId, onSave, onCancel }) {
   const [f, setF] = useState({ tipo: "fisica", nombre: "", apellido: "", razon_social: "", doc_tipo: "DNI", doc_numero: "", cuit_validado: false, email: "", telefono: "", notas: "" });
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
@@ -312,7 +312,7 @@ function PersonasTab({ C, clienteId, expedienteId }) {
         </button>
       </div>
 
-      {showNueva && <PersonaForm C={C} clienteId={clienteId} onSave={onPersonaCreada} onCancel={() => setShowNueva(false)} />}
+      {showNueva && <PersonaFormInline C={C} clienteId={clienteId} onSave={onPersonaCreada} onCancel={() => setShowNueva(false)} />}
       {err && <div style={{ color: "#ef4444", fontSize: 12, marginTop: 8 }}>{err}</div>}
     </div>
   );
@@ -547,6 +547,16 @@ function ExpedienteDetalle({ C, clienteId, expedienteId, usuarios, onVolver, onR
   const [notas, setNotas] = useState("");
   const [notasGuardando, setNotasGuardando] = useState(false);
 
+  // PDF analyzer states
+  const [pdfModalOpen, setPdfModalOpen]       = useState(false);
+  const [pdfFile, setPdfFile]                 = useState(null);
+  const [pdfInstruccion, setPdfInstruccion]   = useState("");
+  const [pdfOut, setPdfOut]                   = useState("");
+  const [pdfStreaming, setPdfStreaming]        = useState(false);
+  const [pdfErr, setPdfErr]                   = useState("");
+  const [savingNota, setSavingNota]           = useState(false);
+  const pdfScrollRef = useRef(null);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -582,6 +592,32 @@ function ExpedienteDetalle({ C, clienteId, expedienteId, usuarios, onVolver, onR
     setNotasGuardando(false);
   };
 
+  const handlePdfExpediente = async () => {
+    if (!pdfFile || pdfStreaming) return;
+    setPdfOut(""); setPdfStreaming(true); setPdfErr("");
+    let acc = "";
+    await streamPDF(
+      { file: pdfFile, clienteId, expedienteId, instruccion: pdfInstruccion },
+      (t) => { acc += t; setPdfOut(acc); if (pdfScrollRef.current) pdfScrollRef.current.scrollTop = 9999; },
+      () => setPdfStreaming(false),
+      (e) => { setPdfErr(e); setPdfStreaming(false); }
+    );
+  };
+
+  const guardarComoNota = async () => {
+    if (!pdfOut) return;
+    setSavingNota(true);
+    const nuevaNota = (notas ? notas + "\n\n" : "") +
+      `--- Análisis PDF (${pdfFile?.name || "documento"}) ---\n${pdfOut}`;
+    await fetch(`${API}/api/doctor/expedientes/${expedienteId}`, {
+      method: "PUT", headers: jH(),
+      body: JSON.stringify({ ...exp, cliente_id: clienteId, observaciones: nuevaNota }),
+    });
+    setNotas(nuevaNota);
+    setSavingNota(false);
+    setPdfModalOpen(false);
+  };
+
   const TABS = [
     { key: "datos",       label: "Datos" },
     { key: "movimientos", label: "Movimientos" },
@@ -610,6 +646,7 @@ function ExpedienteDetalle({ C, clienteId, expedienteId, usuarios, onVolver, onR
         {onResumirIA && (
           <Btn C={C} variant="ghost" onClick={onResumirIA} style={{ fontSize: 12 }}>✨ Resumir con IA</Btn>
         )}
+        <Btn C={C} variant="ghost" onClick={() => { setPdfModalOpen(true); setPdfOut(""); setPdfErr(""); }} style={{ fontSize: 12 }}>📄 Analizar PDF</Btn>
         {!editando
           ? <Btn C={C} variant="ghost" onClick={() => setEditando(true)} style={{ fontSize: 12 }}>✏ Editar</Btn>
           : <div style={{ display: "flex", gap: 8 }}>
@@ -734,6 +771,55 @@ function ExpedienteDetalle({ C, clienteId, expedienteId, usuarios, onVolver, onR
         )}
 
       </div>
+
+      {/* Modal Analizar PDF */}
+      {pdfModalOpen && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.55)", zIndex:2000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+          <div style={{ background:C.surface, borderRadius:14, width:"100%", maxWidth:600, maxHeight:"90vh",
+            display:"flex", flexDirection:"column", boxShadow:"0 8px 40px rgba(0,0,0,.35)" }}>
+            <div style={{ padding:"16px 20px", borderBottom:`1px solid ${C.border}`, display:"flex", alignItems:"center", gap:10 }}>
+              <span style={{ fontSize:20 }}>📄</span>
+              <div style={{ flex:1, fontSize:15, fontWeight:700, color:C.text }}>Analizar PDF con IA</div>
+              <button onClick={() => setPdfModalOpen(false)} style={{ background:"none", border:"none", cursor:"pointer", color:C.muted, fontSize:22 }}>×</button>
+            </div>
+            <div style={{ flex:1, overflowY:"auto", padding:20, display:"flex", flexDirection:"column", gap:14 }}>
+              <div>
+                <div style={{ fontSize:12, color:C.muted, marginBottom:6 }}>Archivo PDF (máx. 20 MB)</div>
+                <input type="file" accept="application/pdf"
+                  onChange={e => { setPdfFile(e.target.files[0]||null); setPdfOut(""); setPdfErr(""); }}
+                  style={{ fontSize:12, color:C.text, width:"100%" }} />
+                {pdfFile && <div style={{ fontSize:11, color:C.muted, marginTop:4 }}>📄 {pdfFile.name} ({(pdfFile.size/1024/1024).toFixed(1)} MB)</div>}
+              </div>
+              <Field C={C} label="Instrucción personalizada (opcional)">
+                <textarea value={pdfInstruccion} onChange={e=>setPdfInstruccion(e.target.value)}
+                  placeholder="Ej: Identificá las cláusulas de penalidad y los plazos de rescisión."
+                  style={{ ...inputSt(C), width:"100%", boxSizing:"border-box", minHeight:56, resize:"vertical", fontSize:12 }} />
+              </Field>
+              <Btn C={C} onClick={handlePdfExpediente} disabled={!pdfFile||pdfStreaming}
+                style={{ background:"linear-gradient(135deg,#6366f1,#8b5cf6)", color:"white", border:"none" }}>
+                {pdfStreaming ? "⏳ Analizando…" : "📄 Analizar"}
+              </Btn>
+              {pdfErr && <div style={{ fontSize:12, color:"#ef4444" }}>{pdfErr}</div>}
+              {pdfOut && (
+                <div ref={pdfScrollRef} style={{ flex:1, background:C.bg, border:`1px solid ${C.border}`, borderRadius:10, padding:14, overflowY:"auto", maxHeight:320 }}>
+                  <style>{mdStyles(C)}</style>
+                  <div className="md-ia" style={{ fontSize:12, color:C.text, lineHeight:1.75 }}
+                    dangerouslySetInnerHTML={{ __html: mdHtml(pdfOut) }} />
+                  {pdfStreaming && <span style={{ color:C.accent }}>▌</span>}
+                </div>
+              )}
+            </div>
+            {pdfOut && !pdfStreaming && (
+              <div style={{ padding:"12px 20px", borderTop:`1px solid ${C.border}`, display:"flex", justifyContent:"flex-end", gap:10 }}>
+                <Btn C={C} variant="ghost" onClick={() => setPdfModalOpen(false)}>Cerrar sin guardar</Btn>
+                <Btn C={C} onClick={guardarComoNota} disabled={savingNota}>
+                  {savingNota ? "Guardando…" : "💾 Guardar como nota"}
+                </Btn>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1012,6 +1098,46 @@ function humanizarErrorIA(raw = "") {
   return "Doctor IA no está disponible en este momento. Intentá de nuevo en unos minutos.";
 }
 
+async function streamSSE(res, onToken, onDone, onError) {
+  const reader  = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n\n");
+    buffer = lines.pop();
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      try {
+        const data = JSON.parse(line.slice(6));
+        if (data.text)  onToken(data.text);
+        if (data.done)  onDone(data);
+        if (data.error) onError(humanizarErrorIA(data.error));
+      } catch { /* ignorar líneas malformadas */ }
+    }
+  }
+}
+
+async function streamPDF({ file, clienteId, expedienteId, instruccion }, onToken, onDone, onError) {
+  try {
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("cliente_id", clienteId);
+    if (expedienteId) fd.append("expediente_id", expedienteId);
+    if (instruccion)  fd.append("instruccion", instruccion);
+    const res = await fetch(`${API}/api/doctor/ai/analyze-pdf`, {
+      method: "POST", headers: aH(), body: fd,
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      return onError(humanizarErrorIA(d.error || `Error ${res.status}`));
+    }
+    await streamSSE(res, onToken, onDone, onError);
+  } catch(e) { onError(humanizarErrorIA(e.message)); }
+}
+
 async function streamIA(payload, onToken, onDone, onError) {
   try {
     const res = await fetch(`${API}/api/doctor/ai/chat`, {
@@ -1033,25 +1159,7 @@ async function streamIA(payload, onToken, onDone, onError) {
       const d = await res.json().catch(() => ({}));
       return onError(humanizarErrorIA(d.error || `Error ${res.status}`));
     }
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n\n");
-      buffer = lines.pop();
-      for (const line of lines) {
-        if (!line.startsWith("data: ")) continue;
-        try {
-          const data = JSON.parse(line.slice(6));
-          if (data.text)  onToken(data.text);
-          if (data.done)  onDone(data);
-          if (data.error) onError(humanizarErrorIA(data.error));
-        } catch { /* ignorar líneas malformadas */ }
-      }
-    }
+    await streamSSE(res, onToken, onDone, onError);
   } catch (e) { onError(humanizarErrorIA(e.message)); }
 }
 
@@ -1072,6 +1180,12 @@ function DoctorIAPanel({ C, clienteId, expedienteId, iaOpen, setIaOpen, triggerR
   const [plazoForm, setPlazoForm]       = useState({ fecha_inicio: "", cantidad: "", tipo: "dias_habiles_judiciales" });
   const [plazoResult, setPlazoResult]   = useState(null);
   const [plazoExpl, setPlazoExpl]       = useState("");
+
+  // PDF states
+  const [pdfFile, setPdfFile]           = useState(null);
+  const [pdfInstruccion, setPdfInstruccion] = useState("");
+  const [pdfOut, setPdfOut]             = useState("");
+  const [pdfStreaming, setPdfStreaming]  = useState(false);
 
   const scrollRef = useRef(null);
 
@@ -1144,12 +1258,25 @@ function DoctorIAPanel({ C, clienteId, expedienteId, iaOpen, setIaOpen, triggerR
     );
   };
 
+  const handleAnalizarPdf = async () => {
+    if (!pdfFile || pdfStreaming) return;
+    setPdfOut(""); setPdfStreaming(true); setErr("");
+    let acc = "";
+    await streamPDF(
+      { file: pdfFile, clienteId, expedienteId, instruccion: pdfInstruccion },
+      (t) => { acc += t; setPdfOut(acc); },
+      () => setPdfStreaming(false),
+      (e) => { setErr(e); setPdfStreaming(false); }
+    );
+  };
+
   if (!iaOpen) return null;
 
   const TABS_IA = [
     { key: "resumir", label: "📋 Resumir" },
     { key: "plazos",  label: "⏱ Plazos" },
     { key: "chat",    label: "💬 Chat" },
+    { key: "pdf",     label: "📄 PDF" },
   ];
 
   return (
@@ -1305,6 +1432,36 @@ function DoctorIAPanel({ C, clienteId, expedienteId, iaOpen, setIaOpen, triggerR
             />
             <Btn C={C} onClick={handleChat} disabled={streaming || !chatInput.trim()} style={{ height: 56, minWidth: 40, fontSize: 16, padding: "0 12px" }}>↑</Btn>
           </div>
+        </div>
+      )}
+
+      {/* ── PDF ── */}
+      {iaTab === "pdf" && (
+        <div style={{ flex:1, display:"flex", flexDirection:"column", minHeight:0, padding:16, gap:12 }}>
+          <div>
+            <div style={{ fontSize:12, color:C.muted, marginBottom:6 }}>Archivo PDF (máx. 20 MB)</div>
+            <input type="file" accept="application/pdf"
+              onChange={e => { setPdfFile(e.target.files[0]||null); setPdfOut(""); }}
+              style={{ fontSize:12, color:C.text, width:"100%" }} />
+            {pdfFile && <div style={{ fontSize:11, color:C.muted, marginTop:4 }}>📄 {pdfFile.name} ({(pdfFile.size/1024/1024).toFixed(1)} MB)</div>}
+          </div>
+          <Field C={C} label="Instrucción (opcional)">
+            <textarea value={pdfInstruccion} onChange={e=>setPdfInstruccion(e.target.value)}
+              placeholder="Ej: Extraé los plazos y obligaciones de esta parte..."
+              style={{ ...inputSt(C), width:"100%", boxSizing:"border-box", minHeight:60, resize:"vertical", fontSize:12 }} />
+          </Field>
+          <Btn C={C} onClick={handleAnalizarPdf} disabled={!pdfFile || pdfStreaming}
+            style={{ background:"linear-gradient(135deg,#6366f1,#8b5cf6)", color:"white", border:"none" }}>
+            {pdfStreaming ? "⏳ Analizando…" : "📄 Analizar PDF"}
+          </Btn>
+          {err && <div style={{ fontSize:11, color:"#ef4444" }}>{err}</div>}
+          {pdfOut && (
+            <div ref={scrollRef} style={{ flex:1, overflowY:"auto", background:C.bg, border:`1px solid ${C.border}`, borderRadius:10, padding:14 }}>
+              <div className="md-ia" style={{ fontSize:12, color:C.text, lineHeight:1.75 }}
+                dangerouslySetInnerHTML={{ __html: mdHtml(pdfOut) }} />
+              {pdfStreaming && <span style={{ color:C.accent }}>▌</span>}
+            </div>
+          )}
         </div>
       )}
 
@@ -1969,12 +2126,387 @@ function AgendaModule({ C, clienteId, onAgendaChange }) {
   );
 }
 
+// ── Personas CRUD ─────────────────────────────────────────────
+
+const TIPOS_PERSONA = [
+  { value: "fisica",   label: "Persona física" },
+  { value: "juridica", label: "Persona jurídica" },
+];
+
+function PersonaCard({ C, persona, onClick }) {
+  const nombre = persona.tipo === "juridica"
+    ? (persona.razon_social || "—")
+    : [persona.nombre, persona.apellido].filter(Boolean).join(" ") || "—";
+  const docLabel = persona.doc_numero
+    ? `${labelDe(DOC_TIPOS, persona.doc_tipo) || persona.doc_tipo || ""} ${persona.doc_numero}`.trim()
+    : null;
+  return (
+    <div onClick={onClick}
+      style={{ padding:"14px 18px", background:C.surface, borderRadius:10, border:`1px solid ${C.border}`,
+        cursor:"pointer", borderLeft:`4px solid ${persona.tipo==="juridica"?"#6366f1":"#10B981"}`,
+        display:"flex", gap:12, alignItems:"flex-start", transition:"background .12s" }}
+      onMouseEnter={e=>e.currentTarget.style.background=C.bg}
+      onMouseLeave={e=>e.currentTarget.style.background=C.surface}>
+      <div style={{ fontSize:22, lineHeight:1, paddingTop:1 }}>{persona.tipo==="juridica"?"🏢":"👤"}</div>
+      <div style={{ flex:1 }}>
+        <div style={{ fontSize:14, fontWeight:700, color:C.text, marginBottom:2 }}>{nombre}</div>
+        {docLabel && <div style={{ fontSize:12, color:C.muted }}>{docLabel}</div>}
+        <div style={{ fontSize:12, color:C.muted }}>
+          {[persona.email, persona.telefono].filter(Boolean).join(" · ")}
+        </div>
+        {persona.tags?.length > 0 && (
+          <div style={{ display:"flex", gap:4, marginTop:6, flexWrap:"wrap" }}>
+            {persona.tags.map(t => <Chip key={t} label={t} color="#6366f1" />)}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PersonaForm({ C, clienteId, persona, onSave, onCancelar }) {
+  const isNew = !persona;
+  const [form, setForm] = useState({
+    tipo:           persona?.tipo           || "fisica",
+    nombre:         persona?.nombre         || "",
+    apellido:       persona?.apellido       || "",
+    razon_social:   persona?.razon_social   || "",
+    doc_tipo:       persona?.doc_tipo       || "DNI",
+    doc_numero:     persona?.doc_numero     || "",
+    email:          persona?.email          || "",
+    telefono:       persona?.telefono       || "",
+    cuit_validado:  persona?.cuit_validado  || false,
+    categoria_afip: persona?.categoria_afip || "",
+    notas:          persona?.notas          || "",
+    tags:           (persona?.tags || []).join(", "),
+    dir_calle:      persona?.direccion?.calle    || "",
+    dir_numero:     persona?.direccion?.numero   || "",
+    dir_piso:       persona?.direccion?.piso     || "",
+    dir_dto:        persona?.direccion?.dto      || "",
+    dir_ciudad:     persona?.direccion?.ciudad   || "",
+    dir_provincia:  persona?.direccion?.provincia|| "",
+    dir_cp:         persona?.direccion?.cp       || "",
+  });
+  const [saving, setSaving] = useState(false);
+  const [err, setErr]       = useState("");
+  const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  const guardar = async () => {
+    if (form.tipo === "fisica" && !form.nombre && !form.apellido)
+      return setErr("Ingresá nombre o apellido.");
+    if (form.tipo === "juridica" && !form.razon_social)
+      return setErr("La razón social es obligatoria.");
+    setSaving(true); setErr("");
+    try {
+      const tags = form.tags.split(",").map(t => t.trim()).filter(Boolean);
+      const tieneDir = form.dir_calle || form.dir_ciudad;
+      const direccion = tieneDir ? {
+        calle: form.dir_calle, numero: form.dir_numero, piso: form.dir_piso,
+        dto: form.dir_dto, ciudad: form.dir_ciudad,
+        provincia: form.dir_provincia, cp: form.dir_cp,
+      } : null;
+      const body = {
+        cliente_id: clienteId, tipo: form.tipo,
+        nombre: form.nombre || null, apellido: form.apellido || null,
+        razon_social: form.razon_social || null,
+        doc_tipo: form.doc_tipo || null, doc_numero: form.doc_numero || null,
+        email: form.email || null, telefono: form.telefono || null,
+        cuit_validado: form.cuit_validado,
+        categoria_afip: form.categoria_afip || null,
+        notas: form.notas || null,
+        tags: tags.length ? tags : null,
+        direccion,
+      };
+      const url = isNew ? `${API}/api/doctor/personas` : `${API}/api/doctor/personas/${persona.id}`;
+      const r = await fetch(url, { method: isNew ? "POST" : "PUT", headers: jH(), body: JSON.stringify(body) });
+      if (!r.ok) throw new Error((await r.json()).error);
+      onSave(await r.json(), isNew);
+    } catch(e) { setErr(e.message); } finally { setSaving(false); }
+  };
+
+  return (
+    <div style={{ flex:1, display:"flex", flexDirection:"column", minHeight:0 }}>
+      <div style={{ padding:"14px 24px", borderBottom:`1px solid ${C.border}`, display:"flex", alignItems:"center", gap:12, flexShrink:0 }}>
+        <button onClick={onCancelar} style={{ background:"none", border:"none", cursor:"pointer", color:C.muted, fontSize:20, padding:0 }}>←</button>
+        <div style={{ fontSize:15, fontWeight:700, color:C.text }}>{isNew ? "Nueva persona" : "Editar persona"}</div>
+      </div>
+      <div style={{ flex:1, overflowY:"auto", padding:24 }}>
+        {err && <div style={{ background:"#ef444422", border:"1px solid #ef4444", borderRadius:8, padding:"10px 14px", color:"#ef4444", fontSize:13, marginBottom:16 }}>{err}</div>}
+
+        <Field C={C} label="Tipo">
+          <div style={{ display:"flex", gap:20 }}>
+            {TIPOS_PERSONA.map(t => (
+              <label key={t.value} style={{ display:"flex", alignItems:"center", gap:6, cursor:"pointer", fontSize:13, color:C.text }}>
+                <input type="radio" checked={form.tipo===t.value} onChange={()=>set("tipo",t.value)} />{t.label}
+              </label>
+            ))}
+          </div>
+        </Field>
+
+        {form.tipo === "fisica" ? (
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
+            <Field C={C} label="Nombre" required><Input C={C} value={form.nombre} onChange={e=>set("nombre",e.target.value)} /></Field>
+            <Field C={C} label="Apellido" required><Input C={C} value={form.apellido} onChange={e=>set("apellido",e.target.value)} /></Field>
+            <Field C={C} label="Tipo de documento">
+              <Sel C={C} value={form.doc_tipo} onChange={e=>set("doc_tipo",e.target.value)} options={DOC_TIPOS} />
+            </Field>
+            <Field C={C} label="Número de documento">
+              <Input C={C} value={form.doc_numero} onChange={e=>set("doc_numero",e.target.value)} placeholder="Ej: 30123456" />
+            </Field>
+          </div>
+        ) : (
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
+            <Field C={C} label="Razón social" required style={{ gridColumn:"1/-1" }}>
+              <Input C={C} value={form.razon_social} onChange={e=>set("razon_social",e.target.value)} />
+            </Field>
+            <Field C={C} label="CUIT">
+              <Input C={C} value={form.doc_numero} onChange={e=>set("doc_numero",e.target.value)} placeholder="20-12345678-9" />
+            </Field>
+            <Field C={C} label="Categoría AFIP">
+              <Sel C={C} value={form.categoria_afip} onChange={e=>set("categoria_afip",e.target.value)}
+                options={[{value:"",label:"— sin especificar —"}, ...CATEGORIAS_AFIP]} />
+            </Field>
+            <Field C={C} label="">
+              <label style={{ display:"flex", alignItems:"center", gap:8, cursor:"pointer", fontSize:13, color:C.text }}>
+                <input type="checkbox" checked={form.cuit_validado} onChange={e=>set("cuit_validado",e.target.checked)} />
+                CUIT validado en AFIP
+              </label>
+            </Field>
+          </div>
+        )}
+
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginTop:16 }}>
+          <Field C={C} label="Email"><Input C={C} type="email" value={form.email} onChange={e=>set("email",e.target.value)} /></Field>
+          <Field C={C} label="Teléfono"><Input C={C} value={form.telefono} onChange={e=>set("telefono",e.target.value)} /></Field>
+        </div>
+
+        <div style={{ fontSize:13, fontWeight:600, color:C.text, margin:"20px 0 10px" }}>Dirección</div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 80px 60px 60px", gap:12, marginBottom:12 }}>
+          <Field C={C} label="Calle"><Input C={C} value={form.dir_calle} onChange={e=>set("dir_calle",e.target.value)} /></Field>
+          <Field C={C} label="N°"><Input C={C} value={form.dir_numero} onChange={e=>set("dir_numero",e.target.value)} /></Field>
+          <Field C={C} label="Piso"><Input C={C} value={form.dir_piso} onChange={e=>set("dir_piso",e.target.value)} /></Field>
+          <Field C={C} label="Dto"><Input C={C} value={form.dir_dto} onChange={e=>set("dir_dto",e.target.value)} /></Field>
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 80px", gap:12, marginBottom:20 }}>
+          <Field C={C} label="Ciudad"><Input C={C} value={form.dir_ciudad} onChange={e=>set("dir_ciudad",e.target.value)} /></Field>
+          <Field C={C} label="Provincia"><Input C={C} value={form.dir_provincia} onChange={e=>set("dir_provincia",e.target.value)} /></Field>
+          <Field C={C} label="CP"><Input C={C} value={form.dir_cp} onChange={e=>set("dir_cp",e.target.value)} /></Field>
+        </div>
+
+        <Field C={C} label="Tags (separados por coma)">
+          <Input C={C} value={form.tags} onChange={e=>set("tags",e.target.value)} placeholder="ej: cliente, deudor, testigo" />
+        </Field>
+        <Field C={C} label="Notas">
+          <textarea value={form.notas} onChange={e=>set("notas",e.target.value)}
+            style={{ ...inputSt(C), width:"100%", boxSizing:"border-box", minHeight:80, resize:"vertical" }} />
+        </Field>
+
+        <div style={{ display:"flex", gap:10, marginTop:24 }}>
+          <Btn C={C} variant="ghost" onClick={onCancelar}>Cancelar</Btn>
+          <Btn C={C} onClick={guardar} disabled={saving}>{saving ? "Guardando…" : isNew ? "Crear persona" : "Guardar cambios"}</Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PersonaDetalle({ C, clienteId, personaId, onVolver, onEditar }) {
+  const [persona, setPersona]       = useState(null);
+  const [expedientes, setExpedientes] = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [deleting, setDeleting]     = useState(false);
+
+  const cargar = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [pR, eR] = await Promise.all([
+        fetch(`${API}/api/doctor/personas/${personaId}?cliente_id=${clienteId}`, { headers: aH() }),
+        fetch(`${API}/api/doctor/personas/${personaId}/expedientes?cliente_id=${clienteId}`, { headers: aH() }),
+      ]);
+      if (pR.ok) setPersona(await pR.json());
+      if (eR.ok) setExpedientes(await eR.json());
+    } catch(e) { /* silenciar */ } finally { setLoading(false); }
+  }, [personaId, clienteId]);
+
+  useEffect(() => { cargar(); }, [cargar]);
+
+  const eliminar = async () => {
+    if (!window.confirm("¿Eliminar esta persona? Se desvinculará de todos los expedientes.")) return;
+    setDeleting(true);
+    try {
+      const r = await fetch(`${API}/api/doctor/personas/${personaId}?cliente_id=${clienteId}`,
+        { method: "DELETE", headers: aH() });
+      if (r.ok) onVolver(true);
+    } catch(e) { /* silenciar */ } finally { setDeleting(false); }
+  };
+
+  if (loading) return <Spinner C={C} />;
+  if (!persona) return <EmptyState C={C} icon="❌" title="Persona no encontrada" />;
+
+  const nombre = persona.tipo === "juridica"
+    ? (persona.razon_social || "—")
+    : [persona.nombre, persona.apellido].filter(Boolean).join(" ") || "—";
+
+  return (
+    <div style={{ flex:1, display:"flex", flexDirection:"column", minHeight:0 }}>
+      <div style={{ padding:"16px 24px", borderBottom:`1px solid ${C.border}`, display:"flex", alignItems:"center", gap:12, flexShrink:0 }}>
+        <button onClick={() => onVolver(false)} style={{ background:"none", border:"none", cursor:"pointer", color:C.muted, fontSize:20, padding:0 }}>←</button>
+        <div style={{ fontSize:24 }}>{persona.tipo==="juridica"?"🏢":"👤"}</div>
+        <div style={{ flex:1 }}>
+          <div style={{ fontSize:16, fontWeight:700, color:C.text }}>{nombre}</div>
+          <div style={{ fontSize:11, color:C.muted }}>{labelDe(TIPOS_PERSONA, persona.tipo)}</div>
+        </div>
+        <Btn C={C} variant="ghost" onClick={onEditar} style={{ fontSize:12 }}>✏ Editar</Btn>
+        <Btn C={C} variant="ghost" onClick={eliminar} disabled={deleting}
+          style={{ color:"#ef4444", fontSize:12 }}>{deleting?"…":"🗑 Eliminar"}</Btn>
+      </div>
+
+      <div style={{ flex:1, overflowY:"auto", padding:24, display:"flex", flexDirection:"column", gap:24 }}>
+        <div>
+          <div style={{ fontSize:14, fontWeight:700, color:C.text, marginBottom:14 }}>Datos</div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+            {persona.doc_numero && (
+              <Field C={C} label={labelDe(DOC_TIPOS, persona.doc_tipo) || "Documento"}>
+                <div style={{ fontSize:13, color:C.text }}>{persona.doc_numero}</div>
+              </Field>
+            )}
+            {persona.email && <Field C={C} label="Email"><div style={{ fontSize:13, color:C.text }}>{persona.email}</div></Field>}
+            {persona.telefono && <Field C={C} label="Teléfono"><div style={{ fontSize:13, color:C.text }}>{persona.telefono}</div></Field>}
+            {persona.categoria_afip && (
+              <Field C={C} label="Categoría AFIP"><div style={{ fontSize:13, color:C.text }}>{persona.categoria_afip}</div></Field>
+            )}
+          </div>
+          {persona.direccion?.calle && (
+            <Field C={C} label="Dirección">
+              <div style={{ fontSize:13, color:C.text }}>
+                {[persona.direccion.calle, persona.direccion.numero,
+                  persona.direccion.piso, persona.direccion.dto].filter(Boolean).join(" ")}
+                {persona.direccion.ciudad    && `, ${persona.direccion.ciudad}`}
+                {persona.direccion.provincia && `, ${persona.direccion.provincia}`}
+                {persona.direccion.cp        && ` (${persona.direccion.cp})`}
+              </div>
+            </Field>
+          )}
+          {persona.tags?.length > 0 && (
+            <Field C={C} label="Tags">
+              <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+                {persona.tags.map(t => <Chip key={t} label={t} color="#6366f1" />)}
+              </div>
+            </Field>
+          )}
+          {persona.notas && (
+            <Field C={C} label="Notas">
+              <div style={{ fontSize:13, color:C.text, whiteSpace:"pre-wrap" }}>{persona.notas}</div>
+            </Field>
+          )}
+        </div>
+
+        <div>
+          <div style={{ fontSize:14, fontWeight:700, color:C.text, marginBottom:14 }}>
+            Vista 360° — Expedientes vinculados ({expedientes.length})
+          </div>
+          {expedientes.length === 0 ? (
+            <div style={{ fontSize:13, color:C.muted }}>Sin expedientes vinculados.</div>
+          ) : (
+            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+              {expedientes.map(e => (
+                <div key={`${e.id}-${e.rol}`} style={{ padding:"12px 16px", background:C.surface,
+                  borderRadius:8, border:`1px solid ${C.border}`,
+                  borderLeft:`4px solid ${ETAPA_COLOR[e.etapa]||C.accent}` }}>
+                  <div style={{ fontSize:13, fontWeight:600, color:C.text }}>{e.caratula}</div>
+                  <div style={{ display:"flex", gap:6, marginTop:6, flexWrap:"wrap", alignItems:"center" }}>
+                    <Chip label={e.rol} color="#6366f1" />
+                    {e.fuero  && <Chip label={labelDe(FUEROS, e.fuero)}  color="#6b7280" />}
+                    {e.etapa  && <Chip label={labelDe(ETAPAS_EXPEDIENTE, e.etapa)} color={ETAPA_COLOR[e.etapa]||"#6366f1"} />}
+                    {e.estado && <Chip label={labelDe(ESTADOS_EXPEDIENTE, e.estado)} color={ESTADO_COLOR[e.estado]||"#6b7280"} />}
+                    {e.porcentaje && <span style={{ fontSize:11, color:C.muted }}>{e.porcentaje}%</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PersonasModule({ C, clienteId }) {
+  const [view, setView]           = useState("lista");
+  const [personaId, setPersonaId] = useState(null);
+  const [personas, setPersonas]   = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [q, setQ]                 = useState("");
+  const [tipoFiltro, setTipoFiltro] = useState("");
+
+  const cargar = useCallback(() => {
+    if (!clienteId) return;
+    setLoading(true);
+    const params = new URLSearchParams({ cliente_id: clienteId });
+    if (q) params.set("q", q);
+    if (tipoFiltro) params.set("tipo", tipoFiltro);
+    fetch(`${API}/api/doctor/personas?${params}`, { headers: aH() })
+      .then(r => r.ok ? r.json() : [])
+      .then(setPersonas).catch(() => {}).finally(() => setLoading(false));
+  }, [clienteId, q, tipoFiltro]);
+
+  useEffect(() => { cargar(); }, [cargar]);
+
+  const irADetalle  = (id)       => { setPersonaId(id); setView("detalle"); };
+  const irAEditar   = ()         => setView("editar");
+  const irALista    = (eliminado)=> { setView("lista"); setPersonaId(null); if (eliminado) cargar(); };
+
+  const onSave = (p, isNew) => {
+    if (isNew) {
+      setPersonas(prev => [p, ...prev]);
+      irADetalle(p.id);
+    } else {
+      setPersonas(prev => prev.map(x => x.id === p.id ? p : x));
+      setView("detalle");
+    }
+  };
+
+  if (view === "nuevo") return (
+    <PersonaForm C={C} clienteId={clienteId} persona={null} onSave={onSave} onCancelar={() => setView("lista")} />
+  );
+  if (view === "editar" && personaId) {
+    const persona = personas.find(p => p.id === personaId);
+    return <PersonaForm C={C} clienteId={clienteId} persona={persona} onSave={onSave} onCancelar={() => setView("detalle")} />;
+  }
+  if (view === "detalle" && personaId) return (
+    <PersonaDetalle C={C} clienteId={clienteId} personaId={personaId} onVolver={irALista} onEditar={irAEditar} />
+  );
+
+  return (
+    <div style={{ flex:1, display:"flex", flexDirection:"column", minHeight:0 }}>
+      <div style={{ padding:"12px 20px", borderBottom:`1px solid ${C.border}`, display:"flex", gap:10, alignItems:"center", flexShrink:0, flexWrap:"wrap" }}>
+        <Input C={C} value={q} onChange={e=>setQ(e.target.value)}
+          placeholder="Buscar por nombre, doc, email…" style={{ flex:1, minWidth:180 }} />
+        <Sel C={C} value={tipoFiltro} onChange={e=>setTipoFiltro(e.target.value)}
+          options={[{value:"",label:"Todos"},{value:"fisica",label:"Física"},{value:"juridica",label:"Jurídica"}]} />
+        <Btn C={C} onClick={() => setView("nuevo")}>+ Nueva persona</Btn>
+      </div>
+      <div style={{ flex:1, overflowY:"auto", padding:20 }}>
+        {loading && <Spinner C={C} />}
+        {!loading && personas.length === 0 && (
+          <EmptyState C={C} icon="👥" title="Sin personas" sub='Creá la primera con "+ Nueva persona".' />
+        )}
+        {!loading && personas.length > 0 && (
+          <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+            {personas.map(p => <PersonaCard key={p.id} C={C} persona={p} onClick={() => irADetalle(p.id)} />)}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Sub-navegación Doctor ─────────────────────────────────────
 
 const SUB_NAV = [
   { key: "expedientes", label: "📁 Expedientes",  fase: null },
   { key: "agenda",      label: "📅 Agenda",        fase: null },
-  { key: "personas",    label: "👥 Personas",       fase: "Fase 4" },
+  { key: "personas",    label: "👥 Personas",       fase: null },
   { key: "escritos",    label: "📄 Escritos",       fase: "Fase 5" },
   { key: "cuentas",     label: "💰 Cuentas",        fase: "Fase 6" },
   { key: "ia",          label: "🤖 Doctor IA",      fase: null },
@@ -2101,6 +2633,11 @@ export default function DoctorModule({ C, clienteId }) {
         {/* Agenda */}
         {subTab === "agenda" && (
           <AgendaModule C={C} clienteId={clienteId} onAgendaChange={refreshBadge} />
+        )}
+
+        {/* Personas */}
+        {subTab === "personas" && (
+          <PersonasModule C={C} clienteId={clienteId} />
         )}
 
         {/* Expedientes — con sub-vistas */}

@@ -420,6 +420,99 @@ function MovimientosTab({ C, clienteId, expedienteId }) {
   );
 }
 
+// ── Plazos tab dentro de ExpedienteDetalle ────────────────────
+
+function PlazosExpedienteTab({ C, clienteId, expedienteId }) {
+  const [eventos, setEventos]   = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [eventoEdit, setEventoEdit] = useState(null);
+
+  const cargar = useCallback(async () => {
+    setLoading(true);
+    try {
+      const r = await fetch(
+        `${API}/api/doctor/expedientes/${expedienteId}/agenda?cliente_id=${clienteId}`,
+        { headers: aH() }
+      );
+      if (r.ok) setEventos(await r.json());
+    } catch (e) { /* silenciar */ } finally { setLoading(false); }
+  }, [clienteId, expedienteId]);
+
+  useEffect(() => { cargar(); }, [cargar]);
+
+  const onSave = (ev, esNuevo) => {
+    if (esNuevo) setEventos((p) => [ev, ...p]);
+    else setEventos((p) => p.map((e) => (e.id === ev.id ? ev : e)));
+    setModalOpen(false);
+    setEventoEdit(null);
+  };
+
+  const onDelete = (id) => {
+    setEventos((p) => p.filter((e) => e.id !== id));
+    setModalOpen(false);
+    setEventoEdit(null);
+  };
+
+  if (loading) return <Spinner C={C} />;
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>Plazos y eventos del expediente</div>
+        <Btn C={C} onClick={() => { setEventoEdit(null); setModalOpen(true); }}>+ Agregar plazo</Btn>
+      </div>
+
+      {eventos.length === 0 ? (
+        <EmptyState C={C} icon="⏱" title="Sin plazos cargados" sub="Agregá el primer plazo con el botón +" />
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {eventos.map((ev) => {
+            const color = TIPO_AGENDA_COLOR[ev.tipo] || "#6366f1";
+            const msFin = new Date(ev.fecha_fin || ev.fecha_inicio).getTime();
+            const dias  = Math.ceil((msFin - Date.now()) / 86400000);
+            const urgColor = dias <= 0 ? "#ef4444" : dias <= 3 ? "#ef4444" : dias <= 7 ? "#FBBA00" : C.muted;
+            return (
+              <div key={ev.id}
+                onClick={() => { setEventoEdit(ev); setModalOpen(true); }}
+                style={{ display: "flex", gap: 14, padding: "14px 18px", background: C.surface,
+                  borderRadius: 10, border: `1px solid ${C.border}`, cursor: "pointer",
+                  borderLeft: `4px solid ${color}` }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 4 }}>{ev.titulo}</div>
+                  <div style={{ fontSize: 11, color: C.muted }}>
+                    {(TIPOS_AGENDA.find((t) => t.value === ev.tipo) || {}).label || ev.tipo}
+                    {" · "}
+                    {new Date(ev.fecha_inicio).toLocaleDateString("es-AR", { day: "numeric", month: "short", year: "numeric" })}
+                    {ev.estado ? ` · ${ev.estado}` : ""}
+                  </div>
+                </div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: urgColor, whiteSpace: "nowrap", alignSelf: "center" }}>
+                  {dias <= 0 ? "Vencido" : dias === 1 ? "Mañana" : `${dias}d`}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {modalOpen && (
+        <EventoModal
+          C={C}
+          clienteId={clienteId}
+          evento={eventoEdit}
+          fechaInicio={new Date().toISOString()}
+          expedienteIdPreset={String(expedienteId)}
+          expedientes={[]}
+          onSave={onSave}
+          onDelete={onDelete}
+          onClose={() => { setModalOpen(false); setEventoEdit(null); }}
+        />
+      )}
+    </div>
+  );
+}
+
 // ── Ficha del expediente ──────────────────────────────────────
 
 function ExpedienteDetalle({ C, clienteId, expedienteId, usuarios, onVolver, onResumirIA }) {
@@ -597,8 +690,10 @@ function ExpedienteDetalle({ C, clienteId, expedienteId, usuarios, onVolver, onR
         {/* ── DOCUMENTOS (placeholder) ── */}
         {tab === "documentos" && <Placeholder C={C} fase="Fase 5 — Escritos y plantillas" />}
 
-        {/* ── PLAZOS (placeholder) ── */}
-        {tab === "plazos" && <Placeholder C={C} fase="Fase 3 — Agenda y calculadora de plazos" />}
+        {/* ── PLAZOS ── */}
+        {tab === "plazos" && (
+          <PlazosExpedienteTab C={C} clienteId={clienteId} expedienteId={expedienteId} />
+        )}
 
         {/* ── NOTAS ── */}
         {tab === "notas" && (
@@ -1859,6 +1954,7 @@ export default function DoctorModule({ C, clienteId }) {
   const [usuarios, setUsuarios]         = useState([]);
   const [iaOpen, setIaOpen]             = useState(false);
   const [triggerResumir, setTriggerResumir] = useState(0);
+  const [agendaBadge, setAgendaBadge]   = useState(0);
 
   // Cargar usuarios para selects de responsable
   useEffect(() => {
@@ -1867,6 +1963,23 @@ export default function DoctorModule({ C, clienteId }) {
       .then((r) => r.ok ? r.json() : [])
       .then(setUsuarios)
       .catch(() => {});
+  }, [clienteId]);
+
+  // Badge de vencimientos próximos (≤3 días) en sub-nav Agenda
+  useEffect(() => {
+    if (!clienteId) return;
+    fetch(`${API}/api/doctor/agenda/proximos?cliente_id=${clienteId}&dias=3`, { headers: aH() })
+      .then((r) => r.ok ? r.json() : [])
+      .then((data) => setAgendaBadge(Array.isArray(data) ? data.length : 0))
+      .catch(() => {});
+    // Refrescar cada 5 minutos
+    const t = setInterval(() => {
+      fetch(`${API}/api/doctor/agenda/proximos?cliente_id=${clienteId}&dias=3`, { headers: aH() })
+        .then((r) => r.ok ? r.json() : [])
+        .then((data) => setAgendaBadge(Array.isArray(data) ? data.length : 0))
+        .catch(() => {});
+    }, 5 * 60 * 1000);
+    return () => clearInterval(t);
   }, [clienteId]);
 
   // Atajo de teclado Cmd/Ctrl+I → toggle panel IA
@@ -1915,8 +2028,18 @@ export default function DoctorModule({ C, clienteId }) {
               style={{ padding: "12px 16px", cursor: "pointer", whiteSpace: "nowrap", fontSize: 13,
                 fontWeight: active ? 600 : 400, color: active ? C.accent : C.muted,
                 borderBottom: active ? `2px solid ${C.accent}` : "2px solid transparent",
-                transition: "all .15s", flexShrink: 0 }}>
+                transition: "all .15s", flexShrink: 0, display: "flex", alignItems: "center", gap: 6 }}>
               {item.label}
+              {item.key === "agenda" && agendaBadge > 0 && (
+                <span style={{
+                  background: "#ef4444", color: "#fff", borderRadius: "999px",
+                  fontSize: 10, fontWeight: 700, minWidth: 16, height: 16,
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  padding: "0 4px", lineHeight: 1,
+                }}>
+                  {agendaBadge > 9 ? "9+" : agendaBadge}
+                </span>
+              )}
             </div>
           );
         })}

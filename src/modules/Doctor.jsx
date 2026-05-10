@@ -2196,6 +2196,13 @@ function PersonaForm({ C, clienteId, persona, onSave, onCancelar }) {
       return setErr("Ingresá nombre o apellido.");
     if (form.tipo === "juridica" && !form.razon_social)
       return setErr("La razón social es obligatoria.");
+    // Bug 1+2: para jurídica el doc_tipo efectivo siempre es CUIT;
+    // para física usamos el selector. Validar CUIT/CUIL antes de guardar.
+    const docTipoEfectivo = form.tipo === "juridica" ? "CUIT" : form.doc_tipo;
+    if (form.doc_numero && (docTipoEfectivo === "CUIT" || docTipoEfectivo === "CUIL")) {
+      const check = validarCUIT(form.doc_numero);
+      if (!check.valido) return setErr(check.mensaje || "CUIT/CUIL inválido.");
+    }
     setSaving(true); setErr("");
     try {
       const tags = form.tags.split(",").map(t => t.trim()).filter(Boolean);
@@ -2209,7 +2216,7 @@ function PersonaForm({ C, clienteId, persona, onSave, onCancelar }) {
         cliente_id: clienteId, tipo: form.tipo,
         nombre: form.nombre || null, apellido: form.apellido || null,
         razon_social: form.razon_social || null,
-        doc_tipo: form.doc_tipo || null, doc_numero: form.doc_numero || null,
+        doc_tipo: docTipoEfectivo || null, doc_numero: form.doc_numero || null,
         email: form.email || null, telefono: form.telefono || null,
         cuit_validado: form.cuit_validado,
         categoria_afip: form.categoria_afip || null,

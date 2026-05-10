@@ -1250,7 +1250,7 @@ function DoctorIAPage({ C, clienteId, expedienteId }) {
       </div>
 
       {/* Mensajes */}
-      <div style={{ flex: 1, overflowY: "auto", padding: 24, display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: 24, display: "flex", flexDirection: "column", gap: 14, justifyContent: chatHistory.length === 0 && !streamingMsg ? "center" : "flex-start" }}>
         {chatHistory.length === 0 && !streamingMsg && (
           <EmptyState C={C} icon="🤖" title="Doctor IA listo"
             sub={expedienteId ? "El expediente activo está cargado como contexto. Hacé tu consulta jurídica." : "Hacé una consulta jurídica libre o abrí un expediente para contexto."}

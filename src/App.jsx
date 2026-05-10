@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { DARK_C, LIGHT_C, TYPOGRAPHY } from "./theme";
+import { DARK_C, LIGHT_C } from "./theme";
 import { STAGES, FUNNEL_ORDER, PROF_COLORS, MONEDAS_MUNDO } from "./constants";
 import { API, tok, aH, jH } from "./utils/api";
 import { useIsMobile } from "./hooks/useIsMobile";
@@ -99,34 +99,25 @@ function Spinner() {
 
 function Badge({ etapa }) {
   const s = STAGES[etapa] || STAGES.RAPPORT;
-  return <span style={{background:s.bg,color:s.color,border:`1px solid ${s.color}33`,padding:"2px 8px",borderRadius:2,fontSize:10,fontWeight:600,whiteSpace:"nowrap"}}>{s.label}</span>;
+  return <span style={{background:s.bg,color:s.color,border:`1px solid ${s.color}33`,padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:600,whiteSpace:"nowrap"}}>{s.label}</span>;
 }
 
 function Btn({ onClick, disabled, children, secondary=false, small=false, style:xStyle }) {
-  const [hov, setHov] = React.useState(false);
-  const [act, setAct] = React.useState(false);
-  const bg = secondary ? "transparent" : act ? C.accentActive : hov ? C.accentHover : C.accent;
   return (
-    <button onClick={onClick} disabled={disabled}
-      onMouseEnter={() => !disabled && setHov(true)}
-      onMouseLeave={() => { setHov(false); setAct(false); }}
-      onMouseDown={() => !disabled && setAct(true)}
-      onMouseUp={() => setAct(false)}
-      style={{
-        background: bg,
-        border: secondary ? `1px solid ${C.border}` : "none",
-        borderRadius:4, color: secondary ? C.muted : "white",
-        padding: small ? "5px 12px" : "8px 16px",
-        fontSize: small ? 11 : 13, fontWeight:600, cursor: disabled ? "not-allowed" : "pointer",
-        fontFamily:"inherit", opacity: disabled ? 0.6 : 1,
-        transition: "background 200ms ease",
-        ...(xStyle||{})
-      }}>{children}</button>
+    <button onClick={onClick} disabled={disabled} style={{
+      background: secondary ? "transparent" : C.accent,
+      border: secondary ? `1px solid ${C.border}` : "none",
+      borderRadius:8, color: secondary ? C.muted : "white",
+      padding: small ? "5px 12px" : "8px 16px",
+      fontSize: small ? 11 : 13, fontWeight:600, cursor:"pointer",
+      fontFamily:"inherit", opacity: disabled ? 0.6 : 1,
+      ...(xStyle||{})
+    }}>{children}</button>
   );
 }
 
 function Field({ label, value, onChange, placeholder, type="text", textarea=false }) {
-  const s = {width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"};
+  const s = {width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"};
   return (
     <div style={{marginBottom:14}}>
       <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>{label}</label>
@@ -153,9 +144,9 @@ function AddMetodoPago({ activos, setCampos, campos }) {
       <input value={val} onChange={e=>setVal(e.target.value)}
         onKeyDown={e=>e.key==="Enter"&&agregar()}
         placeholder="Agregar método personalizado..."
-        style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
+        style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
       <button onClick={agregar}
-        style={{background:C.accent,border:"none",color:"white",borderRadius:4,padding:"8px 14px",fontSize:12,cursor:"pointer",fontWeight:600,fontFamily:"inherit"}}>
+        style={{background:C.accent,border:"none",color:"white",borderRadius:8,padding:"8px 14px",fontSize:12,cursor:"pointer",fontWeight:600,fontFamily:"inherit"}}>
         + Agregar
       </button>
     </div>
@@ -177,14 +168,14 @@ function MonedaSelector({ campos, setCampos }) {
   return (
     <div>
       <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Buscar moneda..."
-        style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit",marginBottom:8}}/>
+        style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit",marginBottom:8}}/>
       <div style={{maxHeight:180,overflowY:"auto",display:"flex",flexWrap:"wrap",gap:6,padding:4}}>
         {filtradas.map(m => {
           const active = activas.includes(m.code);
           return (
             <div key={m.code} onClick={()=>toggle(m.code)}
               title={m.label}
-              style={{padding:"5px 10px",borderRadius:2,border:`1px solid ${active?C.accent:C.border}`,background:active?C.accentGlow:"transparent",cursor:"pointer",fontSize:11,fontWeight:active?700:400,color:active?C.accentLight:C.muted,transition:"all .15s",whiteSpace:"nowrap"}}>
+              style={{padding:"5px 10px",borderRadius:7,border:`1px solid ${active?C.accent:C.border}`,background:active?C.accentGlow:"transparent",cursor:"pointer",fontSize:11,fontWeight:active?700:400,color:active?C.accentLight:C.muted,transition:"all .15s",whiteSpace:"nowrap"}}>
               {m.code}
             </div>
           );
@@ -419,7 +410,7 @@ function OnboardingChecklist({ cliente, onClose, API, jH }) {
 
   return (
     <div style={{position:"fixed",inset:0,z:1000,background:"rgba(0,0,0,0.85)",backdropFilter:"blur(12px)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,zIndex:1000}} onClick={onClose}>
-      <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:2,width:"100%",maxWidth:720,maxHeight:MH90,display:"flex",flexDirection:"column",overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
+      <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:20,width:"100%",maxWidth:720,maxHeight:MH90,display:"flex",flexDirection:"column",overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
 
         {/* Header */}
         <div style={{padding:"24px 28px",borderBottom:`1px solid ${C.border}`,flexShrink:0}}>
@@ -428,18 +419,18 @@ function OnboardingChecklist({ cliente, onClose, API, jH }) {
               <div style={{fontSize:11,color:C.accentLight,fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:4}}>Onboarding</div>
               <div style={{fontSize:20,fontWeight:700}}>{cliente.nombre}</div>
             </div>
-            <button onClick={onClose} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,width:32,height:32,borderRadius:4,cursor:"pointer",fontSize:16}}>×</button>
+            <button onClick={onClose} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,width:32,height:32,borderRadius:8,cursor:"pointer",fontSize:16}}>×</button>
           </div>
           {/* Barra de progreso */}
           <div style={{display:"flex",alignItems:"center",gap:12}}>
-            <div style={{flex:1,height:6,background:C.border,borderRadius:2,overflow:"hidden"}}>
-              <div style={{height:"100%",width:`${progreso}%`,background:progreso===100?"#10b981":C.accent,borderRadius:2,transition:"width 0.4s ease"}}/>
+            <div style={{flex:1,height:6,background:C.border,borderRadius:3,overflow:"hidden"}}>
+              <div style={{height:"100%",width:`${progreso}%`,background:progreso===100?"#10b981":C.accent,borderRadius:3,transition:"width 0.4s ease"}}/>
             </div>
             <div style={{fontSize:12,fontWeight:700,color:progreso===100?"#10b981":C.accentLight,minWidth:40}}>{progreso}%</div>
             <div style={{fontSize:11,color:C.muted}}>{totalCompletados}/{totalPasos}</div>
           </div>
           {progreso === 100 && (
-            <div style={{marginTop:12,padding:"8px 14px",background:"rgba(16,185,129,0.1)",border:"1px solid rgba(16,185,129,0.3)",borderRadius:4,fontSize:12,color:"#4ade80",fontWeight:600}}>
+            <div style={{marginTop:12,padding:"8px 14px",background:"rgba(16,185,129,0.1)",border:"1px solid rgba(16,185,129,0.3)",borderRadius:8,fontSize:12,color:"#4ade80",fontWeight:600}}>
               🎉 ¡Onboarding completado! El cliente está listo para operar.
             </div>
           )}
@@ -453,7 +444,7 @@ function OnboardingChecklist({ cliente, onClose, API, jH }) {
             const faseLista = completadosFase === todosFase;
             return (
               <button key={fase.fase} onClick={()=>setFaseAbierta(fase.fase)}
-                style={{flexShrink:0,padding:"6px 14px",borderRadius:4,border:`1px solid ${faseAbierta===fase.fase?C.accent:C.border}`,
+                style={{flexShrink:0,padding:"6px 14px",borderRadius:8,border:`1px solid ${faseAbierta===fase.fase?C.accent:C.border}`,
                   background:faseAbierta===fase.fase?"rgba(99,102,241,0.15)":"transparent",
                   color:faseLista?"#4ade80":faseAbierta===fase.fase?C.accentLight:C.muted,
                   fontSize:11,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:6,whiteSpace:"nowrap"}}>
@@ -473,12 +464,12 @@ function OnboardingChecklist({ cliente, onClose, API, jH }) {
                 const abierto = expandido === paso.id;
                 return (
                   <div key={paso.id} style={{marginBottom:8}}>
-                    <div style={{background:C.surface,border:`1px solid ${done?"rgba(16,185,129,0.3)":C.border}`,borderRadius:2,overflow:"hidden",transition:"border-color 0.2s"}}>
+                    <div style={{background:C.surface,border:`1px solid ${done?"rgba(16,185,129,0.3)":C.border}`,borderRadius:12,overflow:"hidden",transition:"border-color 0.2s"}}>
                       <div style={{display:"flex",alignItems:"flex-start",gap:12,padding:"14px 16px",cursor:"pointer"}}
                         onClick={()=>setExpandido(abierto?null:paso.id)}>
                         {/* Checkbox */}
                         <div onClick={e=>{e.stopPropagation();toggle(paso.id);}}
-                          style={{width:22,height:22,borderRadius:4,border:`2px solid ${done?"#10b981":C.border}`,
+                          style={{width:22,height:22,borderRadius:6,border:`2px solid ${done?"#10b981":C.border}`,
                             background:done?"#10b981":"transparent",display:"flex",alignItems:"center",justifyContent:"center",
                             cursor:"pointer",flexShrink:0,marginTop:1,transition:"all 0.2s"}}>
                           {done && <span style={{color:"white",fontSize:12,fontWeight:700}}>✓</span>}
@@ -498,12 +489,12 @@ function OnboardingChecklist({ cliente, onClose, API, jH }) {
                       {/* Detalle expandido */}
                       {abierto && paso.detalle && (
                         <div style={{padding:"0 16px 16px 50px"}}>
-                          <div style={{background:"rgba(99,102,241,0.06)",border:`1px solid rgba(99,102,241,0.15)`,borderRadius:4,padding:"14px 16px"}}>
+                          <div style={{background:"rgba(99,102,241,0.06)",border:`1px solid rgba(99,102,241,0.15)`,borderRadius:10,padding:"14px 16px"}}>
                             <pre style={{fontSize:12,color:C.muted,lineHeight:1.7,whiteSpace:"pre-wrap",fontFamily:"inherit",margin:0}}>{paso.detalle}</pre>
                           </div>
                           {!done && (
                             <button onClick={()=>toggle(paso.id)}
-                              style={{marginTop:10,padding:"7px 16px",borderRadius:4,border:"none",background:C.accent,color:"white",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+                              style={{marginTop:10,padding:"7px 16px",borderRadius:8,border:"none",background:C.accent,color:"white",fontSize:12,fontWeight:600,cursor:"pointer"}}>
                               Marcar como completado ✓
                             </button>
                           )}
@@ -648,7 +639,7 @@ function PropuestasComerciales() {
       </div>
       {loading ? <div style={{color:C.muted,fontSize:13,padding:20}}>Cargando...</div> :
        propuestas.length === 0 ? <div style={{color:C.muted,fontSize:13,padding:20,textAlign:"center"}}>No hay propuestas aún. Creá tu primera propuesta comercial.</div> :
-       <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,overflow:"hidden"}}>
+       <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,overflow:"hidden"}}>
         <table style={{width:"100%",borderCollapse:"collapse"}}>
           <thead><tr style={{borderBottom:`1px solid ${C.border}`}}>
             {["Empresa","Paquete","Estado","Vistas","Fecha",""].map((h,i) => (
@@ -659,14 +650,14 @@ function PropuestasComerciales() {
             {propuestas.map(p => (
               <tr key={p.id} className="hr" style={{borderBottom:`1px solid ${C.border}`,cursor:"pointer"}} onClick={()=>editarPropuesta(p)}>
                 <td style={{padding:"12px 16px",fontWeight:500,fontSize:13}}>{p.empresa||p.titulo||'Sin nombre'}<div style={{fontSize:11,color:C.muted}}>{p.contacto||''}</div></td>
-                <td style={{padding:"12px 16px"}}><span style={{background:`${paqueteColor[p.paquete]||C.accent}22`,color:paqueteColor[p.paquete]||C.accent,border:`1px solid ${paqueteColor[p.paquete]||C.accent}44`,borderRadius:2,padding:"3px 8px",fontSize:10,fontWeight:600,textTransform:"capitalize"}}>{p.paquete||'-'}</span></td>
+                <td style={{padding:"12px 16px"}}><span style={{background:`${paqueteColor[p.paquete]||C.accent}22`,color:paqueteColor[p.paquete]||C.accent,border:`1px solid ${paqueteColor[p.paquete]||C.accent}44`,borderRadius:6,padding:"3px 8px",fontSize:10,fontWeight:600,textTransform:"capitalize"}}>{p.paquete||'-'}</span></td>
                 <td style={{padding:"12px 16px"}}><span style={{color:estadoColor[p.estado]||C.muted,fontSize:12,fontWeight:500,textTransform:"capitalize"}}>{p.estado}</span></td>
                 <td style={{padding:"12px 16px",fontSize:13}}>{p.vistas||0}</td>
                 <td style={{padding:"12px 16px",fontSize:12,color:C.muted}}>{p.creado_en ? new Date(p.creado_en).toLocaleDateString('es-AR') : '-'}</td>
                 <td style={{padding:"12px 16px",textAlign:"right"}} onClick={e=>e.stopPropagation()}>
                   <span style={{display:"flex",gap:6,justifyContent:"flex-end"}}>
                     {p.uuid && <Btn onClick={()=>copiarLink(p.uuid)} secondary small>{copiedId===p.uuid?'Copiado':'Link'}</Btn>}
-                    <select value={p.estado} onChange={e=>cambiarEstado(p.id,e.target.value)} onClick={e=>e.stopPropagation()} style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"3px 6px",fontSize:10,color:C.text,cursor:"pointer",fontFamily:"inherit"}}>
+                    <select value={p.estado} onChange={e=>cambiarEstado(p.id,e.target.value)} onClick={e=>e.stopPropagation()} style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:6,padding:"3px 6px",fontSize:10,color:C.text,cursor:"pointer",fontFamily:"inherit"}}>
                       {['borrador','enviada','vista','aceptada','rechazada'].map(e=><option key={e} value={e}>{e}</option>)}
                     </select>
                     <Btn onClick={()=>eliminar(p.id)} secondary small style={{color:C.red}}>X</Btn>
@@ -696,7 +687,7 @@ function PropuestasComerciales() {
         <div style={{display:"flex",gap:8}}>
           {[{k:'starter',l:'Starter ($400-500)'},{k:'growth',l:'Growth ($700-800)'},{k:'premium',l:'Premium ($1200-1400)'}].map(p=>(
             <button key={p.k} onClick={()=>setForm({...form,paquete:p.k})}
-              style={{flex:1,padding:"10px 8px",borderRadius:4,border:`1px solid ${form.paquete===p.k?paqueteColor[p.k]:C.border}`,background:form.paquete===p.k?`${paqueteColor[p.k]}15`:C.bg,color:form.paquete===p.k?paqueteColor[p.k]:C.muted,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit",transition:"all .2s"}}>
+              style={{flex:1,padding:"10px 8px",borderRadius:8,border:`1px solid ${form.paquete===p.k?paqueteColor[p.k]:C.border}`,background:form.paquete===p.k?`${paqueteColor[p.k]}15`:C.bg,color:form.paquete===p.k?paqueteColor[p.k]:C.muted,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit",transition:"all .2s"}}>
               {p.l}
             </button>
           ))}
@@ -706,9 +697,9 @@ function PropuestasComerciales() {
         <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Notas de la llamada / contexto del prospecto</label>
         <textarea value={form.info_cruda} onChange={e=>setForm({...form,info_cruda:e.target.value})}
           placeholder="Pegá acá tus notas de la llamada, info del prospecto, problemas que tiene, qué le ofreciste, números que mencionó..."
-          style={{width:"100%",minHeight:200,background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:14,color:C.text,fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.6,boxSizing:"border-box"}}/>
+          style={{width:"100%",minHeight:200,background:C.bg,border:`1px solid ${C.border}`,borderRadius:10,padding:14,color:C.text,fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.6,boxSizing:"border-box"}}/>
         <div style={{marginTop:8,display:"flex",alignItems:"center",gap:10}}>
-          <label style={{display:"inline-flex",alignItems:"center",gap:6,padding:"6px 12px",borderRadius:2,border:`1px solid ${C.border}`,background:C.bg,color:C.muted,fontSize:11,cursor:"pointer",transition:"all .2s"}}>
+          <label style={{display:"inline-flex",alignItems:"center",gap:6,padding:"6px 12px",borderRadius:8,border:`1px solid ${C.border}`,background:C.bg,color:C.muted,fontSize:11,cursor:"pointer",transition:"all .2s"}}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
             Adjuntar archivo
             <input type="file" accept=".txt,.md,.pdf,.doc,.docx,.json,.csv" multiple style={{display:"none"}} onChange={async e=>{
@@ -735,13 +726,13 @@ function PropuestasComerciales() {
         {contenido && <Btn onClick={guardar} disabled={guardando} secondary>{guardando?'Guardando...':'Guardar borrador'}</Btn>}
       </div>
       {contenido && (
-        <div style={{marginTop:20,background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:16}}>
+        <div style={{marginTop:20,background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:16}}>
           <div style={{fontSize:13,fontWeight:600,marginBottom:8,color:C.green}}>Propuesta generada para: {contenido.empresa}</div>
           <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Secciones: Diagnóstico ({(contenido.diagnostico?.problemas||[]).length} problemas) · Solución ({(contenido.solucion?.features||[]).length} features) · Timeline ({(contenido.timeline||[]).length} etapas)</div>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
             <input value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>{ if(e.key==='Enter'&&chatInput.trim()){generar(chatInput.trim());setChatInput('');}}}
               placeholder="Pedile cambios: 'cambiá el precio a 1000', 'agregá un feature de email marketing'..."
-              style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"9px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
+              style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
             <Btn onClick={()=>{if(chatInput.trim()){generar(chatInput.trim());setChatInput('');}}} small disabled={generando}>{generando?'...':'Ajustar'}</Btn>
           </div>
         </div>
@@ -764,10 +755,10 @@ function PropuestasComerciales() {
         <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:8}}>
           <input value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>{ if(e.key==='Enter'&&chatInput.trim()&&!generando){generar(chatInput.trim());setChatInput('');}}}
             placeholder="Pedí cambios: 'subí el precio a 1500', 'sacá la sección de timeline', 'cambiá la garantía'..."
-            style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"9px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
+            style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
           <Btn onClick={()=>{if(chatInput.trim()){generar(chatInput.trim());setChatInput('');}}} small disabled={generando}>{generando?'Ajustando...':'Ajustar'}</Btn>
         </div>
-        <div style={{background:"#F5F0E8",borderRadius:2,overflow:"hidden",border:`1px solid ${C.border}`,height:`${Math.floor(_winH * 0.72 / UI_SCALE)}px`}}>
+        <div style={{background:"#F5F0E8",borderRadius:12,overflow:"hidden",border:`1px solid ${C.border}`,height:`${Math.floor(_winH * 0.72 / UI_SCALE)}px`}}>
           {previewLoading || generando ? <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100%",color:"#7A6E62",fontSize:14}}>{generando?'Regenerando propuesta...':'Cargando preview...'}</div> :
           <iframe srcDoc={previewHtml} style={{width:"100%",height:"100%",border:"none"}} sandbox="allow-scripts"/>}
         </div>
@@ -814,10 +805,10 @@ function AdminView({ stats, clientes, onSelectClient, onRefresh, onCrearUsuario,
   return (
     <div style={{flex:1,overflowY:"auto",padding:"16px 12px",paddingBottom:80}}>
       {/* Admin tabs */}
-      <div style={{display:"flex",gap:3,background:C.bg,borderRadius:2,padding:3,border:`1px solid ${C.border}`,marginBottom:16,width:"fit-content"}}>
+      <div style={{display:"flex",gap:3,background:C.bg,borderRadius:8,padding:3,border:`1px solid ${C.border}`,marginBottom:16,width:"fit-content"}}>
         {[{k:'clientes',l:'Clientes'},{k:'propuestas',l:'Honorarios'}].map(t=>(
           <button key={t.k} onClick={()=>setAdminTab(t.k)}
-            style={{padding:"6px 14px",borderRadius:4,border:"none",cursor:"pointer",fontSize:12,fontWeight:500,background:adminTab===t.k?C.accent:"transparent",color:adminTab===t.k?"white":C.muted,transition:"all .2s",fontFamily:"inherit"}}>
+            style={{padding:"6px 14px",borderRadius:6,border:"none",cursor:"pointer",fontSize:12,fontWeight:500,background:adminTab===t.k?C.accent:"transparent",color:adminTab===t.k?"white":C.muted,transition:"all .2s",fontFamily:"inherit"}}>
             {t.l}
           </button>
         ))}
@@ -832,14 +823,14 @@ function AdminView({ stats, clientes, onSelectClient, onRefresh, onCrearUsuario,
           { label:"Honorarios aceptados", value: stats?.honorarios_aceptados||0 },
           { label:"Conversión", value: stats?.conversion ? `${stats.conversion}%` : "0%" },
         ].map((s,i) => (
-          <div key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:"16px 20px"}}>
+          <div key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:"16px 20px"}}>
             <div style={{fontSize:11,color:C.muted,textTransform:"uppercase",letterSpacing:".8px",marginBottom:8,fontWeight:500}}>{s.label}</div>
             <div style={{fontSize:24,fontWeight:700,color:C.accentLight,fontFamily:"'DM Mono',monospace"}}>{s.value}</div>
           </div>
         ))}
       </div>
 
-      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,overflow:"hidden"}}>
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,overflow:"hidden"}}>
         <div style={{padding:"14px 16px",borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <span style={{fontWeight:600,fontSize:14}}>Clientes</span>
           <Btn onClick={()=>setShowNew(true)} small>+ Nuevo</Btn>
@@ -857,17 +848,17 @@ function AdminView({ stats, clientes, onSelectClient, onRefresh, onCrearUsuario,
             <tbody>
               {clientes.map(c => (
                 <tr key={c.id} className="hr" style={{borderBottom:`1px solid ${C.border}`}} onClick={()=>onSelectClient(c)}>
-                  <td style={{padding:"14px 16px",fontWeight:500,fontSize:14,color:C.text}}>{c.nombre}<div style={{fontSize:11,color:C.textMuted,marginTop:2}}>{c.numero_whatsapp||"-"}</div></td>
-                  <td style={{padding:"14px 16px"}} onClick={e=>e.stopPropagation()}>
+                  <td style={{padding:"12px 16px",fontWeight:500,fontSize:13}}>{c.nombre}<div style={{fontSize:11,color:C.muted}}>{c.numero_whatsapp||"-"}</div></td>
+                  <td style={{padding:"12px 16px"}} onClick={e=>e.stopPropagation()}>
                     <select value={c.plan||"pro"}
                       onChange={async e=>{const plan=e.target.value;await fetch(`${API}/api/clientes/${c.id}/plan`,{method:"PUT",headers:{"Content-Type":"application/json","Authorization":`Bearer ${tok()}`},body:JSON.stringify({plan})});if(onPlanChange)onPlanChange(c.id,plan);else onRefresh();}}
-                      style={{background:c.plan==="base"?"rgba(251,191,36,0.15)":c.plan==="plus"?"rgba(20,184,166,0.15)":C.accentGlow,border:`1px solid ${c.plan==="base"?"#f59e0b":c.plan==="plus"?"#14b8a6":C.accent}`,borderRadius:4,padding:"4px 8px",fontSize:11,fontWeight:600,color:c.plan==="base"?"#f59e0b":c.plan==="plus"?"#14b8a6":C.accent,cursor:"pointer",fontFamily:"inherit"}}>
+                      style={{background:c.plan==="base"?"rgba(251,191,36,0.15)":c.plan==="plus"?"rgba(20,184,166,0.15)":C.accentGlow,border:`1px solid ${c.plan==="base"?"#f59e0b":c.plan==="plus"?"#14b8a6":C.accent}`,borderRadius:6,padding:"4px 8px",fontSize:11,fontWeight:600,color:c.plan==="base"?"#f59e0b":c.plan==="plus"?"#14b8a6":C.accent,cursor:"pointer",fontFamily:"inherit"}}>
                       <option value="pro">Pro</option><option value="plus">Plus</option><option value="base">Básico</option>
                     </select>
                   </td>
-                  <td style={{padding:"14px 16px",fontSize:13,color:C.textMuted,fontVariantNumeric:"tabular-nums"}}>{c.total_prospectos||0}</td>
-                  <td style={{padding:"14px 16px",fontSize:13,color:C.textMuted,fontVariantNumeric:"tabular-nums"}}>{c.agendados||0}</td>
-                  <td style={{padding:"14px 16px",fontSize:13,color:C.textMuted,fontVariantNumeric:"tabular-nums"}}>{c.tasa_conversion||0}%</td>
+                  <td style={{padding:"12px 16px",fontSize:13}}>{c.total_prospectos||0}</td>
+                  <td style={{padding:"12px 16px",fontSize:13}}>{c.agendados||0}</td>
+                  <td style={{padding:"12px 16px",fontSize:13}}>{c.tasa_conversion||0}%</td>
                   <td style={{padding:"12px 16px",textAlign:"right"}}>
                     <span style={{display:"flex",gap:6,justifyContent:"flex-end",alignItems:"center"}}>
                       <Btn onClick={e=>{e.stopPropagation();setOnboardingCliente(c);}} secondary small>📋 Setup</Btn>
@@ -893,7 +884,7 @@ function AdminView({ stats, clientes, onSelectClient, onRefresh, onCrearUsuario,
                 <select value={c.plan||"pro"}
                   onChange={async e=>{e.stopPropagation();const plan=e.target.value;await fetch(`${API}/api/clientes/${c.id}/plan`,{method:"PUT",headers:{"Content-Type":"application/json","Authorization":`Bearer ${tok()}`},body:JSON.stringify({plan})});if(onPlanChange)onPlanChange(c.id,plan);else onRefresh();}}
                   onClick={e=>e.stopPropagation()}
-                  style={{background:c.plan==="base"?"rgba(251,191,36,0.15)":c.plan==="plus"?"rgba(20,184,166,0.15)":C.accentGlow,border:`1px solid ${c.plan==="base"?"#f59e0b":c.plan==="plus"?"#14b8a6":C.accent}`,borderRadius:4,padding:"4px 8px",fontSize:11,fontWeight:600,color:c.plan==="base"?"#f59e0b":c.plan==="plus"?"#14b8a6":C.accent,cursor:"pointer",fontFamily:"inherit"}}>
+                  style={{background:c.plan==="base"?"rgba(251,191,36,0.15)":c.plan==="plus"?"rgba(20,184,166,0.15)":C.accentGlow,border:`1px solid ${c.plan==="base"?"#f59e0b":c.plan==="plus"?"#14b8a6":C.accent}`,borderRadius:6,padding:"4px 8px",fontSize:11,fontWeight:600,color:c.plan==="base"?"#f59e0b":c.plan==="plus"?"#14b8a6":C.accent,cursor:"pointer",fontFamily:"inherit"}}>
                   <option value="pro">Pro</option><option value="plus">Plus</option><option value="base">Básico</option>
                 </select>
               </div>
@@ -923,7 +914,7 @@ function AdminView({ stats, clientes, onSelectClient, onRefresh, onCrearUsuario,
 
       {showNew && (
         <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}}>
-          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:32,width:420,maxWidth:"92vw"}}>
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:32,width:420,maxWidth:"92vw"}}>
             <div style={{fontSize:16,fontWeight:700,marginBottom:20}}>Nuevo cliente</div>
             <Field label="Nombre de la agencia *" value={form.nombre} onChange={v=>setForm({...form,nombre:v})} placeholder="Skyward Consultoría Jurídica"/>
             <Field label="Número de WhatsApp (opcional)" value={form.numero_whatsapp} onChange={v=>setForm({...form,numero_whatsapp:v})} placeholder="+54 11 4523-8901"/>
@@ -933,12 +924,12 @@ function AdminView({ stats, clientes, onSelectClient, onRefresh, onCrearUsuario,
               <div style={{position:"relative"}}>
                 <input type="password" value={form.whatsapp_token} onChange={e=>setForm({...form,whatsapp_token:e.target.value})}
                   placeholder="EAAxxxxx..."
-                  style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:2,padding:"9px 40px 9px 12px",color:C.text,fontSize:12,fontFamily:"'DM Mono',monospace",boxSizing:"border-box"}}/>
+                  style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 40px 9px 12px",color:C.text,fontSize:12,fontFamily:"'DM Mono',monospace",boxSizing:"border-box"}}/>
                 <span style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",fontSize:11,color:C.muted,cursor:"default"}}>🔒</span>
               </div>
               <div style={{fontSize:10,color:C.muted,marginTop:4}}>Token permanente del número en Meta Developers</div>
             </div>
-            {err && <div style={{background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:4,padding:"8px 12px",fontSize:12,color:C.red,marginBottom:16}}>{err}</div>}
+            {err && <div style={{background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,padding:"8px 12px",fontSize:12,color:C.red,marginBottom:16}}>{err}</div>}
             <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
               <Btn onClick={()=>setShowNew(false)} secondary>Cancelar</Btn>
               <Btn onClick={crear} disabled={saving}>{saving?"Creando...":"Crear cliente"}</Btn>
@@ -1146,9 +1137,9 @@ function OnboardingWizard({ client, onComplete, onSkip, calStatus, plan }) {
 
           {/* -- PASO: WhatsApp -- */}
           {pasoActual.id === 'whatsapp' && (
-            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:24}}>
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:24}}>
               {waGuardado && (
-                <div style={{background:"rgba(16,185,129,0.1)",border:"1px solid #10b981",borderRadius:4,padding:"10px 14px",marginBottom:16,fontSize:13,color:"#10b981",fontWeight:500}}>
+                <div style={{background:"rgba(16,185,129,0.1)",border:"1px solid #10b981",borderRadius:8,padding:"10px 14px",marginBottom:16,fontSize:13,color:"#10b981",fontWeight:500}}>
                   ✅ WhatsApp configurado
                 </div>
               )}
@@ -1156,17 +1147,17 @@ function OnboardingWizard({ client, onComplete, onSkip, calStatus, plan }) {
                 <label style={{fontSize:12,color:C.muted,display:"block",marginBottom:6}}>Phone Number ID</label>
                 <input value={wa.phone_number_id} onChange={e=>setWa({...wa,phone_number_id:e.target.value})}
                   placeholder="Ej: 1052491337942532"
-                  style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
+                  style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
                 <div style={{fontSize:11,color:C.muted,marginTop:4}}>Se obtiene en Meta Developers -> WhatsApp -> API Setup</div>
               </div>
               <div style={{marginBottom:16}}>
                 <label style={{fontSize:12,color:C.muted,display:"block",marginBottom:6}}>Token de acceso</label>
                 <input type="password" value={wa.whatsapp_token} onChange={e=>setWa({...wa,whatsapp_token:e.target.value})}
                   placeholder="Token permanente de WhatsApp..."
-                  style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
+                  style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
               </div>
               <button onClick={guardarWa} disabled={savingWa||!wa.phone_number_id}
-                style={{width:"100%",padding:"11px 0",borderRadius:4,border:"none",background:C.accent,color:"white",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+                style={{width:"100%",padding:"11px 0",borderRadius:8,border:"none",background:C.accent,color:"white",fontSize:13,fontWeight:600,cursor:"pointer"}}>
                 {savingWa?"Guardando...":"Guardar configuración"}
               </button>
             </div>
@@ -1176,30 +1167,30 @@ function OnboardingWizard({ client, onComplete, onSkip, calStatus, plan }) {
           {pasoActual.id === 'bot' && (
             <div style={{display:"flex",flexDirection:"column",gap:12}}>
               {botGuardado && (
-                <div style={{background:"rgba(16,185,129,0.1)",border:"1px solid #10b981",borderRadius:4,padding:"10px 14px",fontSize:13,color:"#10b981",fontWeight:500}}>
+                <div style={{background:"rgba(16,185,129,0.1)",border:"1px solid #10b981",borderRadius:8,padding:"10px 14px",fontSize:13,color:"#10b981",fontWeight:500}}>
                   ✅ Bot configurado
                 </div>
               )}
-              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20}}>
+              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20}}>
                 <label style={{fontSize:12,color:C.muted,display:"block",marginBottom:6}}>Nombre del bot</label>
                 <input value={bot.bot_nombre} onChange={e=>setBot({...bot,bot_nombre:e.target.value})}
                   placeholder="Ej: Sofi, Luna, Valeria..."
-                  style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box",marginBottom:14}}/>
+                  style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box",marginBottom:14}}/>
                 <label style={{fontSize:12,color:C.muted,display:"block",marginBottom:6}}>Descripción de la agencia</label>
                 <textarea value={bot.descripcion_clinica} onChange={e=>setBot({...bot,descripcion_clinica:e.target.value})}
                   rows={3} placeholder="Quiénes son, qué hacen, a quién atienden..."
-                  style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box",marginBottom:14}}/>
+                  style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box",marginBottom:14}}/>
                 <label style={{fontSize:12,color:C.muted,display:"block",marginBottom:8}}>Tono</label>
                 <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:14}}>
                   {TONOS.map(t=>(
                     <div key={t.v} onClick={()=>setBot({...bot,tono:t.v})}
-                      style={{padding:"6px 14px",borderRadius:2,cursor:"pointer",fontSize:12,border:`1.5px solid ${bot.tono===t.v?C.accent:C.border}`,background:bot.tono===t.v?C.accentGlow:"transparent",color:bot.tono===t.v?C.accentLight:C.muted,fontWeight:bot.tono===t.v?600:400}}>
+                      style={{padding:"6px 14px",borderRadius:20,cursor:"pointer",fontSize:12,border:`1.5px solid ${bot.tono===t.v?C.accent:C.border}`,background:bot.tono===t.v?C.accentGlow:"transparent",color:bot.tono===t.v?C.accentLight:C.muted,fontWeight:bot.tono===t.v?600:400}}>
                       {t.l}
                     </div>
                   ))}
                 </div>
                 <button onClick={guardarBot} disabled={savingBot||!bot.bot_nombre||!bot.descripcion_clinica}
-                  style={{width:"100%",padding:"11px 0",borderRadius:4,border:"none",background:C.accent,color:"white",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+                  style={{width:"100%",padding:"11px 0",borderRadius:8,border:"none",background:C.accent,color:"white",fontSize:13,fontWeight:600,cursor:"pointer"}}>
                   {savingBot?"Guardando...":"Guardar configuración del bot"}
                 </button>
               </div>
@@ -1208,9 +1199,9 @@ function OnboardingWizard({ client, onComplete, onSkip, calStatus, plan }) {
 
           {/* -- PASO: Profesionales -- */}
           {pasoActual.id === 'profesionales' && (
-            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:24}}>
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:24}}>
               {profs.map(p=>(
-                <div key={p.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",background:C.bg,borderRadius:2,border:`1px solid ${C.border}`,marginBottom:8}}>
+                <div key={p.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",background:C.bg,borderRadius:8,border:`1px solid ${C.border}`,marginBottom:8}}>
                   <div>
                     <div style={{fontSize:13,fontWeight:500}}>{p.nombre}</div>
                     <div style={{fontSize:11,color:C.muted}}>{p.rol||"-"}{p.email?` · ${p.email}`:""}</div>
@@ -1222,17 +1213,17 @@ function OnboardingWizard({ client, onComplete, onSkip, calStatus, plan }) {
                 <div style={{display:"flex",gap:8,marginBottom:8}}>
                   <input value={formProf.nombre} onChange={e=>setFormProf({...formProf,nombre:e.target.value})}
                     placeholder="Nombre *" onKeyDown={e=>e.key==="Enter"&&agregarProf()}
-                    style={{flex:2,background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"9px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
+                    style={{flex:2,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
                   <input value={formProf.rol} onChange={e=>setFormProf({...formProf,rol:e.target.value})}
                     placeholder="Rol"
-                    style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"9px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
+                    style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
                 </div>
                 <div style={{display:"flex",gap:8}}>
                   <input value={formProf.email} onChange={e=>setFormProf({...formProf,email:e.target.value})}
                     placeholder="Email (para invitar a turnos)"
-                    style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"9px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
+                    style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
                   <button onClick={agregarProf} disabled={savingProf||!formProf.nombre}
-                    style={{padding:"9px 18px",borderRadius:4,border:"none",background:C.accent,color:"white",fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>
+                    style={{padding:"9px 18px",borderRadius:8,border:"none",background:C.accent,color:"white",fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>
                     {savingProf?"...":"+ Agregar"}
                   </button>
                 </div>
@@ -1242,9 +1233,9 @@ function OnboardingWizard({ client, onComplete, onSkip, calStatus, plan }) {
 
           {/* -- PASO: Tratamientos -- */}
           {pasoActual.id === 'tratamientos' && (
-            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:24}}>
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:24}}>
               {trats.map(t=>(
-                <div key={t.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",background:C.bg,borderRadius:2,border:`1px solid ${C.border}`,marginBottom:8}}>
+                <div key={t.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",background:C.bg,borderRadius:8,border:`1px solid ${C.border}`,marginBottom:8}}>
                   <div>
                     <div style={{fontSize:13,fontWeight:500}}>{t.nombre}</div>
                     <div style={{fontSize:11,color:C.muted}}>{t.duracion_minutos} min</div>
@@ -1255,17 +1246,17 @@ function OnboardingWizard({ client, onComplete, onSkip, calStatus, plan }) {
               <div style={{display:"flex",gap:8,marginTop:trats.length>0?16:0,flexWrap:"wrap"}}>
                 <input value={formTrat.nombre} onChange={e=>setFormTrat({...formTrat,nombre:e.target.value})}
                   placeholder="Nombre del servicio *" onKeyDown={e=>e.key==="Enter"&&agregarTrat()}
-                  style={{flex:2,minWidth:140,background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"9px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
+                  style={{flex:2,minWidth:140,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
                 <select value={formTrat.tipo||'tratamiento'} onChange={e=>setFormTrat({...formTrat,tipo:e.target.value})}
-                  style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"9px 10px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
+                  style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 10px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
                   <option value="tratamiento">Servicio</option>
                   <option value="valoracion">Demo Call</option>
                 </select>
                 <input type="number" value={formTrat.duracion_minutos} onChange={e=>setFormTrat({...formTrat,duracion_minutos:parseInt(e.target.value)||60})}
                   placeholder="Min"
-                  style={{width:70,background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"9px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
+                  style={{width:70,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
                 <button onClick={agregarTrat} disabled={savingTrat||!formTrat.nombre}
-                  style={{padding:"9px 18px",borderRadius:4,border:"none",background:C.accent,color:"white",fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>
+                  style={{padding:"9px 18px",borderRadius:8,border:"none",background:C.accent,color:"white",fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>
                   {savingTrat?"...":"+ Agregar"}
                 </button>
               </div>
@@ -1274,18 +1265,18 @@ function OnboardingWizard({ client, onComplete, onSkip, calStatus, plan }) {
 
           {/* -- PASO: Horarios -- */}
           {pasoActual.id === 'horarios' && (
-            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:24}}>
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:24}}>
               {horarios.length === 0 && (
                 <div style={{textAlign:"center",color:C.muted,fontSize:12,padding:"12px 0 20px"}}>Sin horarios configurados - usará lun-vie 9-18 por defecto</div>
               )}
               {Object.entries(horarios.reduce((acc,h)=>{ const d=h.dia_semana; if(!acc[d]) acc[d]=[]; acc[d].push(h); return acc; },{})).map(([dia,slots])=>(
-                <div key={dia} style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"10px 14px",background:C.bg,borderRadius:2,border:`1px solid ${C.border}`}}>
+                <div key={dia} style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"10px 14px",background:C.bg,borderRadius:8,border:`1px solid ${C.border}`}}>
                   <div style={{width:32,fontSize:12,fontWeight:600,color:C.accentLight,flexShrink:0}}>
                     {['Dom','Lun','Mar','Mie','Jue','Vie','Sab'][parseInt(dia)]}
                   </div>
                   <div style={{flex:1,display:"flex",flexWrap:"wrap",gap:6}}>
                     {slots.map(s=>(
-                      <div key={s.id} style={{display:"flex",alignItems:"center",gap:5,padding:"3px 10px",borderRadius:2,background:C.accentGlow,border:`1px solid ${C.accent}44`,fontSize:12,color:C.accentLight}}>
+                      <div key={s.id} style={{display:"flex",alignItems:"center",gap:5,padding:"3px 10px",borderRadius:20,background:C.accentGlow,border:`1px solid ${C.accent}44`,fontSize:12,color:C.accentLight}}>
                         {s.hora_inicio.substring(0,5)} - {s.hora_fin.substring(0,5)}
                         <span onClick={()=>eliminarHorario(s.id)} style={{cursor:"pointer",fontSize:14,color:C.muted}}>×</span>
                       </div>
@@ -1297,22 +1288,22 @@ function OnboardingWizard({ client, onComplete, onSkip, calStatus, plan }) {
                 <div>
                   <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Día</label>
                   <select value={formHor.dia_semana} onChange={e=>setFormHor({...formHor,dia_semana:parseInt(e.target.value)})}
-                    style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
+                    style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
                     {[1,2,3,4,5,6,0].map(d=><option key={d} value={d}>{DIAS_FULL[d]}</option>)}
                   </select>
                 </div>
                 <div>
                   <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Desde</label>
                   <input type="time" value={formHor.hora_inicio} onChange={e=>setFormHor({...formHor,hora_inicio:e.target.value})}
-                    style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
+                    style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
                 </div>
                 <div>
                   <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Hasta</label>
                   <input type="time" value={formHor.hora_fin} onChange={e=>setFormHor({...formHor,hora_fin:e.target.value})}
-                    style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
+                    style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
                 </div>
                 <button onClick={agregarHorario} disabled={savingHor}
-                  style={{padding:"9px 18px",borderRadius:4,border:"none",background:C.accent,color:"white",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+                  style={{padding:"9px 18px",borderRadius:8,border:"none",background:C.accent,color:"white",fontSize:12,fontWeight:600,cursor:"pointer"}}>
                   {savingHor?"...":"+ Agregar"}
                 </button>
               </div>
@@ -1321,17 +1312,17 @@ function OnboardingWizard({ client, onComplete, onSkip, calStatus, plan }) {
 
           {/* -- PASO: Google -- */}
           {pasoActual.id === 'calendar' && (
-            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:24,textAlign:"center"}}>
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:24,textAlign:"center"}}>
               {calConectado ? (
                 <div>
                   <div style={{fontSize:48,marginBottom:12}}>✅</div>
                   <div style={{fontSize:15,fontWeight:600,color:"#10b981",marginBottom:8}}>Google conectado</div>
                   <div style={{fontSize:13,color:C.muted,marginBottom:16}}>Los turnos se van a sincronizar automáticamente con tu Google</div>
-                  <div style={{background:"rgba(6,182,212,0.08)",border:"1px solid rgba(6,182,212,0.25)",borderRadius:4,padding:"12px 16px",marginBottom:16,textAlign:"left"}}>
+                  <div style={{background:"rgba(6,182,212,0.08)",border:"1px solid rgba(6,182,212,0.25)",borderRadius:8,padding:"12px 16px",marginBottom:16,textAlign:"left"}}>
                     <div style={{fontSize:12,fontWeight:600,color:"#67e8f9",marginBottom:4}}>📧 ¿Querés activar el envío de emails?</div>
                     <div style={{fontSize:11,color:C.muted,marginBottom:10}}>Para poder enviar emails desde tu cuenta necesitás reconectar Google con permisos adicionales de Gmail.</div>
                     <button onClick={conectarCal}
-                      style={{padding:"8px 18px",borderRadius:4,border:"none",background:"#0891b2",color:"white",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+                      style={{padding:"8px 18px",borderRadius:8,border:"none",background:"#0891b2",color:"white",fontSize:12,fontWeight:600,cursor:"pointer"}}>
                       🔗 Conectar Google
                     </button>
                   </div>
@@ -1342,7 +1333,7 @@ function OnboardingWizard({ client, onComplete, onSkip, calStatus, plan }) {
                     Al conectar Google, cada turno va a crear un evento automáticamente e invitar a los profesionales y prospectos. También podrás enviar emails desde tu cuenta.
                   </div>
                   <button onClick={conectarCal}
-                    style={{padding:"12px 28px",borderRadius:4,border:"none",background:"#4285f4",color:"white",fontSize:14,fontWeight:600,cursor:"pointer",marginBottom:12}}>
+                    style={{padding:"12px 28px",borderRadius:10,border:"none",background:"#4285f4",color:"white",fontSize:14,fontWeight:600,cursor:"pointer",marginBottom:12}}>
                     🔗 Conectar Google
                   </button>
                   <div style={{fontSize:11,color:C.muted}}>Se abre una ventana de autorización de Google</div>
@@ -1363,7 +1354,7 @@ function OnboardingWizard({ client, onComplete, onSkip, calStatus, plan }) {
                 { icon:"🕐", label:"Horarios", ok: horarios.length > 0, extra: horarios.length > 0 ? `${horarios.length} franjas` : "Usando default lun-vie 9-18" },
                 { icon:"📅", label:"Google", ok: calConectado, opcional: true },
               ].map((item,i)=>(
-                <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",background:C.surface,borderRadius:2,border:`1px solid ${item.ok?"#10b981":item.opcional?C.border:"#ef444444"}`}}>
+                <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",background:C.surface,borderRadius:10,border:`1px solid ${item.ok?"#10b981":item.opcional?C.border:"#ef444444"}`}}>
                   <span style={{fontSize:20}}>{item.icon}</span>
                   <div style={{flex:1}}>
                     <div style={{fontSize:13,fontWeight:500}}>{item.label}</div>
@@ -1373,11 +1364,11 @@ function OnboardingWizard({ client, onComplete, onSkip, calStatus, plan }) {
                 </div>
               ))}
 
-              <div style={{marginTop:8,background:"rgba(99,102,241,0.08)",border:"1.5px solid #6366f1",borderRadius:2,padding:20,textAlign:"center"}}>
+              <div style={{marginTop:8,background:"rgba(99,102,241,0.08)",border:"1.5px solid #6366f1",borderRadius:12,padding:20,textAlign:"center"}}>
                 <div style={{fontSize:15,fontWeight:700,marginBottom:8}}>¿Todo listo?</div>
                 <div style={{fontSize:13,color:C.muted,marginBottom:16}}>Al activar, el bot comenzará a responder mensajes de WhatsApp automáticamente.</div>
                 <button onClick={activarBot} disabled={saving||!botGuardado}
-                  style={{padding:"13px 32px",borderRadius:4,border:"none",background:C.accent,color:"white",fontSize:15,fontWeight:700,cursor:"pointer"}}>
+                  style={{padding:"13px 32px",borderRadius:10,border:"none",background:C.accent,color:"white",fontSize:15,fontWeight:700,cursor:"pointer"}}>
                   {saving ? "Activando..." : "🚀 Activar el bot"}
                 </button>
               </div>
@@ -1393,18 +1384,18 @@ function OnboardingWizard({ client, onComplete, onSkip, calStatus, plan }) {
           <div style={{display:"flex",gap:8}}>
             {paso > 0 && (
               <button onClick={()=>setPaso(p=>p-1)}
-                style={{padding:"9px 20px",borderRadius:4,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:13,cursor:"pointer"}}>
+                style={{padding:"9px 20px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:13,cursor:"pointer"}}>
                 Atras
               </button>
             )}
             <button onClick={onSkip}
-              style={{padding:"9px 20px",borderRadius:4,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:12,cursor:"pointer"}}>
+              style={{padding:"9px 20px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:12,cursor:"pointer"}}>
               Configurar después
             </button>
           </div>
           {pasoActual.id !== 'activar' && (
             <button onClick={()=>setPaso(p=>p+1)} disabled={!puedeSiguiente()}
-              style={{padding:"9px 24px",borderRadius:4,border:"none",background:puedeSiguiente()?C.accent:"#333",color:"white",fontSize:13,fontWeight:600,cursor:puedeSiguiente()?"pointer":"not-allowed",transition:"background .2s"}}>
+              style={{padding:"9px 24px",borderRadius:8,border:"none",background:puedeSiguiente()?C.accent:"#333",color:"white",fontSize:13,fontWeight:600,cursor:puedeSiguiente()?"pointer":"not-allowed",transition:"background .2s"}}>
               {pasoActual.opcional && !puedeSiguiente() ? "Omitir ->" : "Siguiente ->"}
             </button>
           )}
@@ -1482,7 +1473,7 @@ function FichaClinicaModal({ client, turno, paciente, onClose, onSaved }) {
 
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',zIndex:3000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
-      <div style={{background:C.surface,borderRadius:2,width:'100%',maxWidth:560,maxHeight:MH90,display:'flex',flexDirection:'column',border:`1px solid ${C.border}`}}>
+      <div style={{background:C.surface,borderRadius:16,width:'100%',maxWidth:560,maxHeight:MH90,display:'flex',flexDirection:'column',border:`1px solid ${C.border}`}}>
 
         {/* Header */}
         <div style={{padding:'18px 22px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
@@ -1514,7 +1505,7 @@ function FichaClinicaModal({ client, turno, paciente, onClose, onSaved }) {
                       onChange={e => setDatos({...datos, [campo.campo_key]: e.target.value})}
                       rows={3}
                       placeholder={`Escribí ${campo.label.toLowerCase()}...`}
-                      style={{width:'100%',background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:'10px 12px',color:C.text,fontSize:13,fontFamily:'inherit',resize:'vertical',boxSizing:'border-box'}}
+                      style={{width:'100%',background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:'10px 12px',color:C.text,fontSize:13,fontFamily:'inherit',resize:'vertical',boxSizing:'border-box'}}
                     />
                   ) : campo.tipo === 'numero' ? (
                     <input
@@ -1522,7 +1513,7 @@ function FichaClinicaModal({ client, turno, paciente, onClose, onSaved }) {
                       value={datos[campo.campo_key] || ''}
                       onChange={e => setDatos({...datos, [campo.campo_key]: e.target.value})}
                       placeholder="0"
-                      style={{width:'100%',background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:'10px 12px',color:C.text,fontSize:13,fontFamily:'inherit',boxSizing:'border-box'}}
+                      style={{width:'100%',background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:'10px 12px',color:C.text,fontSize:13,fontFamily:'inherit',boxSizing:'border-box'}}
                     />
                   ) : (
                     <input
@@ -1530,7 +1521,7 @@ function FichaClinicaModal({ client, turno, paciente, onClose, onSaved }) {
                       value={datos[campo.campo_key] || ''}
                       onChange={e => setDatos({...datos, [campo.campo_key]: e.target.value})}
                       placeholder={campo.label}
-                      style={{width:'100%',background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:'10px 12px',color:C.text,fontSize:13,fontFamily:'inherit',boxSizing:'border-box'}}
+                      style={{width:'100%',background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:'10px 12px',color:C.text,fontSize:13,fontFamily:'inherit',boxSizing:'border-box'}}
                     />
                   )}
                 </div>
@@ -1546,7 +1537,7 @@ function FichaClinicaModal({ client, turno, paciente, onClose, onSaved }) {
                 <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:8}}>
                   {fotos.map((f,i) => (
                     <div key={i} style={{position:'relative'}}>
-                      <img src={f.url} alt="" style={{width:80,height:80,objectFit:'cover',borderRadius:4,border:`1px solid ${C.border}`}}/>
+                      <img src={f.url} alt="" style={{width:80,height:80,objectFit:'cover',borderRadius:8,border:`1px solid ${C.border}`}}/>
                       <button onClick={() => setFotos(fotos.filter((_,j)=>j!==i))}
                         style={{position:'absolute',top:-6,right:-6,width:18,height:18,borderRadius:'50%',background:'#ef4444',border:'none',color:'white',fontSize:11,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1}}>×</button>
                       <input value={f.label||''} onChange={e=>setFotos(fotos.map((ft,j)=>j===i?{...ft,label:e.target.value}:ft))}
@@ -1554,7 +1545,7 @@ function FichaClinicaModal({ client, turno, paciente, onClose, onSaved }) {
                         style={{width:80,fontSize:10,background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:'2px 5px',color:C.text,marginTop:4,boxSizing:'border-box'}}/>
                     </div>
                   ))}
-                  <label style={{width:80,height:80,border:`2px dashed ${C.border}`,borderRadius:4,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',cursor:'pointer',color:C.muted,fontSize:11,gap:4}}>
+                  <label style={{width:80,height:80,border:`2px dashed ${C.border}`,borderRadius:8,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',cursor:'pointer',color:C.muted,fontSize:11,gap:4}}>
                     {uploadingFoto ? '...' : <><span style={{fontSize:22}}>📷</span>Agregar</>}
                     <input type="file" accept="image/*" style={{display:'none'}} onChange={e=>e.target.files[0]&&subirFoto(e.target.files[0])}/>
                   </label>
@@ -1567,9 +1558,9 @@ function FichaClinicaModal({ client, turno, paciente, onClose, onSaved }) {
 
         {/* Footer */}
         <div style={{padding:'14px 22px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'flex-end',gap:8,flexShrink:0}}>
-          <button onClick={onClose} style={{padding:'9px 20px',borderRadius:4,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:13,cursor:'pointer'}}>Cancelar</button>
+          <button onClick={onClose} style={{padding:'9px 20px',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:13,cursor:'pointer'}}>Cancelar</button>
           <button onClick={guardar} disabled={saving}
-            style={{padding:'9px 22px',borderRadius:4,border:'none',background:C.accent,color:'white',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+            style={{padding:'9px 22px',borderRadius:8,border:'none',background:C.accent,color:'white',fontSize:13,fontWeight:600,cursor:'pointer'}}>
             {saving ? 'Guardando...' : '💾 Guardar ficha'}
           </button>
         </div>
@@ -1620,14 +1611,14 @@ function ConsentimientosConfig({ client }) {
   };
 
   return (
-    <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+    <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:16}}>
         <div>
           <div style={{fontSize:13,fontWeight:600,marginBottom:2}}>📝 Consentimientos informados</div>
           <div style={{fontSize:12,color:C.muted}}>Plantillas para enviar a prospectos</div>
         </div>
         <button onClick={()=>{setEditando('nueva');setForm({titulo:'',contenido:''}); }}
-          style={{padding:'6px 14px',borderRadius:4,border:'none',background:C.accent,color:'white',fontSize:12,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>
+          style={{padding:'6px 14px',borderRadius:8,border:'none',background:C.accent,color:'white',fontSize:12,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>
           + Nueva
         </button>
       </div>
@@ -1635,19 +1626,19 @@ function ConsentimientosConfig({ client }) {
       {loading ? <div style={{color:C.muted,fontSize:12}}>Cargando...</div> : (
         <>
           {plantillas.map(p => (
-            <div key={p.id} style={{padding:'12px 14px',background:C.bg,borderRadius:2,border:`1px solid ${C.border}`,marginBottom:8}}>
+            <div key={p.id} style={{padding:'12px 14px',background:C.bg,borderRadius:8,border:`1px solid ${C.border}`,marginBottom:8}}>
               {editando === p.id ? (
                 <div>
                   <input value={form.titulo} onChange={e=>setForm({...form,titulo:e.target.value})}
                     placeholder="Título..."
-                    style={{width:'100%',background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:'8px 10px',color:C.text,fontSize:13,fontFamily:'inherit',marginBottom:8,boxSizing:'border-box'}}/>
+                    style={{width:'100%',background:C.surface,border:`1px solid ${C.border}`,borderRadius:6,padding:'8px 10px',color:C.text,fontSize:13,fontFamily:'inherit',marginBottom:8,boxSizing:'border-box'}}/>
                   <textarea value={form.contenido} onChange={e=>setForm({...form,contenido:e.target.value})}
                     rows={8} placeholder="Texto del consentimiento..."
-                    style={{width:'100%',background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:'8px 10px',color:C.text,fontSize:12,fontFamily:'inherit',resize:'vertical',boxSizing:'border-box',marginBottom:8}}/>
+                    style={{width:'100%',background:C.surface,border:`1px solid ${C.border}`,borderRadius:6,padding:'8px 10px',color:C.text,fontSize:12,fontFamily:'inherit',resize:'vertical',boxSizing:'border-box',marginBottom:8}}/>
                   <div style={{display:'flex',gap:6,justifyContent:'flex-end'}}>
-                    <button onClick={()=>setEditando(null)} style={{padding:'6px 14px',borderRadius:4,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:12,cursor:'pointer'}}>Cancelar</button>
+                    <button onClick={()=>setEditando(null)} style={{padding:'6px 14px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:12,cursor:'pointer'}}>Cancelar</button>
                     <button onClick={guardar} disabled={saving||!form.titulo||!form.contenido}
-                      style={{padding:'6px 14px',borderRadius:4,border:'none',background:C.accent,color:'white',fontSize:12,fontWeight:600,cursor:'pointer'}}>{saving?'Guardando...':'Guardar'}</button>
+                      style={{padding:'6px 14px',borderRadius:6,border:'none',background:C.accent,color:'white',fontSize:12,fontWeight:600,cursor:'pointer'}}>{saving?'Guardando...':'Guardar'}</button>
                   </div>
                 </div>
               ) : (
@@ -1658,9 +1649,9 @@ function ConsentimientosConfig({ client }) {
                   </div>
                   <div style={{display:'flex',gap:5,flexShrink:0}}>
                     <button onClick={()=>{setEditando(p.id);setForm({titulo:p.titulo,contenido:p.contenido});}}
-                      style={{padding:'4px 10px',borderRadius:2,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:11,cursor:'pointer'}}>✏️</button>
+                      style={{padding:'4px 10px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:11,cursor:'pointer'}}>✏️</button>
                     <button onClick={()=>eliminar(p.id)}
-                      style={{padding:'4px 10px',borderRadius:4,border:'none',background:'transparent',color:C.muted,fontSize:14,cursor:'pointer'}}>×</button>
+                      style={{padding:'4px 10px',borderRadius:6,border:'none',background:'transparent',color:C.muted,fontSize:14,cursor:'pointer'}}>×</button>
                   </div>
                 </div>
               )}
@@ -1668,18 +1659,18 @@ function ConsentimientosConfig({ client }) {
           ))}
 
           {editando === 'nueva' && (
-            <div style={{padding:'14px',background:C.bg,borderRadius:2,border:`1.5px solid ${C.accent}`,marginTop:8}}>
+            <div style={{padding:'14px',background:C.bg,borderRadius:8,border:`1.5px solid ${C.accent}`,marginTop:8}}>
               <div style={{fontSize:12,fontWeight:600,color:C.accentLight,marginBottom:10}}>Nueva plantilla</div>
               <input value={form.titulo} onChange={e=>setForm({...form,titulo:e.target.value})}
                 placeholder="Título del consentimiento..."
-                style={{width:'100%',background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:'8px 10px',color:C.text,fontSize:13,fontFamily:'inherit',marginBottom:8,boxSizing:'border-box'}}/>
+                style={{width:'100%',background:C.surface,border:`1px solid ${C.border}`,borderRadius:6,padding:'8px 10px',color:C.text,fontSize:13,fontFamily:'inherit',marginBottom:8,boxSizing:'border-box'}}/>
               <textarea value={form.contenido} onChange={e=>setForm({...form,contenido:e.target.value})}
                 rows={8} placeholder="Texto completo del consentimiento informado..."
-                style={{width:'100%',background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:'8px 10px',color:C.text,fontSize:12,fontFamily:'inherit',resize:'vertical',boxSizing:'border-box',marginBottom:8}}/>
+                style={{width:'100%',background:C.surface,border:`1px solid ${C.border}`,borderRadius:6,padding:'8px 10px',color:C.text,fontSize:12,fontFamily:'inherit',resize:'vertical',boxSizing:'border-box',marginBottom:8}}/>
               <div style={{display:'flex',gap:6,justifyContent:'flex-end'}}>
-                <button onClick={()=>setEditando(null)} style={{padding:'6px 14px',borderRadius:4,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:12,cursor:'pointer'}}>Cancelar</button>
+                <button onClick={()=>setEditando(null)} style={{padding:'6px 14px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:12,cursor:'pointer'}}>Cancelar</button>
                 <button onClick={guardar} disabled={saving||!form.titulo||!form.contenido}
-                  style={{padding:'6px 14px',borderRadius:4,border:'none',background:C.accent,color:'white',fontSize:12,fontWeight:600,cursor:'pointer'}}>{saving?'Guardando...':'Guardar'}</button>
+                  style={{padding:'6px 14px',borderRadius:6,border:'none',background:C.accent,color:'white',fontSize:12,fontWeight:600,cursor:'pointer'}}>{saving?'Guardando...':'Guardar'}</button>
               </div>
             </div>
           )}
@@ -1720,7 +1711,7 @@ function EnviarConsentimientoModal({ client, paciente, turno_id, onClose }) {
 
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',zIndex:3000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
-      <div style={{background:C.surface,borderRadius:2,width:'100%',maxWidth:500,maxHeight:MH85,display:'flex',flexDirection:'column',border:`1px solid ${C.border}`}}>
+      <div style={{background:C.surface,borderRadius:16,width:'100%',maxWidth:500,maxHeight:MH85,display:'flex',flexDirection:'column',border:`1px solid ${C.border}`}}>
 
         <div style={{padding:'18px 22px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
           <div>
@@ -1737,7 +1728,7 @@ function EnviarConsentimientoModal({ client, paciente, turno_id, onClose }) {
             <div style={{marginBottom:20}}>
               <div style={{fontSize:11,color:C.muted,textTransform:'uppercase',letterSpacing:'.8px',fontWeight:500,marginBottom:10}}>Historial</div>
               {consentimientos.map(c=>(
-                <div key={c.id} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',background:C.bg,borderRadius:2,border:`1px solid ${C.border}`,marginBottom:6}}>
+                <div key={c.id} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',background:C.bg,borderRadius:8,border:`1px solid ${C.border}`,marginBottom:6}}>
                   <div style={{width:8,height:8,borderRadius:'50%',background:c.estado==='firmado'?'#10b981':'#f59e0b',flexShrink:0}}/>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontSize:12,fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.titulo}</div>
@@ -1765,11 +1756,11 @@ function EnviarConsentimientoModal({ client, paciente, turno_id, onClose }) {
               <div style={{fontSize:13,color:C.muted,marginBottom:16}}>
                 {resultado.enviado_wa ? 'El prospecto recibió el link por WhatsApp para firmar.' : 'Copiá el link y enviáselo al prospecto.'}
               </div>
-              <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:2,padding:'10px 14px',fontSize:11,color:C.muted,wordBreak:'break-all',marginBottom:12}}>
+              <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:'10px 14px',fontSize:11,color:C.muted,wordBreak:'break-all',marginBottom:12}}>
                 {resultado.link}
               </div>
               <button onClick={()=>{navigator.clipboard.writeText(resultado.link).catch(()=>{});}}
-                style={{padding:'8px 20px',borderRadius:4,border:`1px solid ${C.border}`,background:'transparent',color:C.accentLight,fontSize:12,cursor:'pointer'}}>
+                style={{padding:'8px 20px',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',color:C.accentLight,fontSize:12,cursor:'pointer'}}>
                 📋 Copiar link
               </button>
             </div>
@@ -1779,7 +1770,7 @@ function EnviarConsentimientoModal({ client, paciente, turno_id, onClose }) {
               <div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:20}}>
                 {plantillas.map(p=>(
                   <div key={p.id} onClick={()=>setSelPlantilla(p.id)}
-                    style={{padding:'12px 14px',background:C.bg,borderRadius:2,border:`1.5px solid ${selPlantilla===p.id?C.accent:C.border}`,cursor:'pointer',transition:'border .15s'}}>
+                    style={{padding:'12px 14px',background:C.bg,borderRadius:8,border:`1.5px solid ${selPlantilla===p.id?C.accent:C.border}`,cursor:'pointer',transition:'border .15s'}}>
                     <div style={{fontSize:13,fontWeight:500,color:selPlantilla===p.id?C.accentLight:C.text}}>{p.titulo}</div>
                     <div style={{fontSize:11,color:C.muted,marginTop:2}}>{p.contenido.substring(0,80)}...</div>
                   </div>
@@ -1795,16 +1786,16 @@ function EnviarConsentimientoModal({ client, paciente, turno_id, onClose }) {
 
         {!resultado && (
           <div style={{padding:'14px 22px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'flex-end',gap:8,flexShrink:0}}>
-            <button onClick={onClose} style={{padding:'9px 20px',borderRadius:4,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:13,cursor:'pointer'}}>Cancelar</button>
+            <button onClick={onClose} style={{padding:'9px 20px',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:13,cursor:'pointer'}}>Cancelar</button>
             <button onClick={enviar} disabled={sending||!selPlantilla}
-              style={{padding:'9px 22px',borderRadius:4,border:'none',background:C.accent,color:'white',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+              style={{padding:'9px 22px',borderRadius:8,border:'none',background:C.accent,color:'white',fontSize:13,fontWeight:600,cursor:'pointer'}}>
               {sending?'Enviando...':'📨 Enviar consentimiento'}
             </button>
           </div>
         )}
         {resultado && (
           <div style={{padding:'14px 22px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'flex-end'}}>
-            <button onClick={onClose} style={{padding:'9px 22px',borderRadius:4,border:'none',background:C.accent,color:'white',fontSize:13,fontWeight:600,cursor:'pointer'}}>Cerrar</button>
+            <button onClick={onClose} style={{padding:'9px 22px',borderRadius:8,border:'none',background:C.accent,color:'white',fontSize:13,fontWeight:600,cursor:'pointer'}}>Cerrar</button>
           </div>
         )}
       </div>
@@ -1854,17 +1845,17 @@ function CamposFichaConfig({ client }) {
   const TIPO_LABELS = { texto:'Texto corto', textarea:'Texto largo', numero:'Número', fecha:'Fecha' };
 
   return (
-    <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+    <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
       <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>📋 Campos del cliente</div>
       <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Definí qué información se registra en cada sesión</div>
 
       {loading ? <div style={{color:C.muted,fontSize:12}}>Cargando...</div> : (
         <>
           {campos.map(campo => (
-            <div key={campo.id} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',background:C.bg,borderRadius:2,border:`1px solid ${C.border}`,marginBottom:8}}>
+            <div key={campo.id} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',background:C.bg,borderRadius:8,border:`1px solid ${C.border}`,marginBottom:8}}>
               {/* Toggle */}
               <div onClick={() => toggleCampo(campo)}
-                style={{width:36,height:20,borderRadius:4,background:campo.activo?C.accent:C.border,cursor:'pointer',position:'relative',transition:'background .2s',flexShrink:0}}>
+                style={{width:36,height:20,borderRadius:10,background:campo.activo?C.accent:C.border,cursor:'pointer',position:'relative',transition:'background .2s',flexShrink:0}}>
                 <div style={{position:'absolute',width:14,height:14,borderRadius:'50%',background:'white',top:3,left:campo.activo?19:3,transition:'left .2s'}}/>
               </div>
               <div style={{flex:1}}>
@@ -1882,15 +1873,15 @@ function CamposFichaConfig({ client }) {
           <div style={{display:'flex',gap:8,marginTop:12,flexWrap:'wrap'}}>
             <input value={formNuevo.label} onChange={e=>setFormNuevo({...formNuevo,label:e.target.value})}
               placeholder="Nombre del campo..."
-              style={{flex:2,minWidth:140,background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:'8px 12px',color:C.text,fontSize:12,fontFamily:'inherit'}}/>
+              style={{flex:2,minWidth:140,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:'8px 12px',color:C.text,fontSize:12,fontFamily:'inherit'}}/>
             <select value={formNuevo.tipo} onChange={e=>setFormNuevo({...formNuevo,tipo:e.target.value})}
-              style={{flex:1,minWidth:120,background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:'8px 12px',color:C.text,fontSize:12,fontFamily:'inherit'}}>
+              style={{flex:1,minWidth:120,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:'8px 12px',color:C.text,fontSize:12,fontFamily:'inherit'}}>
               <option value="texto">Texto corto</option>
               <option value="textarea">Texto largo</option>
               <option value="numero">Número</option>
             </select>
             <button onClick={agregarCampo} disabled={savingNuevo||!formNuevo.label}
-              style={{padding:'8px 16px',borderRadius:4,border:'none',background:C.accent,color:'white',fontSize:12,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>
+              style={{padding:'8px 16px',borderRadius:8,border:'none',background:C.accent,color:'white',fontSize:12,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>
               {savingNuevo?'...':'+ Agregar'}
             </button>
           </div>
@@ -1960,13 +1951,13 @@ function DisponibilidadPanel({ client, profesionales, horariosClinica, setHorari
 
   return (<>
     {/* Horarios de atención */}
-    <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+    <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
       <div style={{fontSize:13,fontWeight:600,marginBottom:2}}>🕐 Horarios de atención</div>
       <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Días y franjas horarias en que la agencia agenda reuniones</div>
 
       {/* Grilla de dias */}
       {Object.keys(horariosPorDia).length === 0 && (
-        <div style={{fontSize:12,color:C.muted,marginBottom:16,padding:"10px 14px",background:C.bg,borderRadius:2,border:`1px solid ${C.border}`}}>
+        <div style={{fontSize:12,color:C.muted,marginBottom:16,padding:"10px 14px",background:C.bg,borderRadius:8,border:`1px solid ${C.border}`}}>
           Sin horarios configurados - usando lun-vie 9 a 18hs por defecto
         </div>
       )}
@@ -1975,11 +1966,11 @@ function DisponibilidadPanel({ client, profesionales, horariosClinica, setHorari
         const slots = horariosPorDia[dia] || [];
         if (slots.length === 0) return null;
         return (
-          <div key={dia} style={{display:"flex",alignItems:"flex-start",gap:10,marginBottom:10,padding:"10px 14px",background:C.bg,borderRadius:2,border:`1px solid ${C.border}`}}>
+          <div key={dia} style={{display:"flex",alignItems:"flex-start",gap:10,marginBottom:10,padding:"10px 14px",background:C.bg,borderRadius:8,border:`1px solid ${C.border}`}}>
             <div style={{width:36,fontSize:12,fontWeight:600,color:C.accentLight,paddingTop:2,flexShrink:0}}>{DIAS[dia]}</div>
             <div style={{flex:1,display:"flex",flexWrap:"wrap",gap:6}}>
               {slots.map(s => (
-                <div key={s.id} style={{display:"flex",alignItems:"center",gap:6,padding:"3px 10px",borderRadius:2,background:C.accentGlow,border:`1px solid ${C.accent}44`,fontSize:12,color:C.accentLight}}>
+                <div key={s.id} style={{display:"flex",alignItems:"center",gap:6,padding:"3px 10px",borderRadius:20,background:C.accentGlow,border:`1px solid ${C.accent}44`,fontSize:12,color:C.accentLight}}>
                   {s.hora_inicio.substring(0,5)} - {s.hora_fin.substring(0,5)}
                   <span onClick={()=>eliminarHorario(s.id)} style={{cursor:"pointer",color:C.muted,fontSize:14,lineHeight:1}}>×</span>
                 </div>
@@ -1994,19 +1985,19 @@ function DisponibilidadPanel({ client, profesionales, horariosClinica, setHorari
         <div>
           <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Día</label>
           <select value={formHorario.dia_semana} onChange={e=>setFormHorario({...formHorario,dia_semana:parseInt(e.target.value)})}
-            style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
+            style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
             {[1,2,3,4,5,6,0].map(d=><option key={d} value={d}>{DIAS_FULL[d]}</option>)}
           </select>
         </div>
         <div>
           <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Desde</label>
           <input type="time" value={formHorario.hora_inicio} onChange={e=>setFormHorario({...formHorario,hora_inicio:e.target.value})}
-            style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
+            style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
         </div>
         <div>
           <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Hasta</label>
           <input type="time" value={formHorario.hora_fin} onChange={e=>setFormHorario({...formHorario,hora_fin:e.target.value})}
-            style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
+            style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
         </div>
         <Btn onClick={agregarHorario} disabled={savingH} small>{savingH?"...":"+ Agregar"}</Btn>
       </div>
@@ -2014,7 +2005,7 @@ function DisponibilidadPanel({ client, profesionales, horariosClinica, setHorari
     </div>
 
     {/* Bloqueos y ausencias */}
-    <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+    <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
         <div>
           <div style={{fontSize:13,fontWeight:600,marginBottom:2}}>🚫 Bloqueos y ausencias</div>
@@ -2024,12 +2015,12 @@ function DisponibilidadPanel({ client, profesionales, horariosClinica, setHorari
       </div>
 
       {showNewBloqueo && (
-        <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:2,padding:16,marginBottom:16}}>
+        <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:10,padding:16,marginBottom:16}}>
           <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>
             <div style={{flex:1,minWidth:140}}>
               <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Tipo</label>
               <select value={formBloqueo.tipo} onChange={e=>setFormBloqueo({...formBloqueo,tipo:e.target.value})}
-                style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
+                style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
                 <option value="ausencia">🤒 Ausencia</option>
                 <option value="feriado">🏖 Feriado / Vacaciones</option>
                 <option value="mantenimiento">🔧 Mantenimiento</option>
@@ -2038,7 +2029,7 @@ function DisponibilidadPanel({ client, profesionales, horariosClinica, setHorari
             <div style={{flex:1,minWidth:140}}>
               <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Profesional (opcional)</label>
               <select value={formBloqueo.profesional_id} onChange={e=>setFormBloqueo({...formBloqueo,profesional_id:e.target.value})}
-                style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
+                style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
                 <option value="">Toda la agencia</option>
                 {profesionales.map(p=><option key={p.id} value={p.id}>{p.nombre}</option>)}
               </select>
@@ -2048,17 +2039,17 @@ function DisponibilidadPanel({ client, profesionales, horariosClinica, setHorari
             <div style={{flex:1,minWidth:120}}>
               <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Desde</label>
               <input type="date" value={formBloqueo.fecha_desde} onChange={e=>setFormBloqueo({...formBloqueo,fecha_desde:e.target.value})}
-                style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
+                style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
             </div>
             <div style={{flex:1,minWidth:120}}>
               <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Hasta</label>
               <input type="date" value={formBloqueo.fecha_hasta} onChange={e=>setFormBloqueo({...formBloqueo,fecha_hasta:e.target.value})}
-                style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
+                style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
             </div>
           </div>
           <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:10}}>
             <div onClick={()=>setFormBloqueo({...formBloqueo,todo_el_dia:!formBloqueo.todo_el_dia})}
-              style={{width:34,height:18,borderRadius:4,background:formBloqueo.todo_el_dia?C.accent:C.border,cursor:"pointer",position:"relative",transition:"background .2s",flexShrink:0}}>
+              style={{width:34,height:18,borderRadius:9,background:formBloqueo.todo_el_dia?C.accent:C.border,cursor:"pointer",position:"relative",transition:"background .2s",flexShrink:0}}>
               <div style={{position:"absolute",top:2,left:formBloqueo.todo_el_dia?18:2,width:14,height:14,borderRadius:"50%",background:"white",transition:"left .2s"}}/>
             </div>
             <span style={{fontSize:12,color:C.muted}}>Todo el dia</span>
@@ -2068,12 +2059,12 @@ function DisponibilidadPanel({ client, profesionales, horariosClinica, setHorari
               <div style={{flex:1}}>
                 <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Hora inicio</label>
                 <input type="time" value={formBloqueo.hora_inicio} onChange={e=>setFormBloqueo({...formBloqueo,hora_inicio:e.target.value})}
-                  style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
+                  style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
               </div>
               <div style={{flex:1}}>
                 <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Hora fin</label>
                 <input type="time" value={formBloqueo.hora_fin} onChange={e=>setFormBloqueo({...formBloqueo,hora_fin:e.target.value})}
-                  style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
+                  style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
               </div>
             </div>
           )}
@@ -2086,11 +2077,11 @@ function DisponibilidadPanel({ client, profesionales, horariosClinica, setHorari
       )}
 
       {bloqueosActivos.length === 0 && !showNewBloqueo && (
-        <div style={{fontSize:12,color:C.muted,padding:"10px 14px",background:C.bg,borderRadius:2,border:`1px solid ${C.border}`}}>Sin bloqueos activos</div>
+        <div style={{fontSize:12,color:C.muted,padding:"10px 14px",background:C.bg,borderRadius:8,border:`1px solid ${C.border}`}}>Sin bloqueos activos</div>
       )}
 
       {bloqueosActivos.map(b => (
-        <div key={b.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",background:C.bg,borderRadius:2,border:`1px solid ${C.border}`,marginBottom:8}}>
+        <div key={b.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",background:C.bg,borderRadius:8,border:`1px solid ${C.border}`,marginBottom:8}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <span style={{fontSize:18}}>{b.tipo==="ausencia"?"🤒":b.tipo==="feriado"?"🏖":"🔧"}</span>
             <div>
@@ -2173,7 +2164,7 @@ ${form.instrucciones_libres ? 'Instrucciones extra:\n'+form.instrucciones_libres
     <div style={{display:"flex",flexDirection:"column",gap:16}}>
 
       {/* Estado del bot */}
-      <div style={{background:C.surface,border:`1.5px solid ${form.bot_activo?"#10b981":C.border}`,borderRadius:2,padding:20}}>
+      <div style={{background:C.surface,border:`1.5px solid ${form.bot_activo?"#10b981":C.border}`,borderRadius:12,padding:20}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <div>
             <div style={{fontSize:13,fontWeight:600,marginBottom:2}}>Estado del bot</div>
@@ -2182,33 +2173,33 @@ ${form.instrucciones_libres ? 'Instrucciones extra:\n'+form.instrucciones_libres
             </div>
           </div>
           <div onClick={()=>setForm({...form,bot_activo:!form.bot_activo})}
-            style={{width:42,height:22,borderRadius:4,background:form.bot_activo?"#10b981":C.border,cursor:"pointer",position:"relative",transition:"background .2s",flexShrink:0}}>
+            style={{width:42,height:22,borderRadius:11,background:form.bot_activo?"#10b981":C.border,cursor:"pointer",position:"relative",transition:"background .2s",flexShrink:0}}>
             <div style={{position:"absolute",top:2,left:form.bot_activo?22:2,width:18,height:18,borderRadius:"50%",background:"white",transition:"left .2s",boxShadow:"0 1px 3px rgba(0,0,0,.3)"}}/>
           </div>
         </div>
       </div>
 
       {/* Nombre del bot */}
-      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20}}>
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20}}>
         <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>🤖 Nombre del bot</div>
         <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Cómo se presenta el asistente al prospecto</div>
         <input value={form.bot_nombre} onChange={e=>setForm({...form,bot_nombre:e.target.value})}
           placeholder="Ej: Sofi, Luna, Valeria, Asistente..."
-          style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
+          style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
       </div>
 
       {/* Descripción de la agencia */}
-      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20}}>
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20}}>
         <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>🏢 Descripción de la agencia</div>
         <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Qué hacen, a quién atienden, qué los diferencia. El bot usa esto para contextualizar las conversaciones.</div>
         <textarea value={form.descripcion_clinica} onChange={e=>setForm({...form,descripcion_clinica:e.target.value})}
           rows={4}
           placeholder={"Ej: Somos una agencia de marketing jurídico. Ayudamos a abogados y estudios a triplicar sus honorarios. Nuestro diferencial es el sistema de captación de clientes automatizado..."}
-          style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
+          style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
       </div>
 
       {/* Modalidad */}
-      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20}}>
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20}}>
         <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>📍 Modalidad de atención</div>
         <div style={{fontSize:12,color:C.muted,marginBottom:14}}>Cómo atiende la agencia. El bot solo ofrecerá la opción configurada.</div>
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
@@ -2218,7 +2209,7 @@ ${form.instrucciones_libres ? 'Instrucciones extra:\n'+form.instrucciones_libres
             { v:'ambas',      l:'Presencial y virtual', desc:'El prospecto elige cuál prefiere.' },
           ].map(op => (
             <div key={op.v} onClick={()=>setForm({...form,modalidad:op.v})}
-              style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:4,border:`1.5px solid ${form.modalidad===op.v?C.accent:C.border}`,background:form.modalidad===op.v?C.accentGlow:C.bg,cursor:"pointer",transition:"all .15s"}}>
+              style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:10,border:`1.5px solid ${form.modalidad===op.v?C.accent:C.border}`,background:form.modalidad===op.v?C.accentGlow:C.bg,cursor:"pointer",transition:"all .15s"}}>
               <div style={{width:16,height:16,borderRadius:"50%",border:`2px solid ${form.modalidad===op.v?C.accent:C.border}`,background:form.modalidad===op.v?C.accent:"transparent",flexShrink:0,transition:"all .15s"}}/>
               <div>
                 <div style={{fontSize:13,fontWeight:form.modalidad===op.v?600:400,color:form.modalidad===op.v?C.accentLight:C.text}}>{op.l}</div>
@@ -2230,30 +2221,30 @@ ${form.instrucciones_libres ? 'Instrucciones extra:\n'+form.instrucciones_libres
       </div>
 
       {/* Nombre de la primera consulta */}
-      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20}}>
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20}}>
         <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>📋 Nombre de la primera cita</div>
         <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Cómo llama la agencia a la primera consulta. El bot usará siempre este término.</div>
         <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>
           {['Demo Call','consulta inicial','primera reunión','entrevista','evaluación','diagnóstico'].map(op=>(
             <div key={op} onClick={()=>setForm({...form,nombre_consulta:op})}
-              style={{padding:"6px 14px",borderRadius:2,cursor:"pointer",fontSize:12,border:`1.5px solid ${form.nombre_consulta===op?C.accent:C.border}`,background:form.nombre_consulta===op?C.accentGlow:"transparent",color:form.nombre_consulta===op?C.accentLight:C.muted,transition:"all .15s",fontWeight:form.nombre_consulta===op?600:400}}>
+              style={{padding:"6px 14px",borderRadius:20,cursor:"pointer",fontSize:12,border:`1.5px solid ${form.nombre_consulta===op?C.accent:C.border}`,background:form.nombre_consulta===op?C.accentGlow:"transparent",color:form.nombre_consulta===op?C.accentLight:C.muted,transition:"all .15s",fontWeight:form.nombre_consulta===op?600:400}}>
               {op}
             </div>
           ))}
         </div>
         <input value={form.nombre_consulta} onChange={e=>setForm({...form,nombre_consulta:e.target.value})}
           placeholder="O escribí el tuyo: 'primera sesión', 'cita de bienvenida'..."
-          style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"9px 14px",color:C.text,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
+          style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 14px",color:C.text,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
       </div>
 
       {/* Tono */}
-      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20}}>
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20}}>
         <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>🎭 Tono y estilo</div>
         <div style={{fontSize:12,color:C.muted,marginBottom:14}}>Cómo quieren que hable el bot</div>
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
           {TONOS.map(t => (
             <div key={t.v} onClick={()=>setForm({...form,tono:t.v})}
-              style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:4,border:`1.5px solid ${form.tono===t.v?C.accent:C.border}`,background:form.tono===t.v?C.accentGlow:C.bg,cursor:"pointer",transition:"all .15s"}}>
+              style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:10,border:`1.5px solid ${form.tono===t.v?C.accent:C.border}`,background:form.tono===t.v?C.accentGlow:C.bg,cursor:"pointer",transition:"all .15s"}}>
               <div style={{width:16,height:16,borderRadius:"50%",border:`2px solid ${form.tono===t.v?C.accent:C.border}`,background:form.tono===t.v?C.accent:"transparent",flexShrink:0,transition:"all .15s"}}/>
               <div>
                 <div style={{fontSize:13,fontWeight:form.tono===t.v?600:400,color:form.tono===t.v?C.accentLight:C.text}}>{t.l}</div>
@@ -2265,40 +2256,40 @@ ${form.instrucciones_libres ? 'Instrucciones extra:\n'+form.instrucciones_libres
       </div>
 
       {/* Instrucciones libres */}
-      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20}}>
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20}}>
         <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>📝 Instrucciones adicionales</div>
         <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Cualquier indicación extra para el bot. Se agrega tal cual al prompt.</div>
         <textarea value={form.instrucciones_libres} onChange={e=>setForm({...form,instrucciones_libres:e.target.value})}
           rows={5}
           placeholder={"Ej: Cuando pregunten por precio decí 'los valores los conversamos en la Demo Call'.\nNo menciones competidores.\nSi alguien pregunta por Tomas, decí que está disponible martes y jueves.\nSiempre preguntá qué tipo de abogado es y cuántos clientes tiene por mes."}
-          style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
+          style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
       </div>
 
       {/* Preview */}
-      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20}}>
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:preview?14:0}}>
           <div style={{fontSize:13,fontWeight:600}}>👁 Vista previa</div>
           <button onClick={()=>setPreview(!preview)}
-            style={{background:"transparent",border:`1px solid ${C.border}`,borderRadius:4,padding:"5px 12px",color:C.muted,fontSize:12,cursor:"pointer"}}>
+            style={{background:"transparent",border:`1px solid ${C.border}`,borderRadius:8,padding:"5px 12px",color:C.muted,fontSize:12,cursor:"pointer"}}>
             {preview?"Ocultar":"Ver resumen del bot"}
           </button>
         </div>
         {preview && (
-          <pre style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:2,padding:14,fontSize:11,color:C.muted,whiteSpace:"pre-wrap",lineHeight:1.7,margin:0,fontFamily:"'DM Mono',monospace"}}>
+          <pre style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:14,fontSize:11,color:C.muted,whiteSpace:"pre-wrap",lineHeight:1.7,margin:0,fontFamily:"'DM Mono',monospace"}}>
 {previewText}
           </pre>
         )}
       </div>
 
       {/* Recordatorios automáticos */}
-      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20}}>
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
           <div>
             <div style={{fontSize:13,fontWeight:600}}>📅 Recordatorios automáticos</div>
             <div style={{fontSize:11,color:C.muted,marginTop:2}}>El bot manda un WhatsApp antes del turno generado por IA</div>
           </div>
           <div onClick={()=>setForm({...form,recordatorio_activo:!form.recordatorio_activo})}
-            style={{width:42,height:24,borderRadius:2,background:form.recordatorio_activo?"#10b981":C.border,cursor:"pointer",position:"relative",transition:"background .2s",flexShrink:0}}>
+            style={{width:42,height:24,borderRadius:12,background:form.recordatorio_activo?"#10b981":C.border,cursor:"pointer",position:"relative",transition:"background .2s",flexShrink:0}}>
             <div style={{position:"absolute",top:3,left:form.recordatorio_activo?20:3,width:18,height:18,borderRadius:"50%",background:"white",transition:"left .2s"}}/>
           </div>
         </div>
@@ -2309,7 +2300,7 @@ ${form.instrucciones_libres ? 'Instrucciones extra:\n'+form.instrucciones_libres
               <div style={{fontSize:11,color:C.muted,marginBottom:6,fontWeight:500}}>1er recordatorio</div>
               <select value={form.recordatorio_horas}
                 onChange={e=>setForm({...form,recordatorio_horas:parseInt(e.target.value)})}
-                style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"8px 10px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
+                style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 10px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
                 <option value={2}>2 horas antes</option>
                 <option value={4}>4 horas antes</option>
                 <option value={12}>12 horas antes</option>
@@ -2322,7 +2313,7 @@ ${form.instrucciones_libres ? 'Instrucciones extra:\n'+form.instrucciones_libres
               <div style={{fontSize:11,color:C.muted,marginBottom:6,fontWeight:500}}>2do recordatorio (opcional)</div>
               <select value={form.recordatorio_horas_2}
                 onChange={e=>setForm({...form,recordatorio_horas_2:parseInt(e.target.value)})}
-                style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"8px 10px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
+                style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 10px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
                 <option value={0}>Sin segundo recordatorio</option>
                 <option value={2}>2 horas antes</option>
                 <option value={4}>4 horas antes</option>
@@ -2340,36 +2331,36 @@ ${form.instrucciones_libres ? 'Instrucciones extra:\n'+form.instrucciones_libres
               onChange={e=>setForm({...form,recordatorio_msg_custom:e.target.value})}
               placeholder={"Hola {nombre}! 😊 Te recordamos tu turno el {fecha} a las {hora}. ¡Te esperamos!\n\nVariables: {nombre} {fecha} {hora} {tratamiento} {profesional}"}
               rows={4}
-              style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 12px",color:C.text,fontSize:12,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
+              style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 12px",color:C.text,fontSize:12,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
             <div style={{fontSize:10,color:C.muted,marginTop:4}}>Variables: {"{nombre}"} {"{fecha}"} {"{hora}"} {"{tratamiento}"} {"{profesional}"}</div>
           </div>
         </>)}
       </div>
 
       {/* Mensaje cuando paciente quiere agendar estando ya agendado */}
-      <div style={{background:"rgba(99,102,241,0.06)",border:`1px solid ${C.border}`,borderRadius:4,padding:16}}>
+      <div style={{background:"rgba(99,102,241,0.06)",border:`1px solid ${C.border}`,borderRadius:10,padding:16}}>
         <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>💬 Mensaje cuando el prospecto ya tiene reunión agendada</div>
         <div style={{fontSize:12,color:C.muted,marginBottom:10}}>Qué responde el bot cuando un un prospecto ya ya agendado pide otro turno o agenda para un tercero</div>
         <input value={form.msg_horarios_pendientes}
           onChange={e=>setForm({...form,msg_horarios_pendientes:e.target.value})}
           placeholder="¡Perfecto! Ya te confirmo los horarios disponibles 😊"
-          style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 12px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
+          style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 12px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
         <div style={{fontSize:10,color:C.muted,marginTop:4}}>Dejalo vacío para usar el mensaje por defecto</div>
       </div>
 
       {/* Mensaje fuera de horario */}
-      <div style={{background:"rgba(99,102,241,0.06)",border:`1px solid ${C.border}`,borderRadius:4,padding:16}}>
+      <div style={{background:"rgba(99,102,241,0.06)",border:`1px solid ${C.border}`,borderRadius:10,padding:16}}>
         <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>🌙 Mensaje fuera de horario</div>
         <div style={{fontSize:12,color:C.muted,marginBottom:10}}>Qué responde el bot cuando alguien quiere turno fuera del horario de atención</div>
         <input value={form.msg_fuera_horario}
           onChange={e=>setForm({...form,msg_fuera_horario:e.target.value})}
           placeholder="¡Perfecto! Estamos fuera de horario ahora, pero te confirmamos disponibilidad lo antes posible 😊"
-          style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 12px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
+          style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 12px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
         <div style={{fontSize:10,color:C.muted,marginTop:4}}>Dejalo vacío para que el bot genere el mensaje automáticamente</div>
       </div>
 
       <button onClick={guardar} disabled={saving}
-        style={{width:"100%",padding:"13px 0",borderRadius:4,border:"none",background:saved?"#10b981":C.accent,color:"white",fontSize:14,fontWeight:600,cursor:"pointer",transition:"background .3s"}}>
+        style={{width:"100%",padding:"13px 0",borderRadius:10,border:"none",background:saved?"#10b981":C.accent,color:"white",fontSize:14,fontWeight:600,cursor:"pointer",transition:"background .3s"}}>
         {saving ? "Guardando..." : saved ? "✅ ¡Guardado!" : "Guardar configuración del bot"}
       </button>
     </div>
@@ -2421,13 +2412,13 @@ function WAConfigPanel({ client }) {
     setWsaving(false);
   };
   return (
-    <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+    <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
       <div style={{fontSize:13,fontWeight:600,marginBottom:2}}>📱 Número de WhatsApp</div>
       <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Credenciales del número de WhatsApp en Meta</div>
       <div style={{marginBottom:16}}>
         <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>País del negocio</label>
         <select value={wform.pais_codigo} onChange={e=>setWform({...wform,pais_codigo:e.target.value})}
-          style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:2,padding:"9px 12px",color:C.text,fontSize:12,boxSizing:"border-box"}}>
+          style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:12,boxSizing:"border-box"}}>
           {PAISES_LISTA.map(p=>(
             <option key={p.codigo} value={p.codigo}>{p.nombre}</option>
           ))}
@@ -2440,7 +2431,7 @@ function WAConfigPanel({ client }) {
         <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>WhatsApp Token</label>
         <input type="password" value={wform.whatsapp_token} onChange={e=>setWform({...wform,whatsapp_token:e.target.value})}
           placeholder="EAAxxxxx... (dejar vacío para no cambiar)"
-          style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:2,padding:"9px 12px",color:C.text,fontSize:12,fontFamily:"'DM Mono',monospace",boxSizing:"border-box"}}/>
+          style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:12,fontFamily:"'DM Mono',monospace",boxSizing:"border-box"}}/>
         <div style={{fontSize:10,color:C.muted,marginTop:4}}>Token permanente de Meta Developers. Dejar vacío para no modificarlo.</div>
       </div>
       <div style={{display:"flex",gap:10,alignItems:"center"}}>
@@ -2589,13 +2580,13 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
       {/* Tabs */}
       <div style={{display:"flex",gap:8,marginBottom:20}}>
         <button onClick={()=>setVistaActiva('nueva')}
-          style={{padding:"7px 16px",borderRadius:4,border:`1px solid ${vistaActiva==='nueva'?C.accent:C.border}`,
+          style={{padding:"7px 16px",borderRadius:8,border:`1px solid ${vistaActiva==='nueva'?C.accent:C.border}`,
             background:vistaActiva==='nueva'?"rgba(99,102,241,0.15)":C.surface,
             color:vistaActiva==='nueva'?C.accentLight:C.muted,fontSize:12,fontWeight:600,cursor:"pointer"}}>
           📣 Nueva campaña
         </button>
         <button onClick={()=>setVistaActiva('historial')}
-          style={{padding:"7px 16px",borderRadius:4,border:`1px solid ${vistaActiva==='historial'?C.accent:C.border}`,
+          style={{padding:"7px 16px",borderRadius:8,border:`1px solid ${vistaActiva==='historial'?C.accent:C.border}`,
             background:vistaActiva==='historial'?"rgba(99,102,241,0.15)":C.surface,
             color:vistaActiva==='historial'?C.accentLight:C.muted,fontSize:12,fontWeight:600,cursor:"pointer"}}>
           📋 Historial
@@ -2612,7 +2603,7 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
           ) : (
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
               {historial.map((h,i) => (
-                <details key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,overflow:"hidden"}}>
+                <details key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,overflow:"hidden"}}>
                   <summary style={{padding:"14px 16px",cursor:"pointer",listStyle:"none",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                     <div style={{display:"flex",alignItems:"center",gap:10}}>
                       <span style={{fontSize:18}}>{h.tipo==='difusion_email'?'📧':'📣'}</span>
@@ -2654,14 +2645,14 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
       {vistaActiva === 'nueva' && <>
 
       {enviado && (
-        <div style={{background:"rgba(16,185,129,0.1)",border:"1px solid rgba(16,185,129,0.3)",borderRadius:4,padding:"10px 14px",marginBottom:16,fontSize:12,color:"#4ade80"}}>
+        <div style={{background:"rgba(16,185,129,0.1)",border:"1px solid rgba(16,185,129,0.3)",borderRadius:10,padding:"10px 14px",marginBottom:16,fontSize:12,color:"#4ade80"}}>
           ✅ Difusión completada: {enviado}
           <button onClick={()=>{setEnviado(null);fetchHistorial();setVistaActiva('historial');}} style={{marginLeft:10,background:"transparent",border:"none",color:"#4ade80",cursor:"pointer",fontSize:12}}>Ver historial →</button>
         </div>
       )}
 
       {paso === 'enviando' ? (
-        <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:32,textAlign:"center"}}>
+        <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:32,textAlign:"center"}}>
           <div style={{fontSize:28,marginBottom:16}}>📣</div>
           <div style={{fontSize:14,fontWeight:600,marginBottom:8}}>Enviando mensajes...</div>
           {progreso && (
@@ -2669,8 +2660,8 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
               <div style={{fontSize:13,color:C.muted,marginBottom:16}}>
                 {progreso.nombre && <span>Enviando a <strong style={{color:C.text}}>{progreso.nombre}</strong>...</span>}
               </div>
-              <div style={{background:C.bg,borderRadius:2,height:8,overflow:"hidden",marginBottom:10}}>
-                <div style={{width:`${((progreso.enviados+progreso.fallidos)/progreso.total)*100}%`,height:"100%",background:C.accent,borderRadius:4,transition:"width .5s ease"}}/>
+              <div style={{background:C.bg,borderRadius:8,height:8,overflow:"hidden",marginBottom:10}}>
+                <div style={{width:`${((progreso.enviados+progreso.fallidos)/progreso.total)*100}%`,height:"100%",background:C.accent,borderRadius:8,transition:"width .5s ease"}}/>
               </div>
               <div style={{fontSize:12,color:C.muted}}>
                 {progreso.enviados+progreso.fallidos} de {progreso.total}
@@ -2682,13 +2673,13 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
         </div>
       ) : paso === 'filtros' ? (<>
         {/* Filtros */}
-        <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+        <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
           <div style={{fontSize:13,fontWeight:600,marginBottom:16}}>🎯 Segmentación</div>
 
           <div style={{marginBottom:14}}>
             <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:6}}>Servicio</label>
             <select value={tratFiltro} onChange={e=>setTratFiltro(e.target.value)}
-              style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
+              style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
               <option value="">Todos los servicios</option>
               {(tratamientos||[]).map(t=><option key={t.id} value={t.nombre}>{t.nombre}</option>)}
             </select>
@@ -2697,7 +2688,7 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
           <div style={{marginBottom:14}}>
             <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:6}}>Etapa del prospecto</label>
             <select value={etapaFiltro} onChange={e=>setEtapaFiltro(e.target.value)}
-              style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
+              style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
               <option value="">Todas las etapas</option>
               <option value="RAPPORT">Rapport</option>
               <option value="OFRECER_AGENDA">Quiere cita</option>
@@ -2710,7 +2701,7 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
           <div style={{marginBottom:14}}>
             <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:6}}>Sin turno hace más de</label>
             <select value={sinTurnoDias} onChange={e=>setSinTurnoDias(e.target.value)}
-              style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
+              style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
               <option value="">Sin límite</option>
               <option value="30">30 días</option>
               <option value="60">60 días</option>
@@ -2723,7 +2714,7 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
           <div style={{marginBottom:20}}>
             <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:6}}>Mínimo de turnos realizados</label>
             <select value={minTurnos} onChange={e=>setMinTurnos(e.target.value)}
-              style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
+              style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
               <option value="">Sin mínimo</option>
               <option value="0">Sin ningún turno (nuevos)</option>
               <option value="1">Al menos 1 turno</option>
@@ -2737,7 +2728,7 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
           <div style={{marginBottom:14}}>
             <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:6}}>Sin contacto hace más de</label>
             <select value={sinContactoDias||''} onChange={e=>setSinContactoDias(e.target.value)}
-              style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
+              style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
               <option value="">Sin límite</option>
               <option value="7">7 días</option>
               <option value="14">14 días</option>
@@ -2751,7 +2742,7 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
           <div style={{marginBottom:20}}>
             <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:6}}>Tipo de prospecto</label>
             <select value={tipoPacienteFiltro||''} onChange={e=>setTipoPacienteFiltro(e.target.value)}
-              style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
+              style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
               <option value="">Todos</option>
               <option value="sin_tratamiento">Sin servicio nunca</option>
               <option value="con_tratamiento">Con al menos 1 servicio</option>
@@ -2760,25 +2751,25 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
           </div>
 
           <button onClick={buscarPacientes} disabled={cargando}
-            style={{width:"100%",padding:"11px 0",borderRadius:4,border:"none",background:C.accent,color:"white",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+            style={{width:"100%",padding:"11px 0",borderRadius:8,border:"none",background:C.accent,color:"white",fontSize:13,fontWeight:600,cursor:"pointer"}}>
             {cargando?"Buscando...":"🔍 Ver prospectos"}
           </button>
         </div>
       </>) : (<>
         {/* Preview */}
-        <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:16,marginBottom:16}}>
+        <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:16,marginBottom:16}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
             <div style={{fontSize:13,fontWeight:600}}>{seleccionados.size} de {pacientes.length} prospectos seleccionados</div>
             <div style={{display:"flex",gap:8}}>
-              <button onClick={toggleTodos} style={{padding:"4px 10px",borderRadius:4,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:11,cursor:"pointer"}}>
+              <button onClick={toggleTodos} style={{padding:"4px 10px",borderRadius:6,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:11,cursor:"pointer"}}>
                 {seleccionados.size===pacientes.length?"Deseleccionar todos":"Seleccionar todos"}
               </button>
-              <button onClick={()=>{setPaso('filtros');setPacientes([]);}} style={{padding:"4px 10px",borderRadius:4,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:11,cursor:"pointer"}}>
+              <button onClick={()=>{setPaso('filtros');setPacientes([]);}} style={{padding:"4px 10px",borderRadius:6,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:11,cursor:"pointer"}}>
                 ← Cambiar filtros
               </button>
             </div>
           </div>
-          <div style={{maxHeight:220,overflowY:"auto",borderRadius:4,border:`1px solid ${C.border}`}}>
+          <div style={{maxHeight:220,overflowY:"auto",borderRadius:8,border:`1px solid ${C.border}`}}>
             {pacientes.map((p,i)=>(
               <div key={p.id} onClick={()=>{const s=new Set(seleccionados);s.has(p.id)?s.delete(p.id):s.add(p.id);setSeleccionados(s);}}
                 style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",cursor:"pointer",
@@ -2797,53 +2788,53 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
         </div>
 
         {/* Mensaje */}
-        <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:16,marginBottom:16}}>
+        <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:16,marginBottom:16}}>
           <div style={{fontSize:13,fontWeight:600,marginBottom:10}}>✍️ Mensaje</div>
           <div style={{display:"flex",gap:8,marginBottom:14}}>
             {plan !== 'base' && <button onClick={()=>setModoEnvio('texto')}
-              style={{flex:1,padding:"8px 0",borderRadius:4,border:`1px solid ${modoEnvio==='texto'?C.accent:C.border}`,
+              style={{flex:1,padding:"8px 0",borderRadius:8,border:`1px solid ${modoEnvio==='texto'?C.accent:C.border}`,
                 background:modoEnvio==='texto'?"rgba(99,102,241,0.15)":C.bg,
                 color:modoEnvio==='texto'?C.accentLight:C.muted,fontSize:12,fontWeight:600,cursor:"pointer"}}>
               💬 Texto libre
             </button>}
             {plan !== 'base' && <button onClick={()=>setModoEnvio('plantilla')}
-              style={{flex:1,padding:"8px 0",borderRadius:4,border:`1px solid ${modoEnvio==='plantilla'?C.accent:C.border}`,
+              style={{flex:1,padding:"8px 0",borderRadius:8,border:`1px solid ${modoEnvio==='plantilla'?C.accent:C.border}`,
                 background:modoEnvio==='plantilla'?"rgba(99,102,241,0.15)":C.bg,
                 color:modoEnvio==='plantilla'?C.accentLight:C.muted,fontSize:12,fontWeight:600,cursor:"pointer"}}>
               📋 Plantilla Meta
             </button>}
             <button onClick={()=>setModoEnvio('email')}
-              style={{flex:1,padding:"8px 0",borderRadius:4,border:`1px solid ${modoEnvio==='email'?'#06b6d4':C.border}`,
+              style={{flex:1,padding:"8px 0",borderRadius:8,border:`1px solid ${modoEnvio==='email'?'#06b6d4':C.border}`,
                 background:modoEnvio==='email'?"rgba(6,182,212,0.15)":C.bg,
                 color:modoEnvio==='email'?'#67e8f9':C.muted,fontSize:12,fontWeight:600,cursor:"pointer"}}>
               📧 Email
             </button>
           </div>
           {modoEnvio === 'texto' ? (<>
-            <div style={{fontSize:11,color:"#f59e0b",marginBottom:8,padding:"6px 10px",background:"rgba(245,158,11,0.08)",borderRadius:4,border:"1px solid rgba(245,158,11,0.2)"}}>
+            <div style={{fontSize:11,color:"#f59e0b",marginBottom:8,padding:"6px 10px",background:"rgba(245,158,11,0.08)",borderRadius:6,border:"1px solid rgba(245,158,11,0.2)"}}>
               ⚠️ Solo funciona si el prospecto escribió en las últimas 24hs. Para reactivar inactivos usá Plantilla Meta.
             </div>
             <textarea value={mensaje} onChange={e=>setMensaje(e.target.value)}
               placeholder="Escribí el mensaje que van a recibir los prospectos..."
               rows={5}
-              style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 12px",color:C.text,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box",marginBottom:8}}/>
+              style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 12px",color:C.text,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box",marginBottom:8}}/>
             {mensaje && (
-              <div style={{background:"rgba(99,102,241,0.08)",border:`1px solid ${C.accent}44`,borderRadius:4,padding:"8px 12px",marginBottom:10}}>
+              <div style={{background:"rgba(99,102,241,0.08)",border:`1px solid ${C.accent}44`,borderRadius:8,padding:"8px 12px",marginBottom:10}}>
                 <div style={{fontSize:10,color:C.muted,marginBottom:4}}>Preview:</div>
                 <div style={{fontSize:12,color:C.text,whiteSpace:"pre-wrap"}}>{mensaje}</div>
               </div>
             )}
           </>) : (<>
-            <div style={{fontSize:11,color:"#4ade80",marginBottom:8,padding:"6px 10px",background:"rgba(74,222,128,0.08)",borderRadius:4,border:"1px solid rgba(74,222,128,0.2)"}}>
+            <div style={{fontSize:11,color:"#4ade80",marginBottom:8,padding:"6px 10px",background:"rgba(74,222,128,0.08)",borderRadius:6,border:"1px solid rgba(74,222,128,0.2)"}}>
               ✅ Las plantillas llegan aunque el prospecto no haya escrito recientemente.
             </div>
             <select value={plantillaElegida} onChange={e=>setPlantillaElegida(e.target.value)}
-              style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:2,padding:"9px 12px",color:C.text,fontSize:13,marginBottom:10}}>
+              style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,marginBottom:10}}>
               {PLANTILLAS_REACT.map(p=>(
                 <option key={p.value} value={p.value}>{p.label}</option>
               ))}
             </select>
-            <div style={{background:"rgba(99,102,241,0.08)",border:`1px solid ${C.accent}44`,borderRadius:4,padding:"8px 12px",marginBottom:10}}>
+            <div style={{background:"rgba(99,102,241,0.08)",border:`1px solid ${C.accent}44`,borderRadius:8,padding:"8px 12px",marginBottom:10}}>
               <div style={{fontSize:10,color:C.muted,marginBottom:4}}>Preview (el nombre se reemplaza automáticamente):</div>
               <div style={{fontSize:12,color:C.text}}>
                 {plantillaElegida==="edge_react1" && "Hola [Nombre]! cómo estás? hace tiempo que no hablamos, quería saber cómo seguís 😊"}
@@ -2855,27 +2846,27 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
             </div>
           </>)}
           {modoEnvio === 'email' && (<>
-            <div style={{fontSize:11,color:"#67e8f9",marginBottom:8,padding:"6px 10px",background:"rgba(6,182,212,0.08)",borderRadius:4,border:"1px solid rgba(6,182,212,0.2)"}}>
+            <div style={{fontSize:11,color:"#67e8f9",marginBottom:8,padding:"6px 10px",background:"rgba(6,182,212,0.08)",borderRadius:6,border:"1px solid rgba(6,182,212,0.2)"}}>
               📧 Se envía por Gmail de la agencia. Solo llega a prospectos con email registrado.
             </div>
             <div style={{marginBottom:10}}>
               <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:4}}>Asunto</label>
               <input value={emailAsunto} onChange={e=>setEmailAsunto(e.target.value)}
                 placeholder="Ej: Tenemos algo para vos"
-                style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
+                style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
             </div>
             <div style={{marginBottom:10}}>
               <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:4}}>Cuerpo del email</label>
               <textarea value={emailCuerpo} onChange={e=>setEmailCuerpo(e.target.value)}
                 placeholder={"Hola [Nombre]!\n\nEscribí acá el mensaje...\n\nSaludos,\nSkyward"}
                 rows={6}
-                style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 12px",color:C.text,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
+                style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 12px",color:C.text,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
             </div>
             <div style={{fontSize:11,color:C.muted,marginBottom:8}}>
               💡 Usá [Nombre] para personalizar con el nombre del prospecto.
             </div>
             {emailAsunto && emailCuerpo && (
-              <div style={{background:"rgba(6,182,212,0.06)",border:"1px solid rgba(6,182,212,0.2)",borderRadius:4,padding:"8px 12px",marginBottom:10}}>
+              <div style={{background:"rgba(6,182,212,0.06)",border:"1px solid rgba(6,182,212,0.2)",borderRadius:8,padding:"8px 12px",marginBottom:10}}>
                 <div style={{fontSize:10,color:C.muted,marginBottom:4}}>Preview:</div>
                 <div style={{fontSize:12,fontWeight:600,color:"#67e8f9",marginBottom:4}}>{emailAsunto}</div>
                 <div style={{fontSize:11,color:C.text,whiteSpace:"pre-wrap"}}>{emailCuerpo.replace('[Nombre]', pacientes[0]?.nombre?.split(' ')[0] || 'María')}</div>
@@ -2892,7 +2883,7 @@ function DifusionPanel({ client, API, aH, jH, tratamientos, plan }) {
           )}
           <button onClick={enviar}
             disabled={enviando||(modoEnvio==='texto'&&!mensaje.trim())||(modoEnvio==='email'&&(!emailAsunto.trim()||!emailCuerpo.trim()))||seleccionados.size===0}
-            style={{width:"100%",padding:"11px 0",borderRadius:4,border:"none",
+            style={{width:"100%",padding:"11px 0",borderRadius:8,border:"none",
               background:modoEnvio==='email'?"#0891b2":seleccionados.size===0?"#374151":"#ef4444",
               color:"white",fontSize:13,fontWeight:600,cursor:"pointer"}}>
             {enviando?(modoEnvio==='email'?'Enviando emails...':'Enviando...'):(modoEnvio==='email'?`📧 Enviar email a ${pacientes.filter(p=>seleccionados.has(p.id)&&p.email).length} pacientes`:`📣 Enviar a ${seleccionados.size} prospecto${seleccionados.size!=1?"s":""}`)}
@@ -2921,7 +2912,7 @@ function FuentesConfig({ client }) {
 
   return (
     <div>
-      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
         <div style={{fontSize:13,fontWeight:600,marginBottom:8}}>📊 ¿Cómo funciona la atribución?</div>
         <div style={{fontSize:12,color:C.muted,lineHeight:1.7,marginBottom:12}}>
           Cada vez que alguien te escribe por WhatsApp, el sistema detecta automáticamente de dónde vino. Así podés ver qué canales traen más pacientes y cuáles convierten mejor.
@@ -2942,19 +2933,19 @@ function FuentesConfig({ client }) {
         ))}
       </div>
 
-      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:12}}>
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:12}}>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
           <span>🟢</span><div style={{fontSize:13,fontWeight:600}}>Meta Ads</div>
         </div>
         <div style={{fontSize:12,color:C.muted,marginBottom:10,lineHeight:1.6}}>
           Automático para anuncios <strong style={{color:C.text}}>«Click to WhatsApp»</strong>. Meta envía la fuente directamente.
         </div>
-        <div style={{background:C.bg,borderRadius:2,padding:"8px 12px",fontSize:11,color:"#4ade80"}}>
+        <div style={{background:C.bg,borderRadius:8,padding:"8px 12px",fontSize:11,color:"#4ade80"}}>
           ✅ Activo automáticamente — no requiere configuración
         </div>
       </div>
 
-      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:12}}>
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:12}}>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
           <span>🔵</span><div style={{fontSize:13,fontWeight:600}}>Google Ads</div>
         </div>
@@ -2962,26 +2953,26 @@ function FuentesConfig({ client }) {
           Pegá este link como <strong style={{color:C.text}}>URL final</strong> en tu anuncio de Google.
         </div>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
-          <div style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:2,padding:"8px 12px",fontSize:11,color:C.accentLight,fontFamily:"monospace",wordBreak:"break-all"}}>{linkGoogle}</div>
+          <div style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",fontSize:11,color:C.accentLight,fontFamily:"monospace",wordBreak:"break-all"}}>{linkGoogle}</div>
           <button onClick={()=>copy(linkGoogle,'google')}
-            style={{padding:"8px 14px",borderRadius:4,border:"none",background:copiado==='google'?"#10b981":C.accent,color:"white",fontSize:12,fontWeight:600,cursor:"pointer",flexShrink:0,transition:"background .2s"}}>
+            style={{padding:"8px 14px",borderRadius:8,border:"none",background:copiado==='google'?"#10b981":C.accent,color:"white",fontSize:12,fontWeight:600,cursor:"pointer",flexShrink:0,transition:"background .2s"}}>
             {copiado==='google'?'✓ Copiado':'Copiar'}
           </button>
         </div>
       </div>
 
-      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:12}}>
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:12}}>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
           <span>🟣</span><div style={{fontSize:13,fontWeight:600}}>Personalizado</div>
         </div>
         <div style={{fontSize:12,color:C.muted,marginBottom:10}}>Escribí el nombre y copiá el link.</div>
         <input value={otroNombre} onChange={e=>setOtroNombre(e.target.value.toLowerCase().replace(/\s+/g,'-'))}
           placeholder="tiktok, landing, organico..."
-          style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit",marginBottom:10,boxSizing:"border-box"}}/>
+          style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit",marginBottom:10,boxSizing:"border-box"}}/>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
-          <div style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:2,padding:"8px 12px",fontSize:11,color:C.accentLight,fontFamily:"monospace",wordBreak:"break-all"}}>{linkOtro}</div>
+          <div style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",fontSize:11,color:C.accentLight,fontFamily:"monospace",wordBreak:"break-all"}}>{linkOtro}</div>
           <button onClick={()=>copy(linkOtro,'otro')}
-            style={{padding:"8px 14px",borderRadius:4,border:"none",background:copiado==='otro'?"#10b981":C.accent,color:"white",fontSize:12,fontWeight:600,cursor:"pointer",flexShrink:0,transition:"background .2s"}}>
+            style={{padding:"8px 14px",borderRadius:8,border:"none",background:copiado==='otro'?"#10b981":C.accent,color:"white",fontSize:12,fontWeight:600,cursor:"pointer",flexShrink:0,transition:"background .2s"}}>
             {copiado==='otro'?'✓ Copiado':'Copiar'}
           </button>
         </div>
@@ -4175,10 +4166,10 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
             // Ocultar cuando hay chat abierto en mobile para no tapar el input
             transform:(activeTab==="conversations" && selectedProspect)?"translateY(100%)":"translateY(0)",
             transition:"transform .2s ease"
-          } : {width:52,background:C.bg,borderRight:`1px solid ${C.border}`,display:"flex",flexDirection:"column",flexShrink:0,zIndex:10}}>
+          } : {width:76,background:C.surface,borderRight:`1px solid ${C.border}`,display:"flex",flexDirection:"column",flexShrink:0,zIndex:10}}>
             {/* Logo / cliente */}
             {!isMobile && <div style={{height:56,display:"flex",alignItems:"center",justifyContent:"center",borderBottom:`1px solid ${C.border}`,flexShrink:0}}>
-              <div title={client?.nombre} style={{width:34,height:34,borderRadius:2,background:C.accentGlow,border:`1px solid ${C.accent}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:C.accent,cursor:"default",userSelect:"none",overflow:"hidden"}}>
+              <div title={client?.nombre} style={{width:34,height:34,borderRadius:10,background:C.accentGlow,border:`1px solid ${C.accent}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:C.accent,cursor:"default",userSelect:"none",overflow:"hidden"}}>
                 {client?.logo_url ? <img src={client.logo_url} style={{width:"100%",height:"100%",objectFit:"contain",borderRadius:"inherit"}} alt="Logo"/> : (client?.nombre||"?")[0].toUpperCase()}
               </div>
             </div>}
@@ -4188,8 +4179,8 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 const active = activeTab===item.key;
                 return (
                   <div key={item.key} onClick={()=>setActiveTab(item.key)} title={item.label}
-                    onMouseEnter={e=>{if(!active){const s=e.currentTarget.querySelectorAll('span');if(s[0])s[0].style.color=C.text;if(s[1])s[1].style.color=C.text;}}}
-                    onMouseLeave={e=>{if(!active){const s=e.currentTarget.querySelectorAll('span');if(s[0])s[0].style.color=C.muted;if(s[1])s[1].style.color=C.muted;}}}
+                    onMouseEnter={e=>{if(!active){e.currentTarget.style.background=C.accentGlow;const s=e.currentTarget.querySelectorAll('span');if(s[0]){s[0].style.color=C.accentLight;s[0].style.filter='drop-shadow(0 0 6px #f39200)';}if(s[1])s[1].style.color=C.accentLight;}}}
+                    onMouseLeave={e=>{if(!active){e.currentTarget.style.background='transparent';const s=e.currentTarget.querySelectorAll('span');if(s[0]){s[0].style.color=C.muted;s[0].style.filter='none';}if(s[1])s[1].style.color=C.muted;}}}
                     style={isMobile ? {
                       flex:"0 0 auto",minWidth:60,height:56,display:"flex",flexDirection:"column",
                       alignItems:"center",justifyContent:"center",gap:2,cursor:"pointer",position:"relative",
@@ -4200,11 +4191,11 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       width:"100%",minHeight:52,display:"flex",flexDirection:"column",alignItems:"center",
                       justifyContent:"center",gap:3,cursor:"pointer",position:"relative",
                       padding:"6px 4px",
-                      background:"transparent",
-                      boxShadow:active?`inset 2px 0 0 ${C.accent}`:"none",
+                      background:active?C.accentGlow:"transparent",
+                      borderRight:active?`2px solid ${C.accent}`:"2px solid transparent",
                       transition:"all .15s"
                     }}>
-                    <span style={{color:active?C.accentWarm:C.muted,lineHeight:1,position:"relative",display:"inline-flex",alignItems:"center",justifyContent:"center",transition:"color .15s"}}>
+                    <span style={{color:active?C.accentLight:C.muted,lineHeight:1,position:"relative",display:"inline-flex",alignItems:"center",justifyContent:"center",transition:"color .15s, filter .15s",filter:active?'drop-shadow(0 0 8px #f39200)':'none'}}>
                       {item.icon}
                       {item.badge > 0 && (
                         <div className={item.badgeUrgente?"pulso-naranja":""} style={{position:"absolute",top:-5,right:-7,background:item.badgeUrgente?"#f97316":"#ef4444",borderRadius:"50%",width:15,height:15,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:700,color:"white"}}>
@@ -4212,7 +4203,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         </div>
                       )}
                     </span>
-                    <span style={{fontSize:9,color:active?C.accentWarm:C.muted,fontWeight:active?600:400,letterSpacing:".3px",textAlign:"center",lineHeight:1.2,maxWidth:52,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",padding:"0 2px"}}>
+                    <span style={{fontSize:9,color:active?C.accent:C.muted,fontWeight:active?600:400,letterSpacing:".3px",textAlign:"center",lineHeight:1.2,maxWidth:72,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",padding:"0 2px"}}>
                       {item.label}
                     </span>
                   </div>
@@ -4266,14 +4257,14 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:C.muted,fontSize:13,pointerEvents:"none"}}>🔍</span>
                       <input value={busquedaProspectos} onChange={e=>setBusquedaProspectos(e.target.value)}
                         placeholder="Buscar por nombre o teléfono..."
-                        style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"7px 10px 7px 30px",color:C.text,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
+                        style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"7px 10px 7px 30px",color:C.text,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
                       {busquedaProspectos && (
                         <button onClick={()=>setBusquedaProspectos('')}
                           style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",background:"transparent",border:"none",color:C.muted,cursor:"pointer",fontSize:14,lineHeight:1,padding:0}}>×</button>
                       )}
                     </div>
                     <button onClick={()=>setShowFiltros(f=>!f)}
-                      style={{padding:"7px 10px",borderRadius:2,border:`1px solid ${(showFiltros||filtroEtapa||filtroTratamientoChat||filtroNoShow||filtroInactivos)?C.accent:C.border}`,background:(showFiltros||filtroEtapa||filtroTratamientoChat||filtroNoShow||filtroInactivos)?C.accentGlow:"transparent",color:(showFiltros||filtroEtapa||filtroTratamientoChat||filtroNoShow||filtroInactivos)?C.accentLight:C.muted,fontSize:11,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
+                      style={{padding:"7px 10px",borderRadius:8,border:`1px solid ${(showFiltros||filtroEtapa||filtroTratamientoChat||filtroNoShow||filtroInactivos)?C.accent:C.border}`,background:(showFiltros||filtroEtapa||filtroTratamientoChat||filtroNoShow||filtroInactivos)?C.accentGlow:"transparent",color:(showFiltros||filtroEtapa||filtroTratamientoChat||filtroNoShow||filtroInactivos)?C.accentLight:C.muted,fontSize:11,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
                       ⚙{(filtroEtapa||filtroTratamientoChat||filtroNoShow||filtroInactivos)?" ●":""}
                     </button>
                   </div>
@@ -4288,7 +4279,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       {id:'reagendas', label:'🔄 Reagendas'},
                     ].map(f=>(
                       <button key={f.id} onClick={()=>setFiltroRapido(f.id)}
-                        style={{padding:"4px 10px",borderRadius:2,border:`1px solid ${filtroRapido===f.id?C.accent:C.border}`,background:filtroRapido===f.id?C.accentGlow:"transparent",color:filtroRapido===f.id?C.accentLight:C.muted,fontSize:11,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0,transition:"all .15s"}}>
+                        style={{padding:"4px 10px",borderRadius:20,border:`1px solid ${filtroRapido===f.id?C.accent:C.border}`,background:filtroRapido===f.id?C.accentGlow:"transparent",color:filtroRapido===f.id?C.accentLight:C.muted,fontSize:11,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0,transition:"all .15s"}}>
                         {f.label}
                       </button>
                     ))}
@@ -4297,25 +4288,25 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     <div style={{display:"flex",flexDirection:"column",gap:8,paddingTop:4}}>
                       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                         <select value={filtroEtapa} onChange={e=>setFiltroEtapa(e.target.value)}
-                          style={{background:C.bg,border:`1px solid ${filtroEtapa?C.accent:C.border}`,borderRadius:4,padding:"5px 8px",color:filtroEtapa?C.accentLight:C.muted,fontSize:11,fontFamily:"inherit"}}>
+                          style={{background:C.bg,border:`1px solid ${filtroEtapa?C.accent:C.border}`,borderRadius:6,padding:"5px 8px",color:filtroEtapa?C.accentLight:C.muted,fontSize:11,fontFamily:"inherit"}}>
                           <option value="">Todas las etapas</option>
                           {Object.entries(STAGES).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
                           <option value="PACIENTE_ACTIVO">Prospecto activo</option>
                           <option value="NO_SHOW">No show</option>
                         </select>
                         <select value={filtroTratamientoChat} onChange={e=>setFiltroTratamientoChat(e.target.value)}
-                          style={{background:C.bg,border:`1px solid ${filtroTratamientoChat?C.accent:C.border}`,borderRadius:4,padding:"5px 8px",color:filtroTratamientoChat?C.accentLight:C.muted,fontSize:11,fontFamily:"inherit"}}>
+                          style={{background:C.bg,border:`1px solid ${filtroTratamientoChat?C.accent:C.border}`,borderRadius:6,padding:"5px 8px",color:filtroTratamientoChat?C.accentLight:C.muted,fontSize:11,fontFamily:"inherit"}}>
                           <option value="">Todos los servicios</option>
                           {[...new Set((prospectos||[]).map(p=>p.tratamiento).filter(Boolean))].map(t=><option key={t} value={t}>{t}</option>)}
                         </select>
                       </div>
                       <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                         <button onClick={()=>setFiltroNoShow(f=>!f)}
-                          style={{padding:"4px 10px",borderRadius:2,border:`1px solid ${filtroNoShow?"#ef4444":C.border}`,background:filtroNoShow?"rgba(239,68,68,0.1)":"transparent",color:filtroNoShow?"#ef4444":C.muted,fontSize:10,fontWeight:filtroNoShow?700:400,cursor:"pointer"}}>
+                          style={{padding:"4px 10px",borderRadius:6,border:`1px solid ${filtroNoShow?"#ef4444":C.border}`,background:filtroNoShow?"rgba(239,68,68,0.1)":"transparent",color:filtroNoShow?"#ef4444":C.muted,fontSize:10,fontWeight:filtroNoShow?700:400,cursor:"pointer"}}>
                           🔴 No-show
                         </button>
                         <select value={filtroInactivos} onChange={e=>setFiltroInactivos(parseInt(e.target.value))}
-                          style={{flex:1,background:filtroInactivos?C.accentGlow:C.bg,border:`1px solid ${filtroInactivos?C.accent:C.border}`,borderRadius:4,padding:"4px 6px",color:filtroInactivos?C.accentLight:C.muted,fontSize:10,fontFamily:"inherit"}}>
+                          style={{flex:1,background:filtroInactivos?C.accentGlow:C.bg,border:`1px solid ${filtroInactivos?C.accent:C.border}`,borderRadius:6,padding:"4px 6px",color:filtroInactivos?C.accentLight:C.muted,fontSize:10,fontFamily:"inherit"}}>
                           <option value={0}>Sin actividad: todos</option>
                           <option value={3}>+3 días sin actividad</option>
                           <option value={7}>+7 días sin actividad</option>
@@ -4324,7 +4315,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         </select>
                         {(filtroEtapa||filtroTratamientoChat||filtroNoShow||filtroInactivos) && (
                           <button onClick={()=>{setFiltroEtapa('');setFiltroTratamientoChat('');setFiltroNoShow(false);setFiltroInactivos(0);}}
-                            style={{padding:"4px 8px",borderRadius:2,border:"none",background:"transparent",color:C.muted,fontSize:10,cursor:"pointer"}}>✕ Limpiar</button>
+                            style={{padding:"4px 8px",borderRadius:6,border:"none",background:"transparent",color:C.muted,fontSize:10,cursor:"pointer"}}>✕ Limpiar</button>
                         )}
                       </div>
                     </div>
@@ -4491,14 +4482,14 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     <div style={{display:"flex",alignItems:"center",gap:8}}>
                       <Badge etapa={selectedProspect.etapa}/>
                       <button onClick={()=>toggleModoHumano(selectedProspect.id, !modoHumano[selectedProspect.id])}
-                        style={{padding:"4px 12px",borderRadius:2,border:`1px solid ${modoHumano[selectedProspect.id]?"#10b981":C.border}`,background:modoHumano[selectedProspect.id]?"rgba(16,185,129,0.12)":"transparent",color:modoHumano[selectedProspect.id]?"#34d399":C.muted,fontSize:11,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>
+                        style={{padding:"4px 12px",borderRadius:20,border:`1px solid ${modoHumano[selectedProspect.id]?"#10b981":C.border}`,background:modoHumano[selectedProspect.id]?"rgba(16,185,129,0.12)":"transparent",color:modoHumano[selectedProspect.id]?"#34d399":C.muted,fontSize:11,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>
                         {modoHumano[selectedProspect.id] ? "🧑 Vos" : "🤖 Bot"}
                       </button>
                       {/* Toggle panel derecho — solo PC */}
                       {!isMobile && (
                         <button onClick={()=>setShowDetalle(d=>!d)}
                           title={showDetalle?"Ocultar detalle":"Ver detalle del prospecto"}
-                          style={{width:30,height:30,borderRadius:4,border:`1px solid ${showDetalle?C.accent:C.border}`,background:showDetalle?C.accentGlow:"transparent",color:showDetalle?C.accentLight:C.muted,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .15s"}}>
+                          style={{width:30,height:30,borderRadius:8,border:`1px solid ${showDetalle?C.accent:C.border}`,background:showDetalle?C.accentGlow:"transparent",color:showDetalle?C.accentLight:C.muted,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .15s"}}>
                           ℹ
                         </button>
                       )}
@@ -4547,7 +4538,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                             <span style={{fontSize:11,color:"#f87171",fontWeight:600}}>Ventana cerrada — reagenda pendiente</span>
                           </div>
                           <button onClick={()=>recuperar('edge_recuperar_reagenda')} disabled={recuperando}
-                            style={{fontSize:10,padding:"3px 10px",borderRadius:2,border:"none",background:recuperando?"#6b7280":"#ef4444",color:"white",fontWeight:600,cursor:recuperando?"not-allowed":"pointer",flexShrink:0}}>
+                            style={{fontSize:10,padding:"3px 10px",borderRadius:6,border:"none",background:recuperando?"#6b7280":"#ef4444",color:"white",fontWeight:600,cursor:recuperando?"not-allowed":"pointer",flexShrink:0}}>
                             {recuperando ? '⏳ Enviando...' : 'Recuperar'}
                           </button>
                         </div>
@@ -4569,7 +4560,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                             <span style={{fontSize:11,color:"#f87171",fontWeight:600}}>Ventana cerrada — confirmación pendiente</span>
                           </div>
                           <button onClick={()=>recuperar('edge_recuperar_confirmacion')} disabled={recuperando}
-                            style={{fontSize:10,padding:"3px 10px",borderRadius:2,border:"none",background:recuperando?"#6b7280":"#ef4444",color:"white",fontWeight:600,cursor:recuperando?"not-allowed":"pointer",flexShrink:0}}>
+                            style={{fontSize:10,padding:"3px 10px",borderRadius:6,border:"none",background:recuperando?"#6b7280":"#ef4444",color:"white",fontWeight:600,cursor:recuperando?"not-allowed":"pointer",flexShrink:0}}>
                             {recuperando ? '⏳ Enviando...' : 'Recuperar'}
                           </button>
                         </div>
@@ -4597,11 +4588,11 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                               if (!emailPac) { alert('No hay email registrado para este prospecto'); return; }
                               const r = await fetch(`${API}/api/prospectos/${sp.id}/recuperar-email`,{method:'POST',headers:jH(),body:JSON.stringify({cliente_id:client.id})});
                               if (r.ok) alert(`📧 Email enviado a ${emailPac}`);
-                            }} style={{fontSize:10,padding:"3px 10px",borderRadius:2,border:"1px solid rgba(6,182,212,0.5)",background:"transparent",color:"#67e8f9",fontWeight:600,cursor:"pointer",flexShrink:0}}>
+                            }} style={{fontSize:10,padding:"3px 10px",borderRadius:6,border:"1px solid rgba(6,182,212,0.5)",background:"transparent",color:"#67e8f9",fontWeight:600,cursor:"pointer",flexShrink:0}}>
                               📧 Email
                             </button>
                             <button onClick={()=>recuperar('edge_recuperar_horario')} disabled={recuperando}
-                              style={{fontSize:10,padding:"3px 10px",borderRadius:2,border:"none",background:recuperando?"#6b7280":"#ef4444",color:"white",fontWeight:600,cursor:recuperando?"not-allowed":"pointer",flexShrink:0}}>
+                              style={{fontSize:10,padding:"3px 10px",borderRadius:6,border:"none",background:recuperando?"#6b7280":"#ef4444",color:"white",fontWeight:600,cursor:recuperando?"not-allowed":"pointer",flexShrink:0}}>
                               {recuperando ? '⏳ Enviando...' : 'Recuperar WA'}
                             </button>
                           </div>
@@ -4662,12 +4653,12 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       : null;
                     const horaStr = sol.hora_solicitada ? sol.hora_solicitada.substring(0,5)+"hs" : "";
                     return (
-                      <div style={{margin:"0 16px 0 16px",marginTop:12,borderRadius:2,border:"1.5px solid #f97316",background:"rgba(249,115,22,0.07)",padding:"12px 16px",marginBottom:6}}>
+                      <div style={{margin:"0 16px 0 16px",marginTop:12,borderRadius:12,border:"1.5px solid #f97316",background:"rgba(249,115,22,0.07)",padding:"12px 16px",marginBottom:6}}>
                         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
                           <div style={{width:10,height:10,borderRadius:"50%",background:"#f97316",animation:"pulse 1.5s infinite"}}/>
                           <div style={{fontSize:13,fontWeight:700,color:"#f97316"}}>Preferencias del cliente</div>
                         </div>
-                        <div style={{background:"rgba(0,0,0,0.2)",borderRadius:4,padding:"8px 12px",fontSize:12,color:"#e9edef"}}>
+                        <div style={{background:"rgba(0,0,0,0.2)",borderRadius:8,padding:"8px 12px",fontSize:12,color:"#e9edef"}}>
                           {selectedProspect?.preferencia_horaria && selectedProspect.preferencia_horaria !== "cualquiera" && (
                             <div style={{marginBottom:4}}>
                               {selectedProspect.preferencia_horaria === "manana" ? "🌅 Prefiere mañana" : "🌆 Prefiere tarde"}
@@ -4750,7 +4741,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
                     {/* Menú acciones desplegable */}
                     {showAcciones && (
-                      <div style={{marginBottom:8,background:"#1f2c34",border:"1px solid #2a3942",borderRadius:2,overflow:"hidden"}}>
+                      <div style={{marginBottom:8,background:"#1f2c34",border:"1px solid #2a3942",borderRadius:12,overflow:"hidden"}}>
                         {[
                           { icon:"📅", label:"Ofrecer horarios", desc:"Abre el calendario y ofrece slots al cliente", action: ()=>{ setReagendaMode(false); setModalCalendario(true); setShowAcciones(false); } },
                           { icon:"✅", label:"Confirmar turno", desc:"Abre el modal para confirmar el turno", action: async ()=>{ setShowAcciones(false);
@@ -4908,7 +4899,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       if (!slot) return null;
                       const hora = (slot.hora||'').replace(':00','')+'hs';
                       return (
-                        <div style={{background:"rgba(34,197,94,0.08)",border:"1px solid rgba(34,197,94,0.4)",borderRadius:4,padding:"10px 12px",marginBottom:6,display:"flex",alignItems:"center",gap:10}}>
+                        <div style={{background:"rgba(34,197,94,0.08)",border:"1px solid rgba(34,197,94,0.4)",borderRadius:10,padding:"10px 12px",marginBottom:6,display:"flex",alignItems:"center",gap:10}}>
                           <div style={{flex:1}}>
                             <div style={{fontSize:12,color:"#4ade80",fontWeight:700,marginBottom:2}}>✅ Horario elegido por el prospecto</div>
                             <div style={{fontSize:13,color:"#e9edef",fontWeight:600}}>{slot.label} a las {hora}</div>
@@ -4927,7 +4918,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                               marcarLimpiado(selectedProspect.id);
                               setSelectedProspect({...selectedProspect, horario_elegido: null, horarios_ofrecidos: null, listo_para_cierre: false});
                             }}
-                            style={{padding:"6px 10px",borderRadius:4,border:"1px solid rgba(239,68,68,0.4)",background:"transparent",color:"#f87171",fontSize:11,cursor:"pointer",flexShrink:0,marginRight:4}}>
+                            style={{padding:"6px 10px",borderRadius:6,border:"1px solid rgba(239,68,68,0.4)",background:"transparent",color:"#f87171",fontSize:11,cursor:"pointer",flexShrink:0,marginRight:4}}>
                             ✕ Limpiar
                           </button>
                           <button
@@ -4992,7 +4983,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                             }
                             }}
                             disabled={enviandoConfirm}
-                            style={{padding:"8px 14px",borderRadius:4,border:"none",background:enviandoConfirm?"#374151":"#22c55e",color:"white",fontSize:12,fontWeight:700,cursor:enviandoConfirm?"not-allowed":"pointer",whiteSpace:"nowrap",flexShrink:0}}>
+                            style={{padding:"8px 14px",borderRadius:8,border:"none",background:enviandoConfirm?"#374151":"#22c55e",color:"white",fontSize:12,fontWeight:700,cursor:enviandoConfirm?"not-allowed":"pointer",whiteSpace:"nowrap",flexShrink:0}}>
                             {enviandoConfirm ? '⏳ Cargando...' : '📅 Confirmar turno'}
                           </button>
                         </div>
@@ -5001,7 +4992,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
                     {/* Banner push no activo */}
                     {selectedProspect?.listo_para_cierre && !pushActivo && (
-                      <div style={{background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:4,padding:"6px 10px",marginBottom:6,display:"flex",alignItems:"center",gap:8}}>
+                      <div style={{background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,padding:"6px 10px",marginBottom:6,display:"flex",alignItems:"center",gap:8}}>
                         <span style={{fontSize:13}}>🔕</span>
                         <span style={{fontSize:11,color:"#f87171"}}>Las notificaciones no están activas. <span style={{textDecoration:"underline",cursor:"pointer"}} onClick={()=>{ setActiveTab("config"); window._edgeHighlightPush = true; setTimeout(()=>{ const el = document.getElementById("push-settings-block"); if(el){ el.scrollIntoView({behavior:"smooth",block:"center"}); el.classList.add("push-highlight"); setTimeout(()=>el.classList.remove("push-highlight"),2000); } },300); }}>Activarlas en Configuración</span></span>
                       </div>
@@ -5009,7 +5000,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
                     {/* Banner cancelación pendiente */}
                     {selectedProspect?.cancelacion_pendiente && (
-                      <div style={{background:"rgba(239,68,68,0.08)",border:"1.5px solid rgba(239,68,68,0.5)",borderRadius:4,padding:"10px 12px",marginBottom:6}}>
+                      <div style={{background:"rgba(239,68,68,0.08)",border:"1.5px solid rgba(239,68,68,0.5)",borderRadius:10,padding:"10px 12px",marginBottom:6}}>
                         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
                           <div style={{width:8,height:8,borderRadius:"50%",background:"#ef4444",animation:"pulse 1.5s infinite"}}/>
                           <span style={{fontSize:12,fontWeight:700,color:"#f87171"}}>❌ Solicitud de cancelación</span>
@@ -5031,13 +5022,13 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                               const tel = selectedProspect.telefono;
                               await fetch(`${API}/api/enviar-mensaje`,{method:'POST',headers:jH(),body:JSON.stringify({telefono:tel,mensaje:'tu turno fue cancelado. cuando quieras volver a agendar escribinos!',cliente_id:client.id})}).catch(()=>{});
                             } catch(e) { console.error(e); }
-                          }} style={{flex:1,padding:"7px 0",borderRadius:4,border:"none",background:"#ef4444",color:"white",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                          }} style={{flex:1,padding:"7px 0",borderRadius:8,border:"none",background:"#ef4444",color:"white",fontSize:12,fontWeight:700,cursor:"pointer"}}>
                             ✓ Confirmar cancelación
                           </button>
                           <button onClick={async()=>{
                             await fetch(`${API}/api/prospectos/${selectedProspect.id}`,{method:'PUT',headers:jH(),body:JSON.stringify({cancelacion_pendiente:false,cliente_id:client.id})}).catch(()=>{});
                             setSelectedProspect({...selectedProspect,cancelacion_pendiente:false});
-                          }} style={{padding:"7px 12px",borderRadius:4,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:12,cursor:"pointer"}}>
+                          }} style={{padding:"7px 12px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:12,cursor:"pointer"}}>
                             Ignorar
                           </button>
                         </div>
@@ -5046,7 +5037,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
                     {/* Banner reagenda pendiente */}
                     {selectedProspect?.reagenda_pendiente && !selectedProspect?.cancelacion_pendiente && (
-                      <div style={{background:"rgba(59,130,246,0.08)",border:"1.5px solid rgba(59,130,246,0.4)",borderRadius:4,padding:"10px 12px",marginBottom:6}}>
+                      <div style={{background:"rgba(59,130,246,0.08)",border:"1.5px solid rgba(59,130,246,0.4)",borderRadius:10,padding:"10px 12px",marginBottom:6}}>
                         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
                           <div style={{width:8,height:8,borderRadius:"50%",background:"#3b82f6",animation:"pulse 1.5s infinite"}}/>
                           <span style={{fontSize:12,fontWeight:700,color:"#60a5fa"}}>🔄 Quiere reagendar</span>
@@ -5061,14 +5052,14 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                           setReagendaMode(true);
                           setModalCalendario(true);
                         }}
-                          style={{width:"100%",padding:"7px 0",borderRadius:4,border:"none",background:"#3b82f6",color:"white",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                          style={{width:"100%",padding:"7px 0",borderRadius:8,border:"none",background:"#3b82f6",color:"white",fontSize:12,fontWeight:700,cursor:"pointer"}}>
                           📅 Ver disponibilidad para reagendar
                         </button>
                       </div>
                     )}
                     {/* Boton ver disponibilidad — calendario fantasma */}
                     {modoHumano[selectedProspect?.id] && selectedProspect?.listo_para_cierre && !selectedProspect?.horario_elegido && !yaEnvieHorariosIds.has(selectedProspect?.id) && !selectedProspect?.reagenda_pendiente && !selectedProspect?.cancelacion_pendiente && (
-                      <div style={{background:"rgba(249,115,22,0.06)",border:"1px solid rgba(249,115,22,0.3)",borderRadius:4,padding:"8px 10px",marginBottom:6,display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+                      <div style={{background:"rgba(249,115,22,0.06)",border:"1px solid rgba(249,115,22,0.3)",borderRadius:10,padding:"8px 10px",marginBottom:6,display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
                         <div>
                           <div style={{fontSize:11,color:"#fb923c",fontWeight:600}}>🎯 Listo para agendar{selectedProspect?.tratamiento ? ` — ${selectedProspect.tratamiento}` : ''}</div>
                           {selectedProspect?.preferencia_horaria && selectedProspect.preferencia_horaria !== 'cualquiera' &&
@@ -5079,7 +5070,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                           }
                         </div>
                         <button onClick={()=>setModalCalendario(true)}
-                          style={{padding:"6px 14px",borderRadius:4,border:"none",background:"#f97316",color:"white",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
+                          style={{padding:"6px 14px",borderRadius:8,border:"none",background:"#f97316",color:"white",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
                           📅 Ver disponibilidad
                         </button>
                       </div>
@@ -5113,7 +5104,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();enviarMensajeManual(selectedProspect?.telefono, horariosParaEnviar);setHorariosParaEnviar([]);}}}
                         placeholder={modoHumano[selectedProspect?.id]?"Mensaje…":"Tomá el control para escribir"}
                         rows={1}
-                        style={{flex:1,background:"#2a3942",border:"none",borderRadius:4,padding:"10px 14px",color:"#e9edef",fontSize:13.5,fontFamily:"inherit",resize:"none",outline:"none",lineHeight:1.4,maxHeight:120,overflowY:"auto",transition:"height .1s"}}
+                        style={{flex:1,background:"#2a3942",border:"none",borderRadius:20,padding:"10px 14px",color:"#e9edef",fontSize:13.5,fontFamily:"inherit",resize:"none",outline:"none",lineHeight:1.4,maxHeight:120,overflowY:"auto",transition:"height .1s"}}
                       />
                       {/* Enviar */}
                       <button
@@ -5157,7 +5148,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     <div style={{height:1,background:C.border,margin:"14px 0"}}/>
                     <div style={{fontSize:11,color:C.muted,textTransform:"uppercase",letterSpacing:".8px",marginBottom:14,fontWeight:500}}>Datos del turno</div>
                     {datosAgenda.fecha_turno && (
-                      <div style={{marginBottom:10,background:C.accentGlow,borderRadius:4,padding:"8px 10px",border:`1px solid ${C.border}`}}>
+                      <div style={{marginBottom:10,background:C.accentGlow,borderRadius:8,padding:"8px 10px",border:`1px solid ${C.border}`}}>
                         <div style={{fontSize:10,color:C.muted,marginBottom:2}}>TURNO</div>
                         <div style={{fontSize:13,fontWeight:600,color:C.accentLight}}>
                           {new Date(datosAgenda.fecha_turno).toLocaleDateString("es-AR",{weekday:"long",day:"numeric",month:"long"})} · {(datosAgenda.hora_turno||"").replace(":00","")+"hs"}
@@ -5197,7 +5188,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       setTimeout(()=>t.remove(), 3000);
                     }
                   }}
-                  style={{width:"100%",padding:"8px 0",borderRadius:4,border:"1px solid rgba(239,68,68,0.3)",background:"transparent",color:"#f87171",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+                  style={{width:"100%",padding:"8px 0",borderRadius:8,border:"1px solid rgba(239,68,68,0.3)",background:"transparent",color:"#f87171",fontSize:11,fontWeight:600,cursor:"pointer"}}>
                   🔄 Resetear estado del prospecto
                 </button>
               </div>
@@ -5216,13 +5207,13 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   { label:"Mensajes", value:selectedProspect.mensajes_count||0 },
                   { label:"Último contacto", value:timeAgo(selectedProspect.actualizado_en) },
                 ].map((item,i) => (
-                  <div key={i} style={{marginBottom:14,background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:"10px 14px"}}>
+                  <div key={i} style={{marginBottom:14,background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:"10px 14px"}}>
                     <div style={{fontSize:10,color:C.muted,marginBottom:2,textTransform:"uppercase"}}>{item.label}</div>
                     <div style={{fontSize:13,fontWeight:500}}>{item.value}</div>
                   </div>
                 ))}
                 {datosAgenda?.fecha_turno && (
-                  <div style={{background:C.accentGlow,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",marginBottom:10}}>
+                  <div style={{background:C.accentGlow,border:`1px solid ${C.border}`,borderRadius:10,padding:"10px 14px",marginBottom:10}}>
                     <div style={{fontSize:10,color:C.muted,marginBottom:4,textTransform:"uppercase"}}>Turno</div>
                     <div style={{fontSize:14,fontWeight:600,color:C.accentLight}}>
                       {new Date(datosAgenda.fecha_turno).toLocaleDateString("es-AR",{weekday:"long",day:"numeric",month:"long"})} · {(datosAgenda.hora_turno||"").replace(":00","")+"hs"}
@@ -5247,17 +5238,17 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 </div>
                 <div style={{display:"flex",gap:8,alignItems:"center"}}>
                   <select value={funnelMes} onChange={e=>{setFunnelMes(e.target.value);fetchFunnelNuevo(e.target.value,funnelAño);}}
-                    style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:"6px 10px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
+                    style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"6px 10px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
                     {["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"].map((m,i)=>(
                       <option key={i+1} value={String(i+1)}>{m}</option>
                     ))}
                   </select>
                   <select value={funnelAño} onChange={e=>{setFunnelAño(e.target.value);fetchFunnelNuevo(funnelMes,e.target.value);}}
-                    style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:"6px 10px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
+                    style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"6px 10px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
                     {[2024,2025,2026,2027].map(y=><option key={y} value={y}>{y}</option>)}
                   </select>
                   <button onClick={()=>fetchFunnelNuevo(funnelMes,funnelAño)}
-                    style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:"6px 10px",color:C.muted,fontSize:12,cursor:"pointer"}}>
+                    style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"6px 10px",color:C.muted,fontSize:12,cursor:"pointer"}}>
                     {funnelLoading?"...":"↻"}
                   </button>
                 </div>
@@ -5276,7 +5267,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       {label:"Presentados",          value:funnelNuevo.etapas.presentados, color:"#10b981", icon:"✅", desc:"Showup"},
                       {label:"Honorarios aceptados", value:funnelNuevo.etapas.vendidos,    color:"#8b5cf6", icon:"💰", desc:"Servicio contratado"},
                     ].map((s,i)=>(
-                      <div key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:"14px 16px"}}>
+                      <div key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:"14px 16px"}}>
                         <div style={{fontSize:18,marginBottom:4}}>{s.icon}</div>
                         <div style={{fontSize:24,fontWeight:700,color:s.color,fontFamily:"'DM Mono',monospace"}}>{s.value}</div>
                         <div style={{fontSize:11,fontWeight:600,color:C.text,marginTop:4}}>{s.label}</div>
@@ -5286,7 +5277,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   </div>
 
                   {/* Funnel visual con conversiones entre etapas */}
-                  <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+                  <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                     <div style={{fontSize:13,fontWeight:600,marginBottom:20}}>Conversión entre etapas</div>
                     {(() => {
                       const etapas = [
@@ -5313,8 +5304,8 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                               <span style={{fontWeight:600,color:etapa.color}}>{etapa.label}</span>
                               <span style={{color:C.muted,fontWeight:600}}>{etapa.value}</span>
                             </div>
-                            <div style={{background:C.border,borderRadius:2,height:8,overflow:"hidden"}}>
-                              <div style={{width:etapa.value>0?`${pct}%`:"0%",height:"100%",background:etapa.color,borderRadius:4,transition:"width .6s ease",minWidth:0}}/>
+                            <div style={{background:C.border,borderRadius:6,height:8,overflow:"hidden"}}>
+                              <div style={{width:etapa.value>0?`${pct}%`:"0%",height:"100%",background:etapa.color,borderRadius:6,transition:"width .6s ease",minWidth:0}}/>
                             </div>
                           </div>
                         );
@@ -5323,11 +5314,11 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
                     {/* Métricas globales abajo */}
                     <div style={{display:"flex",gap:12,marginTop:20,flexWrap:"wrap"}}>
-                      <div style={{flex:1,minWidth:120,textAlign:"center",padding:"10px 8px",background:C.bg,borderRadius:2,border:`1px solid ${C.border}`}}>
+                      <div style={{flex:1,minWidth:120,textAlign:"center",padding:"10px 8px",background:C.bg,borderRadius:8,border:`1px solid ${C.border}`}}>
                         <div style={{fontSize:18,fontWeight:700,color:"#f59e0b"}}>{funnelNuevo.showrate}%</div>
                         <div style={{fontSize:10,color:C.muted,marginTop:2}}>Showrate</div>
                       </div>
-                      <div style={{flex:1,minWidth:120,textAlign:"center",padding:"10px 8px",background:C.bg,borderRadius:2,border:`1px solid ${C.border}`}}>
+                      <div style={{flex:1,minWidth:120,textAlign:"center",padding:"10px 8px",background:C.bg,borderRadius:8,border:`1px solid ${C.border}`}}>
                         <div style={{fontSize:18,fontWeight:700,color:"#8b5cf6"}}>{funnelNuevo.conversiones.global}%</div>
                         <div style={{fontSize:10,color:C.muted,marginTop:2}}>Conversión global</div>
                       </div>
@@ -5335,7 +5326,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
                     {/* Desglose por fuente */}
                     {funnelNuevo.fuentes && funnelNuevo.fuentes.length > 0 && (
-                      <div style={{marginTop:16,background:C.bg,borderRadius:2,padding:"12px 14px",border:`1px solid ${C.border}`}}>
+                      <div style={{marginTop:16,background:C.bg,borderRadius:10,padding:"12px 14px",border:`1px solid ${C.border}`}}>
                         <div style={{fontSize:12,fontWeight:600,marginBottom:10,color:C.muted}}>📊 Prospectos por fuente</div>
                         {funnelNuevo.fuentes.map((f,i)=>{
                           const icon = f.fuente==='meta'?'🟢':f.fuente==='google'?'🔵':f.fuente==='directo'?'⚪':'🟣';
@@ -5372,7 +5363,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       {label:"Realizados",         value:tratCount.realizados||0, icon:"✅", color:C.green},
                       {label:"No-shows",           value:tratCount.no_shows||0, icon:"🔴", color:"#ef4444"},
                     ].map((s,i)=>(
-                      <div key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:"14px 16px"}}>
+                      <div key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:"14px 16px"}}>
                         <div style={{fontSize:18,marginBottom:4}}>{s.icon}</div>
                         <div style={{fontSize:22,fontWeight:700,color:s.color,fontFamily:"'DM Mono',monospace"}}>{s.value}</div>
                         <div style={{fontSize:11,color:C.muted,marginTop:4,fontWeight:500}}>{s.label}</div>
@@ -5383,7 +5374,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               ) : (
                 <div style={{textAlign:"center",padding:40}}>
                   <button onClick={()=>fetchFunnelNuevo(funnelMes,funnelAño)}
-                    style={{background:C.accent,border:"none",borderRadius:4,padding:"10px 24px",color:"white",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+                    style={{background:C.accent,border:"none",borderRadius:8,padding:"10px 24px",color:"white",fontSize:13,fontWeight:600,cursor:"pointer"}}>
                     Cargar funnel
                   </button>
                 </div>
@@ -5400,11 +5391,11 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 <div style={{display:"flex",gap:8}}>
                   <input value={searchQ} onChange={e=>{setSearchQ(e.target.value);fetchPacientes(e.target.value);}}
                     placeholder="Buscar nombre, doc..."
-                    style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"7px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
+                    style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"7px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
                   <Btn onClick={()=>{setShowNuevoTurno(true);setTurnoStep("buscar");setTurnoPaciente(null);setTurnoSearch("");setTurnoSearchRes([]);setFormTurno(FORM_TURNO_INIT);}} small>+ Nuevo cliente</Btn>
                 </div>
                 <button onClick={()=>{const nd=!filtroDeuda;setFiltroDeuda(nd);fetchPacientes(searchQ,nd);}}
-                  style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:4,border:`1px solid ${filtroDeuda?"#ef4444":C.border}`,background:filtroDeuda?"rgba(239,68,68,0.1)":"transparent",color:filtroDeuda?"#ef4444":C.muted,fontSize:11,cursor:"pointer",fontWeight:filtroDeuda?600:400,width:"fit-content"}}>
+                  style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:8,border:`1px solid ${filtroDeuda?"#ef4444":C.border}`,background:filtroDeuda?"rgba(239,68,68,0.1)":"transparent",color:filtroDeuda?"#ef4444":C.muted,fontSize:11,cursor:"pointer",fontWeight:filtroDeuda?600:400,width:"fit-content"}}>
                   💰 {filtroDeuda?"Con deuda (activo)":"Filtrar con deuda"}
                 </button>
               </div>
@@ -5435,7 +5426,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
             {pacDet ? (
               <div style={{flex:1,overflowY:"auto",padding:isMobile?12:24}}>
-                {isMobile && <button onClick={()=>setSelPac(null)} style={{display:"flex",alignItems:"center",gap:6,background:"transparent",border:`1px solid ${C.border}`,color:C.muted,borderRadius:4,padding:"6px 14px",fontSize:12,cursor:"pointer",marginBottom:14}}>Volver</button>}
+                {isMobile && <button onClick={()=>setSelPac(null)} style={{display:"flex",alignItems:"center",gap:6,background:"transparent",border:`1px solid ${C.border}`,color:C.muted,borderRadius:8,padding:"6px 14px",fontSize:12,cursor:"pointer",marginBottom:14}}>Volver</button>}
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
                   <div style={{display:"flex",alignItems:"center",gap:10}}>
                     <div style={{fontSize:18,fontWeight:700}}>{pacDet.nombre}</div>
@@ -5443,7 +5434,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       const deuda = pacDet.historial.filter(h=>h.estado_pago==="pendiente"||h.estado_pago==="parcial").reduce((acc,h)=>acc+parseFloat(h.monto||0),0);
                       const moneda = pacDet.historial.find(h=>h.estado_pago!=="pagado")?.moneda||"$";
                       return deuda > 0 ? (
-                        <span style={{fontSize:11,padding:"3px 8px",borderRadius:2,background:"rgba(239,68,68,0.12)",color:"#ef4444",fontWeight:600,border:"1px solid rgba(239,68,68,0.2)"}}>
+                        <span style={{fontSize:11,padding:"3px 8px",borderRadius:6,background:"rgba(239,68,68,0.12)",color:"#ef4444",fontWeight:600,border:"1px solid rgba(239,68,68,0.2)"}}>
                           💰 Deuda: {moneda} {deuda.toLocaleString("es-AR")}
                         </span>
                       ) : null;
@@ -5451,7 +5442,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   </div>
                   <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
                     <button onClick={()=>setConsentimientoModal({paciente:pacDet})}
-                      style={{padding:'6px 14px',borderRadius:4,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:12,cursor:'pointer'}}>
+                      style={{padding:'6px 14px',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:12,cursor:'pointer'}}>
                       📝 Consentimiento
                     </button>
                     <button onClick={async()=>{
@@ -5461,24 +5452,24 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         if (r.ok) { const d = await r.json(); setPortalLink(d.link); }
                       } catch(e) {}
                       setLoadingPortal(false);
-                    }} style={{padding:'6px 14px',borderRadius:4,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:12,cursor:'pointer'}}>
+                    }} style={{padding:'6px 14px',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:12,cursor:'pointer'}}>
                       {loadingPortal ? '...' : '🔗 Portal'}
                     </button>
                     <Btn onClick={()=>{setShowNuevoTurno(true);setTurnoStep("turno");setTurnoPaciente(pacDet);setFormTurno(FORM_TURNO_INIT);}} small>+ Nuevo turno</Btn>
                   </div>
                   {/* Link portal */}
                   {portalLink && (
-                    <div style={{marginTop:8,background:"rgba(99,102,241,0.08)",border:`1px solid ${C.accent}44`,borderRadius:4,padding:"10px 14px",display:"flex",alignItems:"center",gap:8}}>
+                    <div style={{marginTop:8,background:"rgba(99,102,241,0.08)",border:`1px solid ${C.accent}44`,borderRadius:8,padding:"10px 14px",display:"flex",alignItems:"center",gap:8}}>
                       <div style={{flex:1,fontSize:11,color:C.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{portalLink}</div>
                       <button onClick={()=>navigator.clipboard.writeText(portalLink).catch(()=>{})}
-                        style={{padding:"4px 10px",borderRadius:2,border:`1px solid ${C.border}`,background:"transparent",color:C.accentLight,fontSize:11,cursor:"pointer",flexShrink:0}}>
+                        style={{padding:"4px 10px",borderRadius:6,border:`1px solid ${C.border}`,background:"transparent",color:C.accentLight,fontSize:11,cursor:"pointer",flexShrink:0}}>
                         📋 Copiar
                       </button>
                       {pacDet?.telefono && (
                         <button onClick={async()=>{
                           const texto = `Hola ${pacDet.nombre}! Podés ver tus turnos, resultados y consentimientos desde tu portal personal: ${portalLink}`;
                           await fetch(`${API}/api/enviar-mensaje`, { method:'POST', headers:jH(), body:JSON.stringify({ telefono:pacDet.telefono, texto, cliente_id:client.id }) }).catch(()=>{});
-                        }} style={{padding:"4px 10px",borderRadius:2,border:`1px solid ${C.border}`,background:"transparent",color:"#10b981",fontSize:11,cursor:"pointer",flexShrink:0}}>
+                        }} style={{padding:"4px 10px",borderRadius:6,border:`1px solid ${C.border}`,background:"transparent",color:"#10b981",fontSize:11,cursor:"pointer",flexShrink:0}}>
                           📱 Enviar WA
                         </button>
                       )}
@@ -5499,7 +5490,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     return <span style={{fontSize:13,color:dias===0?C.green:C.muted}}>🎂 {nac.toLocaleDateString("es-AR",{day:"numeric",month:"long"})}{dias===0?" · ¡Hoy!":dias<=7?` · en ${dias} dias`:""}</span>;
                   })()}
                 </div>
-                {pacDet.notas && <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:14,marginBottom:20,fontSize:13,color:C.muted}}>{pacDet.notas}</div>}
+                {pacDet.notas && <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:14,marginBottom:20,fontSize:13,color:C.muted}}>{pacDet.notas}</div>}
 
                 {/* Valoraciones grabadas — solo Pro */}
                 {plan === 'pro' && (
@@ -5509,7 +5500,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
                   <div style={{fontSize:11,color:C.muted,textTransform:"uppercase",letterSpacing:".8px",fontWeight:500}}>Historial</div>
                   <button onClick={()=>{setResContextPac(pacDet);setFormRes({paciente_id:pacDet.id,tratamiento_id:"",tratamiento_libre:"",fecha:"",nota:""});setFotoAntes(null);setFotoDespues(null);setFotoAntesURL("");setFotoDespuesURL("");setShowNuevoRes(true);}}
-                    style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,borderRadius:2,padding:"3px 10px",fontSize:11,cursor:"pointer"}}>📷 + Resultado</button>
+                    style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,borderRadius:6,padding:"3px 10px",fontSize:11,cursor:"pointer"}}>📷 + Resultado</button>
                 </div>
                 {!(pacDet.historial?.length) ? (
                   <div style={{color:C.muted,fontSize:13}}>Sin tratamientos registrados</div>
@@ -5539,10 +5530,10 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         </div>
                         <div style={{display:'flex',gap:6,flexShrink:0}}>
                           <button onClick={()=>setFichaModal({turno:h, paciente:pacDet})}
-                            style={{background:fichasCache[h.id]?"rgba(99,102,241,0.12)":"transparent",border:`1px solid ${fichasCache[h.id]?C.accent:C.border}`,color:fichasCache[h.id]?C.accentLight:C.muted,borderRadius:2,padding:"3px 8px",fontSize:11,cursor:"pointer",whiteSpace:"nowrap"}}>
+                            style={{background:fichasCache[h.id]?"rgba(99,102,241,0.12)":"transparent",border:`1px solid ${fichasCache[h.id]?C.accent:C.border}`,color:fichasCache[h.id]?C.accentLight:C.muted,borderRadius:6,padding:"3px 8px",fontSize:11,cursor:"pointer",whiteSpace:"nowrap"}}>
                             📋 Ficha
                           </button>
-                          <button onClick={()=>abrirEditTurno(h)} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,borderRadius:4,padding:"3px 8px",fontSize:11,cursor:"pointer",whiteSpace:"nowrap"}}>✏ Editar</button>
+                          <button onClick={()=>abrirEditTurno(h)} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,borderRadius:6,padding:"3px 8px",fontSize:11,cursor:"pointer",whiteSpace:"nowrap"}}>✏ Editar</button>
                         </div>
                       </div>
                     </div>
@@ -5550,12 +5541,12 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 ))}
                 {/* Mensaje manual desde perfil paciente */}
                 {pacDet?.telefono && (
-                  <div style={{marginTop:20,background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:16}}>
+                  <div style={{marginTop:20,background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:16}}>
                     <div style={{fontSize:11,color:C.muted,textTransform:"uppercase",letterSpacing:".8px",fontWeight:500,marginBottom:10}}>Enviar mensaje por WhatsApp</div>
                     <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8}}>
                       {PLANTILLAS_RAPIDAS.map((p,i)=>(
                         <button key={i} onClick={()=>{setPlantillaRapida(p.label);setMsgManual(p.texto);}}
-                          style={{padding:"3px 10px",borderRadius:2,border:`1px solid ${plantillaRapida===p.label?C.accent:C.border}`,background:plantillaRapida===p.label?C.accentGlow:"transparent",color:plantillaRapida===p.label?C.accentLight:C.muted,fontSize:10,cursor:"pointer",whiteSpace:"nowrap"}}>
+                          style={{padding:"3px 10px",borderRadius:20,border:`1px solid ${plantillaRapida===p.label?C.accent:C.border}`,background:plantillaRapida===p.label?C.accentGlow:"transparent",color:plantillaRapida===p.label?C.accentLight:C.muted,fontSize:10,cursor:"pointer",whiteSpace:"nowrap"}}>
                           {p.label}
                         </button>
                       ))}
@@ -5567,12 +5558,12 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();enviarMensajeManual(pacDet.telefono);}}}
                         placeholder="Escribí un mensaje..."
                         rows={2}
-                        style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"8px 12px",color:C.text,fontSize:13,fontFamily:"inherit",resize:"none",outline:"none"}}
+                        style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:10,padding:"8px 12px",color:C.text,fontSize:13,fontFamily:"inherit",resize:"none",outline:"none"}}
                       />
                       <button
                         onClick={()=>enviarMensajeManual(pacDet.telefono)}
                         disabled={enviandoMsg||!msgManual.trim()}
-                        style={{width:38,height:38,borderRadius:4,border:"none",background:msgManual.trim()?C.accent:C.border,color:"white",fontSize:18,cursor:msgManual.trim()?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"background .2s"}}>
+                        style={{width:38,height:38,borderRadius:10,border:"none",background:msgManual.trim()?C.accent:C.border,color:"white",fontSize:18,cursor:msgManual.trim()?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"background .2s"}}>
                         {enviandoMsg?"…":"➤"}
                       </button>
                     </div>
@@ -5588,7 +5579,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       <div style={{fontSize:11,color:C.muted,textTransform:"uppercase",letterSpacing:".8px",fontWeight:500,marginBottom:12}}>Antes y Después</div>
                       <div style={{display:"flex",flexDirection:"column",gap:12}}>
                         {resP.map((res,i)=>(
-                          <div key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:12}}>
+                          <div key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:12}}>
                             <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
                               <div>
                                 <div style={{fontSize:12,fontWeight:600}}>{res.tratamiento||"Servicio"}</div>
@@ -5601,13 +5592,13 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                               {res.foto_antes && (
                                 <div>
                                   <div style={{fontSize:10,color:C.muted,marginBottom:4,textTransform:"uppercase",letterSpacing:".5px"}}>Antes</div>
-                                  <img src={res.foto_antes} alt="antes" style={{width:"100%",borderRadius:4,objectFit:"cover",maxHeight:160}}/>
+                                  <img src={res.foto_antes} alt="antes" style={{width:"100%",borderRadius:8,objectFit:"cover",maxHeight:160}}/>
                                 </div>
                               )}
                               {res.foto_despues && (
                                 <div>
                                   <div style={{fontSize:10,color:C.muted,marginBottom:4,textTransform:"uppercase",letterSpacing:".5px"}}>Después</div>
-                                  <img src={res.foto_despues} alt="después" style={{width:"100%",borderRadius:4,objectFit:"cover",maxHeight:160}}/>
+                                  <img src={res.foto_despues} alt="después" style={{width:"100%",borderRadius:8,objectFit:"cover",maxHeight:160}}/>
                                 </div>
                               )}
                             </div>
@@ -5627,7 +5618,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
                         <div style={{fontSize:11,color:C.muted,textTransform:"uppercase",letterSpacing:".8px",fontWeight:500}}>Pagos</div>
                         <button onClick={()=>abrirPago(pacDet)}
-                          style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,borderRadius:2,padding:"3px 10px",fontSize:11,cursor:"pointer"}}>+ Registrar pago</button>
+                          style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,borderRadius:6,padding:"3px 10px",fontSize:11,cursor:"pointer"}}>+ Registrar pago</button>
                       </div>
                       {planes.length === 0
                         ? <div style={{fontSize:12,color:C.muted,padding:"12px 0"}}>Sin pagos registrados</div>
@@ -5636,7 +5627,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                             const saldo = parseFloat(pl.monto_total) - parseFloat(pl.monto_pagado);
                             const estadoColor = pl.estado==="pagado" ? C.green : pl.estado==="parcial" ? "#f59e0b" : C.red;
                             return (
-                              <div key={i} style={{background:C.bg,border:`1px solid ${C.border}`,borderLeft:`3px solid ${estadoColor}`,borderRadius:2,padding:"12px 14px",marginBottom:10}}>
+                              <div key={i} style={{background:C.bg,border:`1px solid ${C.border}`,borderLeft:`3px solid ${estadoColor}`,borderRadius:10,padding:"12px 14px",marginBottom:10}}>
                                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
                                   <div>
                                     <div style={{fontWeight:600,fontSize:13}}>{pl.tratamiento}</div>
@@ -5650,12 +5641,12 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                                     </span>
                                     {pl.estado !== "pagado" && (
                                       <button onClick={()=>abrirPago(pacDet, pl)}
-                                        style={{background:C.accentGlow,border:`1px solid ${C.accent}`,color:C.accent,borderRadius:2,padding:"3px 10px",fontSize:11,cursor:"pointer",fontWeight:600}}>
+                                        style={{background:C.accentGlow,border:`1px solid ${C.accent}`,color:C.accent,borderRadius:6,padding:"3px 10px",fontSize:11,cursor:"pointer",fontWeight:600}}>
                                         + Pagar
                                       </button>
                                     )}
                                     <button onClick={async()=>{await fetch(`${API}/api/planes-pago/${pl.id}`,{method:"DELETE",headers:aH()});fetchPlanesPago();}}
-                                      style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,borderRadius:2,padding:"3px 8px",fontSize:11,cursor:"pointer"}}>×</button>
+                                      style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,borderRadius:6,padding:"3px 8px",fontSize:11,cursor:"pointer"}}>×</button>
                                   </div>
                                 </div>
                                 <div style={{background:C.surface,borderRadius:4,height:5,overflow:"hidden",marginBottom:6}}>
@@ -5701,14 +5692,16 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
           };
 
           const Card = ({icon,label,value,sub,pct,color}) => (
-            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:isMobile?"14px 16px":"24px 28px",flex:1,minWidth:isMobile?"calc(50% - 6px)":160}}>
-              <div style={{fontSize:11,fontWeight:500,color:C.textMuted,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:8}}>{label}</div>
-              <div style={{width:32,height:1,background:C.accent,marginBottom:12}}/>
-              <div style={{fontSize:isMobile?24:48,fontWeight:700,color:C.text,lineHeight:1.1,marginBottom:8,fontFamily:TYPOGRAPHY.fontDisplay,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:isMobile?14:20,flex:1,minWidth:isMobile?"calc(50% - 6px)":160}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+                <div style={{width:34,height:34,borderRadius:10,background:`${color}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>{icon}</div>
+                <div style={{fontSize:12,color:C.muted,fontWeight:500}}>{label}</div>
+              </div>
+              <div style={{fontSize:isMobile?18:24,fontWeight:700,color:C.text,lineHeight:1.2,marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                 {value}
               </div>
-              {pct !== undefined && <div style={{marginBottom:4}}>{pctBadge(pct)}</div>}
-              {sub && <div style={{fontSize:11,color:C.textMuted,marginTop:4}}>{sub}</div>}
+              {pct !== undefined && <div style={{marginBottom:2}}>{pctBadge(pct)}</div>}
+              {sub && <div style={{fontSize:11,color:C.muted,marginTop:4}}>{sub}</div>}
             </div>
           );
 
@@ -5722,19 +5715,19 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               <div style={{maxWidth:1000,margin:"0 auto"}}>
 
                 {/* Header */}
-                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:8,minHeight:56,borderBottom:`1px solid ${C.border}`,paddingBottom:16}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:8}}>
                   <div>
-                    <div style={{fontSize:isMobile?16:20,fontWeight:600,fontFamily:TYPOGRAPHY.fontDisplay,color:C.text}}>Dashboard</div>
-                    <div style={{fontSize:11,color:C.textMuted,marginTop:2}}>{mes} · {client?.nombre}</div>
+                    <div style={{fontSize:isMobile?16:20,fontWeight:700}}>📊 Dashboard</div>
+                    <div style={{fontSize:11,color:C.muted,marginTop:2}}>{mes} · {client?.nombre}</div>
                   </div>
-                  <button onClick={fetchDashboard} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:"7px 14px",color:C.muted,fontSize:12,cursor:"pointer"}}>
+                  <button onClick={fetchDashboard} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"7px 14px",color:C.muted,fontSize:12,cursor:"pointer"}}>
                     {loadingDash ? "..." : "↻"}
                   </button>
                 </div>
 
                 {/* Alertas activas */}
                 {(d?.solicitudes_pendientes > 0) && (
-                  <div onClick={()=>setActiveTab("conversations")} style={{background:"rgba(249,115,22,0.08)",border:"1.5px solid #f97316",borderRadius:4,padding:"12px 16px",marginBottom:20,cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
+                  <div onClick={()=>setActiveTab("conversations")} style={{background:"rgba(249,115,22,0.08)",border:"1.5px solid #f97316",borderRadius:10,padding:"12px 16px",marginBottom:20,cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
                     <div style={{width:10,height:10,borderRadius:"50%",background:"#f97316",animation:"pulse 1.5s infinite"}}/>
                     <div style={{fontSize:13,fontWeight:600,color:"#f97316"}}>
                       {d.solicitudes_pendientes} solicitud{d.solicitudes_pendientes>1?"es":""} de turno esperando confirmación
@@ -5749,22 +5742,22 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 ) : !d ? (
                   <div style={{textAlign:"center",color:C.muted,padding:60,fontSize:13}}>
                     <div style={{marginBottom:8}}>⚠️ No se pudieron cargar las métricas</div>
-                    <button onClick={fetchDashboard} style={{background:C.accent,border:"none",borderRadius:4,padding:"8px 16px",color:"white",fontSize:12,cursor:"pointer"}}>Reintentar</button>
+                    <button onClick={fetchDashboard} style={{background:C.accent,border:"none",borderRadius:8,padding:"8px 16px",color:"white",fontSize:12,cursor:"pointer"}}>Reintentar</button>
                   </div>
                 ) : d ? (<>
 
                 <div style={{display:"flex",gap:12,marginBottom:12,flexWrap:"wrap"}}>
                   {/* Consultas este mes con mini breakdown */}
-                  <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:isMobile?14:20,flex:1,minWidth:isMobile?"calc(50% - 6px)":200}}>
+                  <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:isMobile?14:20,flex:1,minWidth:isMobile?"calc(50% - 6px)":200}}>
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
-                      <div style={{width:34,height:34,borderRadius:4,background:"#6366f122",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>⚖️</div>
+                      <div style={{width:34,height:34,borderRadius:10,background:"#6366f122",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>⚖️</div>
                       <div style={{fontSize:12,color:C.muted,fontWeight:500}}>Consultas este mes</div>
                     </div>
                     <div style={{fontSize:isMobile?18:24,fontWeight:700,color:C.text,lineHeight:1.2,marginBottom:4}}>{fmtNum(d.turnos.mes)}</div>
                     {d.turnos.pct_cambio !== undefined && <div style={{marginBottom:8}}>{(() => { const v=parseFloat(d.turnos.pct_cambio)||0; return <span style={{fontSize:11,color:v>=0?"#10b981":"#ef4444",fontWeight:600}}>{v>=0?"^":"v"}{Math.abs(v)}%</span>; })()}</div>}
                     <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
                       {[{l:"💰 Paga",v:d.consultas_breakdown?.paga||0,c:"#10b981"},{l:"🆓 Gratis",v:d.consultas_breakdown?.gratis||0,c:C.muted},{l:"🤝 Seña",v:d.consultas_breakdown?.seña||0,c:C.accentLight}].map((t,i)=>(
-                        <div key={i} style={{fontSize:10,padding:"3px 8px",borderRadius:2,background:C.bg,border:`1px solid ${C.border}`,color:t.c,fontWeight:600,whiteSpace:"nowrap"}}>{t.l} {t.v}</div>
+                        <div key={i} style={{fontSize:10,padding:"3px 8px",borderRadius:20,background:C.bg,border:`1px solid ${C.border}`,color:t.c,fontWeight:600,whiteSpace:"nowrap"}}>{t.l} {t.v}</div>
                       ))}
                     </div>
                   </div>
@@ -5780,7 +5773,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
 
                   {/* Gráfico turnos 30 dias */}
-                  <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,flex:1,minWidth:280}}>
+                  <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,flex:1,minWidth:280}}>
                     <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>Consultas - últimos 30 días</div>
                     <div style={{fontSize:11,color:C.muted,marginBottom:16}}>Barras diarias</div>
                     {dias.length === 0 ? (
@@ -5808,7 +5801,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   </div>
 
                   {/* Próximos turnos */}
-                  <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,flex:1.4,minWidth:300}}>
+                  <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,flex:1.4,minWidth:300}}>
                     <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>Próximas consultas</div>
                     <div style={{fontSize:11,color:C.muted,marginBottom:14}}>{d.proximos_turnos.length} consultas en los próximos 7 días</div>
                     {d.proximos_turnos.length === 0 ? (
@@ -5836,11 +5829,11 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
                 {/* Fila 3 - funnel del período */}
                 {["plus","pro"].includes(plan) && (
-                  <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginTop:12}}>
+                  <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginTop:12}}>
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:8}}>
                       <div style={{fontSize:13,fontWeight:600}}>Funnel del período</div>
                       <button onClick={()=>fetchFunnelNuevo(funnelMes,funnelAño)}
-                        style={{background:"transparent",border:`1px solid ${C.border}`,borderRadius:2,padding:"4px 10px",color:C.muted,fontSize:11,cursor:"pointer"}}>
+                        style={{background:"transparent",border:`1px solid ${C.border}`,borderRadius:6,padding:"4px 10px",color:C.muted,fontSize:11,cursor:"pointer"}}>
                         {funnelLoading?"...":"↻"}
                       </button>
                     </div>
@@ -5854,7 +5847,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                             {label:"Presentados",          value:funnelNuevo.etapas.presentados, color:"#10b981"},
                             {label:"Honorarios aceptados", value:funnelNuevo.etapas.vendidos,    color:"#8b5cf6"},
                           ].map((e,i)=>(
-                            <div key={i} style={{flex:1,minWidth:90,textAlign:"center",padding:"10px 6px",background:C.bg,borderRadius:2,border:`1px solid ${C.border}`}}>
+                            <div key={i} style={{flex:1,minWidth:90,textAlign:"center",padding:"10px 6px",background:C.bg,borderRadius:10,border:`1px solid ${C.border}`}}>
                               <div style={{fontSize:20,fontWeight:700,color:e.color}}>{e.value}</div>
                               <div style={{fontSize:10,color:C.muted,marginTop:3}}>{e.label}</div>
                             </div>
@@ -5868,7 +5861,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     ) : (
                       <div style={{textAlign:"center",color:C.muted,fontSize:12,padding:"12px 0"}}>
                         <button onClick={()=>fetchFunnelNuevo(funnelMes,funnelAño)}
-                          style={{background:C.accent,border:"none",borderRadius:4,padding:"7px 18px",color:"white",fontSize:12,cursor:"pointer",fontWeight:600}}>
+                          style={{background:C.accent,border:"none",borderRadius:8,padding:"7px 18px",color:"white",fontSize:12,cursor:"pointer",fontWeight:600}}>
                           Cargar funnel
                         </button>
                       </div>
@@ -5890,7 +5883,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
               {/* Alerta solicitudes pendientes */}
               {solicitudesPendientes > 0 && (
-                <div onClick={()=>setActiveTab("conversations")} style={{background:"rgba(249,115,22,0.08)",border:"1.5px solid #f97316",borderRadius:4,padding:"10px 14px",marginBottom:14,cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
+                <div onClick={()=>setActiveTab("conversations")} style={{background:"rgba(249,115,22,0.08)",border:"1.5px solid #f97316",borderRadius:10,padding:"10px 14px",marginBottom:14,cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
                   <div style={{width:8,height:8,borderRadius:"50%",background:"#f97316",animation:"pulse 1.5s infinite",flexShrink:0}}/>
                   <div style={{fontSize:13,fontWeight:600,color:"#f97316",flex:1}}>
                     {solicitudesPendientes} solicitud{solicitudesPendientes>1?"es":""} esperando confirmación
@@ -5903,7 +5896,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,flexWrap:"wrap",gap:10}}>
                 <div style={{fontSize:16,fontWeight:700}}>Calendario</div>
                 <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
-                  <div style={{display:"flex",background:C.bg,borderRadius:2,border:`1px solid ${C.border}`,overflow:"hidden"}}>
+                  <div style={{display:"flex",background:C.bg,borderRadius:8,border:`1px solid ${C.border}`,overflow:"hidden"}}>
                     {[["dia","Día"],["semanal","Semana"],["mensual","Mes"]].map(([v,l])=>(
                       <div key={v} onClick={()=>setCalVista(v)}
                         style={{padding:"6px 14px",cursor:"pointer",fontSize:12,fontWeight:calVista===v?700:400,background:calVista===v?C.accent:"transparent",color:calVista===v?"white":C.muted}}>
@@ -5913,7 +5906,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   </div>
                   <div style={{display:"flex",alignItems:"center",gap:6}}>
                     <button onClick={()=>{const d=new Date(calFecha);if(calVista==="mensual")d.setMonth(d.getMonth()-1);else if(calVista==="semanal")d.setDate(d.getDate()-7);else d.setDate(d.getDate()-1);setCalFecha(new Date(d));}}
-                      style={{background:C.bg,border:`1px solid ${C.border}`,color:C.text,borderRadius:2,padding:"6px 12px",cursor:"pointer",fontSize:14}}>‹</button>
+                      style={{background:C.bg,border:`1px solid ${C.border}`,color:C.text,borderRadius:8,padding:"6px 12px",cursor:"pointer",fontSize:14}}>‹</button>
                     <div style={{fontSize:13,fontWeight:600,minWidth:160,textAlign:"center"}}>
                       {calVista==="mensual" && calFecha.toLocaleDateString("es-AR",{month:"long",year:"numeric"})}
                       {calVista==="dia" && calFecha.toLocaleDateString("es-AR",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
@@ -5925,9 +5918,9 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       })()}
                     </div>
                     <button onClick={()=>{const d=new Date(calFecha);if(calVista==="mensual")d.setMonth(d.getMonth()+1);else if(calVista==="semanal")d.setDate(d.getDate()+7);else d.setDate(d.getDate()+1);setCalFecha(new Date(d));}}
-                      style={{background:C.bg,border:`1px solid ${C.border}`,color:C.text,borderRadius:2,padding:"6px 12px",cursor:"pointer",fontSize:14}}>›</button>
+                      style={{background:C.bg,border:`1px solid ${C.border}`,color:C.text,borderRadius:8,padding:"6px 12px",cursor:"pointer",fontSize:14}}>›</button>
                     <button onClick={()=>{setCalFecha(new Date());if(calVista==="dia")setCalVista("dia");}}
-                      style={{background:C.bg,border:`1px solid ${C.border}`,color:C.muted,borderRadius:2,padding:"6px 10px",cursor:"pointer",fontSize:11}}>Hoy</button>
+                      style={{background:C.bg,border:`1px solid ${C.border}`,color:C.muted,borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:11}}>Hoy</button>
                   </div>
                   {profesionales.filter(p=>p.color).length > 0 && (
                     <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center",marginTop:8}}>
@@ -6009,7 +6002,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                           const color = getColor(t);
                           return (
                             <div key={i} onClick={e=>{e.stopPropagation();abrirEditTurno(t);}}
-                              style={{position:"absolute",top,left:4,right:4,height,background:`${color}22`,border:`1px solid ${color}66`,borderLeft:`3px solid ${color}`,borderRadius:2,padding:"2px 6px",cursor:"pointer",zIndex:2,overflow:"hidden",display:"flex",flexDirection:"column",justifyContent:"center",gap:1}}>
+                              style={{position:"absolute",top,left:4,right:4,height,background:`${color}22`,border:`1px solid ${color}66`,borderLeft:`3px solid ${color}`,borderRadius:6,padding:"2px 6px",cursor:"pointer",zIndex:2,overflow:"hidden",display:"flex",flexDirection:"column",justifyContent:"center",gap:1}}>
                               <div style={{fontWeight:700,fontSize:10,color,lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
                                 {t.hora?.slice(0,5)}{t.hora_fin?` - ${t.hora_fin.slice(0,5)}`:""} 
                               </div>
@@ -6020,7 +6013,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         })}
                         {/* Botón agregar */}
                         <div onClick={()=>abrirNuevoTurnoFecha(dStr,"")}
-                          style={{position:"absolute",top:4,right:8,zIndex:4,background:C.accent,color:"white",borderRadius:2,padding:"4px 10px",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+                          style={{position:"absolute",top:4,right:8,zIndex:4,background:C.accent,color:"white",borderRadius:6,padding:"4px 10px",fontSize:11,fontWeight:600,cursor:"pointer"}}>
                           + Cita
                         </div>
                       </div>
@@ -6131,10 +6124,10 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                           const esSelec=calDiasel===dStr;
                           return (
                             <div key={i} onClick={()=>setCalDrawer(esSelec?null:dStr)}
-                              style={{minHeight:100,background:esSelec?C.accentGlow:esHoy?"rgba(99,102,241,0.06)":C.surface,border:`1px solid ${esSelec||esHoy?C.accent:C.border}`,borderRadius:4,padding:"6px 8px",cursor:"pointer",transition:"all .15s"}}>
+                              style={{minHeight:100,background:esSelec?C.accentGlow:esHoy?"rgba(99,102,241,0.06)":C.surface,border:`1px solid ${esSelec||esHoy?C.accent:C.border}`,borderRadius:8,padding:"6px 8px",cursor:"pointer",transition:"all .15s"}}>
                               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
                                 <span style={{fontSize:12,fontWeight:esHoy?700:400,color:esHoy?C.accent:C.text}}>{dia.getDate()}</span>
-                                {turnosDia.length>0&&<span style={{fontSize:10,background:C.accentGlow,color:C.accent,borderRadius:4,padding:"1px 5px",fontWeight:600}}>{turnosDia.length}</span>}
+                                {turnosDia.length>0&&<span style={{fontSize:10,background:C.accentGlow,color:C.accent,borderRadius:10,padding:"1px 5px",fontWeight:600}}>{turnosDia.length}</span>}
                               </div>
                               {turnosDia.slice(0,3).map((t,j)=>{const tc=getColor(t);return(
                                 <div key={j} style={{fontSize:10,padding:"2px 5px",borderRadius:4,marginBottom:2,background:`${tc}22`,color:tc,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",borderLeft:`2px solid ${tc}`}}>
@@ -6172,7 +6165,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   return (
                     <div style={{
                       display:"flex", alignItems:"center", gap:10,
-                      padding:"8px 14px", marginBottom:10, borderRadius:4,
+                      padding:"8px 14px", marginBottom:10, borderRadius:10,
                       background: urgente ? `${C.accent}18` : `${C.surface}`,
                       border: `1px solid ${urgente ? C.accent : C.border}`,
                       transition:"all .3s",
@@ -6193,7 +6186,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         color: urgente ? C.accent : C.muted,
                         background: urgente ? `${C.accent}18` : 'transparent',
                         padding: urgente ? '2px 8px' : '0',
-                        borderRadius:4,
+                        borderRadius:6,
                       }}>
                         {faltaTexto}
                       </div>
@@ -6233,19 +6226,19 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 </div>
                 <div style={{padding:16,flex:1,overflowY:"auto"}}>
                   <button onClick={()=>abrirNuevoTurnoFecha(calDrawer,"")}
-                    style={{width:"100%",marginBottom:16,padding:"8px 0",background:C.accent,border:"none",borderRadius:4,color:"white",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
+                    style={{width:"100%",marginBottom:16,padding:"8px 0",background:C.accent,border:"none",borderRadius:8,color:"white",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
                     + Nueva cita
                   </button>
                   {calTurnos.filter(t=>t.fecha?.toString().slice(0,10)===calDrawer).sort((a,b)=>a.hora>b.hora?1:-1).map((t,i)=>{
                     const color = {realizado:C.green,no_show:C.red,cancelado:"#64748b",confirmado:"#3b82f6",pendiente:C.accent}[t.estado_turno]||C.accent;
                     return (
-                      <div key={i} style={{background:C.bg,border:`1px solid ${C.border}`,borderLeft:`3px solid ${color}`,borderRadius:2,padding:"12px 14px",marginBottom:10}}>
+                      <div key={i} style={{background:C.bg,border:`1px solid ${C.border}`,borderLeft:`3px solid ${color}`,borderRadius:10,padding:"12px 14px",marginBottom:10}}>
                         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
                           <div style={{fontWeight:600,fontSize:13}}>{t.paciente_nombre||"Prospecto"}</div>
                           <div style={{display:"flex",gap:5}}>
                             <button onClick={()=>setFichaModal({turno:t, paciente:{id:t.paciente_id, nombre:t.paciente_nombre}})}
-                              style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,borderRadius:2,padding:"2px 8px",fontSize:11,cursor:"pointer"}}>📋</button>
-                            <button onClick={()=>abrirEditTurno(t)} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,borderRadius:4,padding:"2px 8px",fontSize:11,cursor:"pointer"}}>✏</button>
+                              style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,borderRadius:6,padding:"2px 8px",fontSize:11,cursor:"pointer"}}>📋</button>
+                            <button onClick={()=>abrirEditTurno(t)} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,borderRadius:6,padding:"2px 8px",fontSize:11,cursor:"pointer"}}>✏</button>
                           </div>
                         </div>
                         <div style={{fontSize:12,color:C.muted,marginTop:2}}>{t.hora?.slice(0,5)}{t.hora_fin?` - ${t.hora_fin.slice(0,5)}`:""} · {t.tratamiento}</div>
@@ -6265,7 +6258,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 </div>
                 <div style={{padding:16,borderTop:`1px solid ${C.border}`}}>
                   <button onClick={()=>{setCalVista("dia");setCalFecha(new Date(calDrawer+'T12:00:00'));setCalDrawer(null);}}
-                    style={{width:"100%",padding:"7px 0",background:"transparent",border:`1px solid ${C.border}`,borderRadius:4,color:C.muted,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
+                    style={{width:"100%",padding:"7px 0",background:"transparent",border:`1px solid ${C.border}`,borderRadius:8,color:C.muted,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
                     Ver vista dia ->
                   </button>
                 </div>
@@ -6290,7 +6283,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               const pendientes = recordatoriosProximos.filter(r => r.pendiente);
               const enviados = recordatoriosProximos.filter(r => r.ya_enviado);
               return (
-              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:16,marginBottom:16}}>
+              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:16,marginBottom:16}}>
                 <div style={{fontSize:12,fontWeight:600,color:C.muted,textTransform:"uppercase",letterSpacing:".7px",marginBottom:12}}>
                   🤖 Recordatorios automáticos — próximos 30 días · {recordatoriosProximos.length}
                 </div>
@@ -6339,7 +6332,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
             {/* Buscador */}
             <input value={recBuscar} onChange={e=>{setRecBuscar(e.target.value);fetchRecordatorios(e.target.value,recFiltroCategoria);}}
               placeholder="Buscar por prospecto, título, descripción..."
-              style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",marginBottom:12}}/>
+              style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",marginBottom:12}}/>
 
             {/* Filtros unificados: tipos fijos + categorías personalizadas */}
             {(()=>{
@@ -6360,7 +6353,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     const act = filtroTipo===t.v;
                     return (
                       <div key={t.v} onClick={()=>{setFiltroTipo(t.v);setRecFiltroCategoria("");fetchRecordatorios(recBuscar,"");}}
-                        style={{padding:"4px 12px",borderRadius:2,cursor:"pointer",fontSize:12,fontWeight:act?600:400,
+                        style={{padding:"4px 12px",borderRadius:20,cursor:"pointer",fontSize:12,fontWeight:act?600:400,
                           border:`1px solid ${act?t.color:C.border}`,
                           background:act?`${t.color}22`:"transparent",
                           color:act?t.color:C.muted,transition:"all .15s"}}>
@@ -6376,7 +6369,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         const act = filtroTipo===cat.nombre;
                         return (
                           <div key={cat.id} onClick={()=>{setFiltroTipo(cat.nombre);setRecFiltroCategoria(cat.nombre);fetchRecordatorios(recBuscar,cat.nombre);}}
-                            style={{padding:"4px 12px",borderRadius:2,cursor:"pointer",fontSize:12,fontWeight:act?600:400,
+                            style={{padding:"4px 12px",borderRadius:20,cursor:"pointer",fontSize:12,fontWeight:act?600:400,
                               border:`1px solid ${act?cat.color:C.border}`,
                               background:act?`${cat.color}22`:"transparent",
                               color:act?cat.color:C.muted,transition:"all .15s"}}>
@@ -6428,9 +6421,9 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                               background: esCuota ? "#f59e0b0d" : C.surface,
                               border:`1px solid ${vencido?"rgba(239,68,68,0.4)":esCuota?"#f59e0b44":C.border}`,
                               borderLeft:`3px solid ${meta.color}`,
-                              borderRadius:2,padding:"12px 16px",marginBottom:8,display:"flex",gap:12,alignItems:"flex-start"}}>
+                              borderRadius:12,padding:"12px 16px",marginBottom:8,display:"flex",gap:12,alignItems:"flex-start"}}>
                               {/* Ícono tipo */}
-                              <div style={{width:32,height:32,borderRadius:4,background:`${meta.color}18`,border:`1px solid ${meta.color}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>
+                              <div style={{width:32,height:32,borderRadius:8,background:`${meta.color}18`,border:`1px solid ${meta.color}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>
                                 {meta.icon}
                               </div>
                               <div style={{flex:1,minWidth:0}}>
@@ -6440,14 +6433,14 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                                   {rec.estado==="enviado" && <span style={{fontSize:10,background:"rgba(16,185,129,0.15)",color:"#10b981",padding:"1px 6px",borderRadius:4,fontWeight:600}}>📱 WA ENVIADO</span>}
                                   {rec.estado==="fallido" && <span style={{fontSize:10,background:"rgba(239,68,68,0.15)",color:C.red,padding:"1px 6px",borderRadius:4,fontWeight:600}}>⚠️ FALLIDO</span>}
                                   {hoyMismo && <span style={{fontSize:10,background:"rgba(16,185,129,0.15)",color:C.green,padding:"1px 6px",borderRadius:4,fontWeight:600}}>HOY</span>}
-                                  <span style={{fontSize:10,padding:"1px 7px",borderRadius:4,background:`${meta.color}18`,color:meta.color,fontWeight:600,border:`1px solid ${meta.color}33`}}>
+                                  <span style={{fontSize:10,padding:"1px 7px",borderRadius:10,background:`${meta.color}18`,color:meta.color,fontWeight:600,border:`1px solid ${meta.color}33`}}>
                                     {meta.label}
                                   </span>
                                 </div>
                                 <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:3}}>
                                   {rec.paciente_nombre && <span style={{fontSize:11,color:C.accent}}>👤 {rec.paciente_nombre}</span>}
                                   {rec.categoria && rec.tipo!=="cuota" && (
-                                    <span style={{fontSize:10,padding:"1px 7px",borderRadius:4,background:`${(categoriasRec.find(c=>c.nombre===rec.categoria)?.color||"#64748b")}22`,color:categoriasRec.find(c=>c.nombre===rec.categoria)?.color||C.muted,fontWeight:600}}>
+                                    <span style={{fontSize:10,padding:"1px 7px",borderRadius:10,background:`${(categoriasRec.find(c=>c.nombre===rec.categoria)?.color||"#64748b")}22`,color:categoriasRec.find(c=>c.nombre===rec.categoria)?.color||C.muted,fontWeight:600}}>
                                       {rec.categoria}
                                     </span>
                                   )}
@@ -6462,10 +6455,10 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                               <div style={{display:"flex",gap:6,flexShrink:0}}>
                                 {rec.estado==="pendiente" && (
                                   <button onClick={()=>cambiarEstadoRec(rec.id,"completado")}
-                                    style={{background:"rgba(16,185,129,0.1)",border:"1px solid rgba(16,185,129,0.3)",color:C.green,borderRadius:2,padding:"4px 10px",fontSize:11,cursor:"pointer",fontWeight:500}}>✓ Listo</button>
+                                    style={{background:"rgba(16,185,129,0.1)",border:"1px solid rgba(16,185,129,0.3)",color:C.green,borderRadius:6,padding:"4px 10px",fontSize:11,cursor:"pointer",fontWeight:500}}>✓ Listo</button>
                                 )}
                                 <button onClick={()=>eliminarRec(rec.id)}
-                                  style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,borderRadius:2,padding:"4px 8px",fontSize:11,cursor:"pointer"}}>×</button>
+                                  style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,borderRadius:6,padding:"4px 8px",fontSize:11,cursor:"pointer"}}>×</button>
                               </div>
                             </div>
                           );
@@ -6477,14 +6470,14 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               );
             })()}           {showNuevoRec && (
               <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}}>
-                <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:32,width:440,maxWidth:"92vw"}}>
+                <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:32,width:440,maxWidth:"92vw"}}>
                   <div style={{fontSize:16,fontWeight:700,marginBottom:20}}>Nuevo recordatorio</div>
                   <Field label="Título *" value={formRec.titulo} onChange={v=>setFormRec({...formRec,titulo:v})} placeholder="Cuota 2 de 3, Seguimiento, Llamar..."/>
                   <Field label="Fecha *" value={formRec.fecha_recordatorio} onChange={v=>setFormRec({...formRec,fecha_recordatorio:v})} type="date"/>
                   <div style={{marginBottom:14}}>
                     <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Categoría</label>
                     <select value={formRec.categoria} onChange={e=>setFormRec({...formRec,categoria:e.target.value})}
-                      style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
+                      style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
                       <option value="">Sin categoría</option>
                       {categoriasRec.map(c=><option key={c.id} value={c.nombre}>{c.nombre}</option>)}
                       <option value="__custom__">+ Personalizada...</option>
@@ -6492,13 +6485,13 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     {formRec.categoria === "__custom__" && (
                       <input value={formRec.categoria_personalizada} onChange={e=>setFormRec({...formRec,categoria_personalizada:e.target.value})}
                         placeholder="Nombre de la categoría"
-                        style={{marginTop:6,width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
+                        style={{marginTop:6,width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
                     )}
                   </div>
                   <div style={{marginBottom:14}}>
                     <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Cliente (opcional)</label>
                     <select value={formRec.paciente_id} onChange={e=>setFormRec({...formRec,paciente_id:e.target.value})}
-                      style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
+                      style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
                       <option value="">Sin prospecto</option>
                       {pacientes.map(p=><option key={p.id} value={p.id}>{p.nombre}</option>)}
                     </select>
@@ -6530,9 +6523,9 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
                 <input value={resQ} onChange={e=>{setResQ(e.target.value);fetchResultados(e.target.value,resFiltroTrat);}}
                   placeholder="Buscar por prospecto, servicio..."
-                  style={{flex:1,minWidth:200,background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:"9px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
+                  style={{flex:1,minWidth:200,background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
                 <select value={resFiltroTrat} onChange={e=>{setResFiltroTrat(e.target.value);fetchResultados(resQ,e.target.value);}}
-                  style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:"9px 14px",color:resFiltroTrat?C.text:C.muted,fontSize:13,fontFamily:"inherit"}}>
+                  style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 14px",color:resFiltroTrat?C.text:C.muted,fontSize:13,fontFamily:"inherit"}}>
                   <option value="">Todos los servicios</option>
                   {tratamientos.map(t=><option key={t.id} value={t.nombre}>{t.nombre}</option>)}
                 </select>
@@ -6543,7 +6536,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   ? <div style={{textAlign:"center",padding:60,color:C.muted,fontSize:13}}>Sin resultados cargados todavía</div>
                   : <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(380px,1fr))",gap:16}}>
                       {resultados.map((res,i)=>(
-                        <div key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,overflow:"hidden"}}>
+                        <div key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,overflow:"hidden"}}>
                           {/* Fotos */}
                           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:2,background:C.bg}}>
                             {res.foto_antes
@@ -6564,7 +6557,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                                 <div style={{fontSize:11,color:C.muted,marginTop:2}}>{res.fecha && new Date(res.fecha+'T12:00:00').toLocaleDateString("es-AR",{day:"numeric",month:"long",year:"numeric"})}{res.subido_por?` · ${res.subido_por}`:""}</div>
                               </div>
                               <button onClick={async()=>{await fetch(`${API}/api/resultados/${res.id}`,{method:"DELETE",headers:aH()});fetchResultados(resQ,resFiltroTrat);}}
-                                style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,borderRadius:2,padding:"3px 8px",fontSize:11,cursor:"pointer"}}>×</button>
+                                style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,borderRadius:6,padding:"3px 8px",fontSize:11,cursor:"pointer"}}>×</button>
                             </div>
                             {res.nota && <div style={{fontSize:12,color:C.muted,marginTop:8,borderTop:`1px solid ${C.border}`,paddingTop:8}}>{res.nota}</div>}
                           </div>
@@ -6636,7 +6629,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 </div>
                 <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
                   {/* Vista mes/año */}
-                  <div style={{display:"flex",background:C.bg,borderRadius:2,border:`1px solid ${C.border}`,overflow:"hidden"}}>
+                  <div style={{display:"flex",background:C.bg,borderRadius:8,border:`1px solid ${C.border}`,overflow:"hidden"}}>
                     {["mes","año"].map(v=>(
                       <div key={v} onClick={()=>{setFacVista(v);fetchFac(v,facMes,facAño);}}
                         style={{padding:"6px 16px",cursor:"pointer",fontSize:12,fontWeight:facVista===v?700:400,background:facVista===v?C.accent:"transparent",color:facVista===v?"white":C.muted}}>
@@ -6647,7 +6640,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   {/* Selector mes */}
                   {facVista==="mes" && (
                     <select value={facMes} onChange={e=>{setFacMes(e.target.value);fetchFac("mes",e.target.value,facAño);}}
-                      style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"6px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
+                      style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"6px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
                       {["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"].map((m,i)=>(
                         <option key={i+1} value={String(i+1)}>{m}</option>
                       ))}
@@ -6655,11 +6648,11 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   )}
                   {/* Selector año */}
                   <select value={facAño} onChange={e=>{setFacAño(e.target.value);fetchFac(facVista,facMes,e.target.value);}}
-                    style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"6px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
+                    style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"6px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
                     {[2024,2025,2026,2027].map(y=><option key={y} value={String(y)}>{y}</option>)}
                   </select>
                   {/* Toggle moneda */}
-                  <div style={{display:"flex",background:C.bg,borderRadius:2,border:`1px solid ${C.border}`,overflow:"hidden"}}>
+                  <div style={{display:"flex",background:C.bg,borderRadius:8,border:`1px solid ${C.border}`,overflow:"hidden"}}>
                     {["local","usd"].map(m=>(
                       <div key={m} onClick={()=>setFacMoneda(m)}
                         style={{padding:"6px 14px",cursor:"pointer",fontSize:12,fontWeight:facMoneda===m?700:400,background:facMoneda===m?C.accent:"transparent",color:facMoneda===m?"white":C.muted}}>
@@ -6704,7 +6697,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         { label:"Consultas", value:r.cantTurnos, color:C.text, sub:"en el período" },
                         { label:"Honorario prom.", value:val(r.ticketProm,r.ticketPromUSD), color:C.text, sub:"por consulta" },
                       ].map(card=>(
-                        <div key={card.label} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:"16px 18px"}}>
+                        <div key={card.label} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:"16px 18px"}}>
                           <div style={{fontSize:11,color:C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:".6px"}}>{card.label}</div>
                           <div style={{fontSize:20,fontWeight:700,color:card.color,marginBottom:2}}>{card.value}</div>
                           <div style={{fontSize:11,color:C.muted}}>{card.sub}</div>
@@ -6713,14 +6706,14 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     </div>
 
                     {/* Tabs detalle */}
-                    <div style={{display:"flex",gap:6,marginBottom:20,background:C.bg,borderRadius:2,padding:4,border:`1px solid ${C.border}`}}>
+                    <div style={{display:"flex",gap:6,marginBottom:20,background:C.bg,borderRadius:10,padding:4,border:`1px solid ${C.border}`}}>
                       {[
                         {v:"resumen",label:"Resumen"},
                         {v:"pagos",label:`Pagos (${facPagos.length})`},
                         {v:"pendientes",label:`Pendientes (${facData.pendientes?.length||0})`},
                       ].map(t=>(
                         <div key={t.v} onClick={()=>setFacVistaDetalle(t.v)}
-                          style={{flex:1,textAlign:"center",padding:"7px 0",borderRadius:4,cursor:"pointer",fontSize:12,fontWeight:facVistaDetalle===t.v?700:400,
+                          style={{flex:1,textAlign:"center",padding:"7px 0",borderRadius:7,cursor:"pointer",fontSize:12,fontWeight:facVistaDetalle===t.v?700:400,
                             background:facVistaDetalle===t.v?C.surface:"transparent",color:facVistaDetalle===t.v?C.text:C.muted,
                             boxShadow:facVistaDetalle===t.v?"0 1px 4px rgba(0,0,0,.15)":"none",transition:"all .2s"}}>
                           {t.label}
@@ -6730,13 +6723,13 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
                     {/* Vista Pagos */}
                     {facVistaDetalle === "pagos" && (
-                      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+                      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}}>
                           <div style={{fontSize:13,fontWeight:600}}>Pagos registrados</div>
                           <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                             {["todos","efectivo","transferencia","tarjeta_debito","tarjeta_credito","mercadopago"].map(fp=>(
                               <div key={fp} onClick={()=>setFacFiltroFP(fp)}
-                                style={{padding:"4px 12px",borderRadius:2,cursor:"pointer",fontSize:11,fontWeight:facFiltroFP===fp?700:400,
+                                style={{padding:"4px 12px",borderRadius:6,cursor:"pointer",fontSize:11,fontWeight:facFiltroFP===fp?700:400,
                                   background:facFiltroFP===fp?C.accent:"transparent",color:facFiltroFP===fp?"white":C.muted,
                                   border:`1px solid ${facFiltroFP===fp?C.accent:C.border}`}}>
                                 {fp==="todos"?"Todos":fp.replace("_"," ")}
@@ -6752,7 +6745,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                               {lista.length === 0
                                 ? <div style={{color:C.muted,fontSize:12,padding:"20px 0",textAlign:"center"}}>Sin pagos en este período</div>
                                 : <>
-                                    <div style={{marginBottom:12,padding:"8px 12px",background:C.accentGlow,borderRadius:4,fontSize:12}}>
+                                    <div style={{marginBottom:12,padding:"8px 12px",background:C.accentGlow,borderRadius:8,fontSize:12}}>
                                       Total filtrado: <strong>{fmt(usd?totalFiltrado/facData.cotizUSD:totalFiltrado)}</strong> · {lista.length} registro{lista.length!==1?"s":""}
                                     </div>
                                     <div style={{maxHeight:420,overflowY:"auto"}}>
@@ -6781,12 +6774,12 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
                     {/* Vista Pendientes */}
                     {facVistaDetalle === "pendientes" && (
-                      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+                      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                         <div style={{fontSize:13,fontWeight:600,marginBottom:16}}>Saldos pendientes de cobro</div>
                         {!facData.pendientes?.length
                           ? <div style={{color:C.muted,fontSize:12,padding:"20px 0",textAlign:"center"}}>¡Todo al dia! Sin saldos pendientes 🎉</div>
                           : <>
-                              <div style={{marginBottom:12,padding:"8px 12px",background:"#f59e0b18",border:"1px solid #f59e0b44",borderRadius:4,fontSize:12}}>
+                              <div style={{marginBottom:12,padding:"8px 12px",background:"#f59e0b18",border:"1px solid #f59e0b44",borderRadius:8,fontSize:12}}>
                                 Total pendiente: <strong style={{color:"#f59e0b"}}>{fmt(usd?r.totalPendienteUSD:r.totalPendiente)}</strong> · {facData.pendientes.length} plan{facData.pendientes.length!==1?"es":""}
                               </div>
                               <div style={{maxHeight:420,overflowY:"auto"}}>
@@ -6823,22 +6816,22 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     {facVistaDetalle === "resumen" && <>
 
                     {/* Funnel prospectos */}
-                    <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+                    <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:8}}>
                         <div style={{fontSize:13,fontWeight:600}}>Funnel del período</div>
                         <div style={{display:"flex",gap:6,alignItems:"center"}}>
                           <select value={funnelMes} onChange={e=>{setFunnelMes(e.target.value);fetchFunnelNuevo(e.target.value,funnelAño);}}
-                            style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"4px 8px",color:C.text,fontSize:11,fontFamily:"inherit"}}>
+                            style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:6,padding:"4px 8px",color:C.text,fontSize:11,fontFamily:"inherit"}}>
                             {["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"].map((m,i)=>(
                               <option key={i+1} value={String(i+1)}>{m}</option>
                             ))}
                           </select>
                           <select value={funnelAño} onChange={e=>{setFunnelAño(e.target.value);fetchFunnelNuevo(funnelMes,e.target.value);}}
-                            style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"4px 8px",color:C.text,fontSize:11,fontFamily:"inherit"}}>
+                            style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:6,padding:"4px 8px",color:C.text,fontSize:11,fontFamily:"inherit"}}>
                             {[2024,2025,2026,2027].map(y=><option key={y} value={y}>{y}</option>)}
                           </select>
                           <button onClick={()=>fetchFunnelNuevo(funnelMes,funnelAño)}
-                            style={{background:"transparent",border:`1px solid ${C.border}`,borderRadius:2,padding:"4px 8px",color:C.muted,fontSize:11,cursor:"pointer"}}>
+                            style={{background:"transparent",border:`1px solid ${C.border}`,borderRadius:6,padding:"4px 8px",color:C.muted,fontSize:11,cursor:"pointer"}}>
                             {funnelLoading?"...":"↻"}
                           </button>
                         </div>
@@ -6853,7 +6846,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                               {label:"Presentados",          value:funnelNuevo.etapas.presentados||0, color:"#10b981"},
                               {label:"Honorarios aceptados", value:funnelNuevo.etapas.vendidos||0,    color:C.green},
                             ].map(e=>(
-                              <div key={e.label} style={{flex:1,minWidth:80,background:C.bg,borderRadius:2,padding:"12px 10px",textAlign:"center",border:`1px solid ${e.color}33`}}>
+                              <div key={e.label} style={{flex:1,minWidth:80,background:C.bg,borderRadius:10,padding:"12px 10px",textAlign:"center",border:`1px solid ${e.color}33`}}>
                                 <div style={{fontSize:22,fontWeight:700,color:e.color}}>{e.value}</div>
                                 <div style={{fontSize:10,color:C.muted,marginTop:3}}>{e.label}</div>
                               </div>
@@ -6867,7 +6860,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       ) : (
                         <div style={{textAlign:"center",padding:16}}>
                           <button onClick={()=>fetchFunnelNuevo(funnelMes,funnelAño)}
-                            style={{background:C.accent,border:"none",borderRadius:4,padding:"8px 20px",color:"white",fontSize:12,cursor:"pointer",fontWeight:600}}>
+                            style={{background:C.accent,border:"none",borderRadius:8,padding:"8px 20px",color:"white",fontSize:12,cursor:"pointer",fontWeight:600}}>
                             Cargar funnel
                           </button>
                         </div>
@@ -6876,7 +6869,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}}>
                       {/* Por tratamiento */}
-                      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20}}>
+                      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20}}>
                         <div style={{fontSize:13,fontWeight:600,marginBottom:14}}>Por tratamiento</div>
                         {facData.porTratamiento?.length===0 && <div style={{color:C.muted,fontSize:12}}>Sin datos</div>}
                         {facData.porTratamiento?.map((t,i)=>{
@@ -6897,7 +6890,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       </div>
 
                       {/* Por profesional */}
-                      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20}}>
+                      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20}}>
                         <div style={{fontSize:13,fontWeight:600,marginBottom:14}}>Por profesional</div>
                         {facData.porProfesional?.length===0 && <div style={{color:C.muted,fontSize:12}}>Sin datos</div>}
                         {facData.porProfesional?.map((p,i)=>{
@@ -6919,11 +6912,11 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     </div>
 
                     {/* Por forma de pago */}
-                    <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+                    <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                       <div style={{fontSize:13,fontWeight:600,marginBottom:14}}>Por forma de pago</div>
                       <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
                         {facData.porFormaPago?.map((f,i)=>(
-                          <div key={i} style={{background:C.bg,borderRadius:2,padding:"12px 16px",border:`1px solid ${C.border}`,minWidth:120}}>
+                          <div key={i} style={{background:C.bg,borderRadius:10,padding:"12px 16px",border:`1px solid ${C.border}`,minWidth:120}}>
                             <div style={{fontSize:11,color:C.muted,textTransform:"capitalize",marginBottom:4}}>{f.fp}</div>
                             <div style={{fontSize:15,fontWeight:700}}>{fmt(usd?f.totalUSD:f.total)}</div>
                           </div>
@@ -6933,7 +6926,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
                     {/* Evolución mensual (solo vista año) */}
                     {facVista==="año" && facData.porMes?.length > 0 && (
-                      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20}}>
+                      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20}}>
                         <div style={{fontSize:13,fontWeight:600,marginBottom:16}}>Evolución mensual</div>
                         <div style={{display:"flex",gap:6,alignItems:"flex-end",height:120}}>
                           {facData.porMes.map((m,i)=>{
@@ -6969,7 +6962,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               <p style={{color:C.muted,fontSize:13,marginBottom:20}}>{client?.nombre}</p>
 
               {/* Tabs internas */}
-              <div style={{display:"flex",gap:4,marginBottom:24,background:C.surface,borderRadius:2,padding:4,border:`1px solid ${C.border}`}}>
+              <div style={{display:"flex",gap:4,marginBottom:24,background:C.surface,borderRadius:10,padding:4,border:`1px solid ${C.border}`}}>
                 {[
                   {v:"clinica",  l:"🏢 Agencia"},
                   {v:"agenda",   l:"📅 Agenda"},
@@ -6978,7 +6971,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   {v:"fuentes",  l:"📊 Fuentes"},
                 ].map(t=>(
                   <div key={t.v} onClick={()=>setConfTab(t.v)}
-                    style={{flex:1,textAlign:"center",padding:"8px 0",borderRadius:4,cursor:"pointer",fontSize:13,fontWeight:confTab===t.v?600:400,
+                    style={{flex:1,textAlign:"center",padding:"8px 0",borderRadius:7,cursor:"pointer",fontSize:13,fontWeight:confTab===t.v?600:400,
                       background:confTab===t.v?C.accent:"transparent",color:confTab===t.v?"white":C.muted,transition:"all .15s"}}>
                     {t.l}
                   </div>
@@ -6992,11 +6985,11 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               {plan !== 'base' && <WAConfigPanel client={client} />}
 
               {/* Logo de la agencia */}
-              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                 <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>🖼️ Logo de la agencia</div>
                 <div style={{fontSize:12,color:C.muted,marginBottom:14}}>Se usa en propuestas y comunicaciones. PNG o JPG, máx 2MB.</div>
                 <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:14}}>
-                  <div style={{width:64,height:64,borderRadius:2,background:C.bg,border:`1px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",flexShrink:0}}>
+                  <div style={{width:64,height:64,borderRadius:10,background:C.bg,border:`1px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",flexShrink:0}}>
                     {logoPreview ? <img src={logoPreview} style={{width:"100%",height:"100%",objectFit:"contain"}} alt="Logo"/> : <span style={{fontSize:24}}>⚖️</span>}
                   </div>
                   <div style={{flex:1}}>
@@ -7009,7 +7002,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         reader.onload = ev => setLogoPreview(ev.target.result);
                         reader.readAsDataURL(file);
                       }}/>
-                    <label htmlFor="logo-upload" style={{display:"inline-block",padding:"7px 14px",borderRadius:2,border:`1px solid ${C.border}`,background:C.bg,color:C.muted,fontSize:12,cursor:"pointer",marginBottom:8}}>
+                    <label htmlFor="logo-upload" style={{display:"inline-block",padding:"7px 14px",borderRadius:8,border:`1px solid ${C.border}`,background:C.bg,color:C.muted,fontSize:12,cursor:"pointer",marginBottom:8}}>
                       📁 Elegir imagen
                     </label>
                     {logoPreview && logoPreview !== client?.logo_url && (
@@ -7018,7 +7011,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         const r = await fetch(`${API}/api/clientes/${client.id}/logo`,{method:'PUT',headers:jH(),body:JSON.stringify({logo_base64:logoPreview})});
                         if(r.ok){setLogoOk(true);setTimeout(()=>setLogoOk(false),2000);}
                         setLogoGuardando(false);
-                      }} style={{display:"block",padding:"7px 14px",borderRadius:4,border:"none",background:C.accent,color:"white",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+                      }} style={{display:"block",padding:"7px 14px",borderRadius:8,border:"none",background:C.accent,color:"white",fontSize:12,fontWeight:600,cursor:"pointer"}}>
                         {logoGuardando?'Guardando...':logoOk?'✓ Guardado':'Guardar logo'}
                       </button>
                     )}
@@ -7027,11 +7020,11 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               </div>
 
               {/* Protocolo de atención */}
-              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                 <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>Protocolo de atención</div>
                 <div style={{fontSize:12,color:C.muted,marginBottom:14}}>Sube un documento .doc o .docx con el protocolo de atención de la agencia.</div>
                 {client?.protocolo_url && (
-                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14,padding:"10px 14px",background:C.bg,borderRadius:2,border:`1px solid ${C.border}`}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14,padding:"10px 14px",background:C.bg,borderRadius:8,border:`1px solid ${C.border}`}}>
                     <span style={{fontSize:18}}>📄</span>
                     <div style={{flex:1}}>
                       <div style={{fontSize:12,fontWeight:600}}>{client.protocolo_nombre||'Protocolo'}</div>
@@ -7064,12 +7057,12 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     } catch(err) { alert('Error: '+err.message); if(btn) btn.textContent='Subir protocolo'; }
                   }}/>
                 <label htmlFor="protocolo-upload" id="protocolo-btn"
-                  style={{display:"inline-block",padding:"7px 14px",borderRadius:2,border:`1px solid ${C.border}`,background:C.bg,color:C.muted,fontSize:12,cursor:"pointer"}}>
+                  style={{display:"inline-block",padding:"7px 14px",borderRadius:8,border:`1px solid ${C.border}`,background:C.bg,color:C.muted,fontSize:12,cursor:"pointer"}}>
                   Subir protocolo
                 </label>
               </div>
 
-              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                 <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>Google</div>
                 <div style={{fontSize:12,color:C.muted,marginBottom:14}}>
                   {calStatus?.conectado ? <span style={{color:C.green}}>✓ Conectado</span> : <span style={{color:C.yellow}}>⚠ No conectado</span>}
@@ -7083,7 +7076,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               {confTab === "agenda" && (<>
 
               {/* Tratamientos — oculto para estudios jurídicos (los servicios se definen por propuesta) */}
-              {false && <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+              {false && <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
                   <div>
                     <div style={{fontSize:13,fontWeight:600,marginBottom:2}}>Tratamientos</div>
@@ -7094,11 +7087,11 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 {tratamientos.length === 0 ? (
                   <div style={{fontSize:12,color:C.muted,textAlign:"center",padding:"12px 0"}}>Sin tratamientos cargados</div>
                 ) : tratamientos.map(t => (
-                  <div key={t.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",background:C.bg,borderRadius:2,border:`1px solid ${C.border}`,marginBottom:8}}>
+                  <div key={t.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",background:C.bg,borderRadius:8,border:`1px solid ${C.border}`,marginBottom:8}}>
                     <div>
                       <div style={{display:"flex",alignItems:"center",gap:8}}>
                         <div style={{fontSize:13,fontWeight:500}}>{t.nombre}</div>
-                        <span style={{fontSize:10,padding:"2px 7px",borderRadius:2,fontWeight:600,
+                        <span style={{fontSize:10,padding:"2px 7px",borderRadius:20,fontWeight:600,
                           background:t.tipo==="valoracion"?"rgba(59,130,246,0.12)":"rgba(139,92,246,0.12)",
                           color:t.tipo==="valoracion"?"#3b82f6":"#8b5cf6",border:`1px solid ${t.tipo==="valoracion"?"rgba(59,130,246,0.3)":"rgba(139,92,246,0.3)"}`}}>
                           {t.tipo==="valoracion"?"Demo Call":"Servicio"}
@@ -7110,7 +7103,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   </div>
                 ))}
                 {showNewTrat && (
-                  <div style={{marginTop:12,padding:16,background:C.bg,borderRadius:2,border:`1px solid ${C.border}`}}>
+                  <div style={{marginTop:12,padding:16,background:C.bg,borderRadius:8,border:`1px solid ${C.border}`}}>
                     <Field label="Nombre *" value={formTrat.nombre} onChange={v=>setFormTrat({...formTrat,nombre:v})} placeholder="Ultraformer, Botox..."/>
                     <div style={{marginBottom:14}}>
                       <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:8}}>Tipo</label>
@@ -7118,7 +7111,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         {[{v:"tratamiento",l:"💉 Tratamiento",d:"Servicio que se cobra"},
                           {v:"valoracion",l:"🩺 Valoración",d:"Primera consulta/evaluación"}].map(op=>(
                           <div key={op.v} onClick={()=>setFormTrat({...formTrat,tipo:op.v})}
-                            style={{flex:1,padding:"10px 12px",borderRadius:4,border:`1.5px solid ${(formTrat.tipo||"tratamiento")===op.v?C.accent:C.border}`,
+                            style={{flex:1,padding:"10px 12px",borderRadius:8,border:`1.5px solid ${(formTrat.tipo||"tratamiento")===op.v?C.accent:C.border}`,
                               background:(formTrat.tipo||"tratamiento")===op.v?C.accentGlow:"transparent",cursor:"pointer",transition:"all .15s"}}>
                             <div style={{fontSize:12,fontWeight:600,color:(formTrat.tipo||"tratamiento")===op.v?C.accentLight:C.text}}>{op.l}</div>
                             <div style={{fontSize:10,color:C.muted,marginTop:2}}>{op.d}</div>
@@ -7137,7 +7130,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               </div>}
 
               {/* Profesionales */}
-              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
                   <div>
                     <div style={{fontSize:13,fontWeight:600,marginBottom:2}}>Profesionales</div>
@@ -7150,7 +7143,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 ) : profesionales.map(p => (
                   <div key={p.id} style={{marginBottom:8}}>
                     {editingProf === p.id ? (
-                      <div style={{padding:14,background:C.bg,borderRadius:2,border:`1.5px solid ${C.accent}`}}>
+                      <div style={{padding:14,background:C.bg,borderRadius:8,border:`1.5px solid ${C.accent}`}}>
                         <Field label="Nombre *" value={formEditProf.nombre} onChange={v=>setFormEditProf({...formEditProf,nombre:v})} placeholder="Dr. García"/>
                         <Field label="Rol" value={formEditProf.rol} onChange={v=>setFormEditProf({...formEditProf,rol:v})} placeholder="Socio, Abogado/a, Asesor..."/>
                         <Field label="Email (para invitar a la consulta)" value={formEditProf.email} onChange={v=>setFormEditProf({...formEditProf,email:v})} placeholder="asesor@estudio.com"/>
@@ -7158,7 +7151,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                           <div style={{fontSize:11,color:C.muted,marginBottom:4}}>Color en calendario</div>
                           <div style={{display:"flex",gap:4}}>{PROF_COLORS.map(c=>(
                             <div key={c} onClick={()=>setFormEditProf({...formEditProf,color:c})}
-                              style={{width:22,height:22,borderRadius:4,background:c,cursor:"pointer",border:formEditProf.color===c?'2px solid white':'2px solid transparent'}}/>
+                              style={{width:22,height:22,borderRadius:6,background:c,cursor:"pointer",border:formEditProf.color===c?'2px solid white':'2px solid transparent'}}/>
                           ))}</div>
                         </div>
                         <div style={{display:"flex",gap:8,justifyContent:"flex-end",marginTop:8}}>
@@ -7167,7 +7160,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         </div>
                       </div>
                     ) : (
-                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",background:C.bg,borderRadius:2,border:`1px solid ${C.border}`}}>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",background:C.bg,borderRadius:8,border:`1px solid ${C.border}`}}>
                         <div style={{display:"flex",alignItems:"center",gap:8}}>
                           <div style={{width:10,height:10,borderRadius:"50%",background:p.color||C.accent,flexShrink:0}}/>
                           <div>
@@ -7180,7 +7173,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         </div>
                         <div style={{display:"flex",gap:6}}>
                           <button onClick={()=>{setEditingProf(p.id);setFormEditProf({nombre:p.nombre,rol:p.rol||'',email:p.email||'',color:p.color||''});}}
-                            style={{background:"transparent",border:`1px solid ${C.border}`,borderRadius:2,padding:"4px 10px",color:C.muted,cursor:"pointer",fontSize:11}}>✏️</button>
+                            style={{background:"transparent",border:`1px solid ${C.border}`,borderRadius:6,padding:"4px 10px",color:C.muted,cursor:"pointer",fontSize:11}}>✏️</button>
                           <button onClick={()=>eliminarProfesional(p.id)}
                             style={{background:"transparent",border:"none",color:C.muted,cursor:"pointer",fontSize:16,lineHeight:1}}>×</button>
                         </div>
@@ -7189,7 +7182,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   </div>
                 ))}
                 {showNewProf && (
-                  <div style={{marginTop:12,padding:16,background:C.bg,borderRadius:2,border:`1px solid ${C.border}`}}>
+                  <div style={{marginTop:12,padding:16,background:C.bg,borderRadius:8,border:`1px solid ${C.border}`}}>
                     <Field label="Nombre *" value={formProf.nombre} onChange={v=>setFormProf({...formProf,nombre:v})} placeholder="Dr. García"/>
                     <Field label="Rol" value={formProf.rol} onChange={v=>setFormProf({...formProf,rol:v})} placeholder="Socio, Abogado/a, Asesor..."/>
                     <Field label="Email (para invitar a la consulta)" value={formProf.email} onChange={v=>setFormProf({...formProf,email:v})} placeholder="martin@estudio.com"/>
@@ -7197,7 +7190,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       <div style={{fontSize:11,color:C.muted,marginBottom:4}}>Color en calendario</div>
                       <div style={{display:"flex",gap:4}}>{PROF_COLORS.map(c=>(
                         <div key={c} onClick={()=>setFormProf({...formProf,color:c})}
-                          style={{width:22,height:22,borderRadius:4,background:c,cursor:"pointer",border:formProf.color===c?'2px solid white':'2px solid transparent'}}/>
+                          style={{width:22,height:22,borderRadius:6,background:c,cursor:"pointer",border:formProf.color===c?'2px solid white':'2px solid transparent'}}/>
                       ))}</div>
                     </div>
                     <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
@@ -7213,7 +7206,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
               {/* Usuarios del panel — solo admin y dueño */}
               {['admin','dueno'].includes(rango) && (
-                <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+                <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
                     <div>
                       <div style={{fontSize:13,fontWeight:600,marginBottom:2}}>Usuarios del panel</div>
@@ -7224,7 +7217,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   {usuarios.length === 0 ? (
                     <div style={{fontSize:12,color:C.muted,textAlign:"center",padding:"12px 0"}}>Sin usuarios adicionales</div>
                   ) : usuarios.map(u => (
-                    <div key={u.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",background:C.bg,borderRadius:2,border:`1px solid ${C.border}`,marginBottom:8}}>
+                    <div key={u.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",background:C.bg,borderRadius:8,border:`1px solid ${C.border}`,marginBottom:8}}>
                       <div>
                         <div style={{fontSize:13,fontWeight:500}}>{u.nombre}</div>
                         <div style={{display:"flex",alignItems:"center",gap:8,marginTop:2}}>
@@ -7243,7 +7236,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     </div>
                   ))}
                   {showNewUsuario && (
-                    <div style={{marginTop:12,padding:16,background:C.bg,borderRadius:2,border:`1px solid ${C.border}`}}>
+                    <div style={{marginTop:12,padding:16,background:C.bg,borderRadius:8,border:`1px solid ${C.border}`}}>
                       <Field label="Nombre *" value={formUsuario.nombre} onChange={v=>setFormUsuario({...formUsuario,nombre:v})} placeholder="Ana García"/>
                       <Field label="Email *" value={formUsuario.email} onChange={v=>setFormUsuario({...formUsuario,email:v})} placeholder="ana@skyward.com" type="email"/>
                       <Field label="Contraseña *" value={formUsuario.password} onChange={v=>setFormUsuario({...formUsuario,password:v})} placeholder="••••••••" type="password"/>
@@ -7253,7 +7246,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         <div style={{display:"flex",gap:8}}>
                           {[{v:"dueno",l:"Socio / Dueño",d:"Acceso completo"},{v:"profesional",l:"Abogado Auxiliar",d:"Clientes, Casos y Honorarios"},{v:"staff",l:"Secretario/a",d:"Clientes y Agenda"}].map(r=>(
                             <div key={r.v} onClick={()=>setFormUsuario({...formUsuario,rango:r.v})}
-                              style={{flex:1,padding:"8px 12px",borderRadius:4,border:`1px solid ${formUsuario.rango===r.v?C.accent:C.border}`,background:formUsuario.rango===r.v?C.accentGlow:"transparent",cursor:"pointer"}}>
+                              style={{flex:1,padding:"8px 12px",borderRadius:8,border:`1px solid ${formUsuario.rango===r.v?C.accent:C.border}`,background:formUsuario.rango===r.v?C.accentGlow:"transparent",cursor:"pointer"}}>
                               <div style={{fontSize:12,fontWeight:600,color:formUsuario.rango===r.v?C.accentLight:C.text}}>{r.l}</div>
                               <div style={{fontSize:10,color:C.muted}}>{r.d}</div>
                             </div>
@@ -7294,25 +7287,25 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   Cargando configuración...
                   <br/>
                   <button onClick={()=>fetch(`${API}/api/campos-agenda?cliente_id=${client.id}`).then(r=>r.json()).then(setCampos).catch(()=>{})}
-                    style={{marginTop:12,background:C.accent,border:"none",borderRadius:4,padding:"8px 16px",color:"white",fontSize:12,cursor:"pointer"}}>
+                    style={{marginTop:12,background:C.accent,border:"none",borderRadius:8,padding:"8px 16px",color:"white",fontSize:12,cursor:"pointer"}}>
                     Reintentar
                   </button>
                 </div>
               )}
               {campos && (
-                <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+                <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
                     <div>
                       <div style={{fontSize:13,fontWeight:600,marginBottom:2}}>📱 Mensajes automáticos por WhatsApp</div>
                       <div style={{fontSize:12,color:C.muted,marginBottom:14}}>El bot le escribe al prospecto cuando se agenda o el dia anterior al turno</div>
                     </div>
                     <div onClick={()=>setCampos({...campos,recordatorio_activo:!campos.recordatorio_activo})}
-                      style={{width:36,height:20,borderRadius:4,background:campos.recordatorio_activo!==false?C.accent:C.border,cursor:"pointer",position:"relative",transition:"background .2s",flexShrink:0,marginTop:2}}>
+                      style={{width:36,height:20,borderRadius:10,background:campos.recordatorio_activo!==false?C.accent:C.border,cursor:"pointer",position:"relative",transition:"background .2s",flexShrink:0,marginTop:2}}>
                       <div style={{position:"absolute",top:2,left:campos.recordatorio_activo!==false?18:2,width:16,height:16,borderRadius:"50%",background:"white",transition:"left .2s"}}/>
                     </div>
                   </div>
 
-                  <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:2,padding:"10px 14px",marginBottom:14,fontSize:11,color:C.muted,lineHeight:1.7}}>
+                  <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",marginBottom:14,fontSize:11,color:C.muted,lineHeight:1.7}}>
                     Variables disponibles: <strong style={{color:C.accentLight}}>NOMBRE</strong> · <strong style={{color:C.accentLight}}>TRATAMIENTO</strong> · <strong style={{color:C.accentLight}}>PROFESIONAL</strong> · <strong style={{color:C.accentLight}}>FECHA</strong> · <strong style={{color:C.accentLight}}>HORA</strong> · <strong style={{color:C.accentLight}}>CLINICA</strong>
                   </div>
 
@@ -7321,9 +7314,9 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     <textarea value={campos.msg_confirmacion||""} onChange={e=>setCampos({...campos,msg_confirmacion:e.target.value})}
                       placeholder={"Hola NOMBRE 👋 Tu turno de TRATAMIENTO quedó confirmado para el FECHA a las HORA hs. ¡Te esperamos! 💙"}
                       rows={3}
-                      style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:12,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
+                      style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:12,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
                     {campos.msg_confirmacion && (
-                      <div style={{marginTop:6,padding:"8px 12px",background:C.accentGlow,border:`1px solid ${C.accent}44`,borderRadius:4,fontSize:11,color:C.muted,lineHeight:1.6}}>
+                      <div style={{marginTop:6,padding:"8px 12px",background:C.accentGlow,border:`1px solid ${C.accent}44`,borderRadius:8,fontSize:11,color:C.muted,lineHeight:1.6}}>
                         <span style={{fontWeight:600,color:C.accentLight}}>Preview: </span>
                         {campos.msg_confirmacion
                           .replace(/NOMBRE/gi,"Ana García")
@@ -7341,9 +7334,9 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     <textarea value={campos.msg_recordatorio||""} onChange={e=>setCampos({...campos,msg_recordatorio:e.target.value})}
                       placeholder={"Hola NOMBRE! 🔔 Te recordamos que mañana tenés turno de TRATAMIENTO a las HORA hs. ¡Te esperamos! 💙"}
                       rows={3}
-                      style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:12,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
+                      style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:12,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
                     {campos.msg_recordatorio && (
-                      <div style={{marginTop:6,padding:"8px 12px",background:C.accentGlow,border:`1px solid ${C.accent}44`,borderRadius:4,fontSize:11,color:C.muted,lineHeight:1.6}}>
+                      <div style={{marginTop:6,padding:"8px 12px",background:C.accentGlow,border:`1px solid ${C.accent}44`,borderRadius:8,fontSize:11,color:C.muted,lineHeight:1.6}}>
                         <span style={{fontWeight:600,color:C.accentLight}}>Preview: </span>
                         {campos.msg_recordatorio
                           .replace(/NOMBRE/gi,"Ana García")
@@ -7362,14 +7355,14 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
               {/* Seguimientos automáticos */}
               {botConfig && (
-              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
                   <div>
                     <div style={{fontSize:13,fontWeight:600}}>💬 Seguimientos automáticos</div>
                     <div style={{fontSize:12,color:C.muted,marginTop:2}}>El bot escribe solo antes y después de cada turno</div>
                   </div>
                   <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}}>
-                    <div style={{width:36,height:20,borderRadius:4,background:botConfig?.seguimiento_activo?"#6366f1":"#374151",position:"relative",transition:"background .2s",cursor:"pointer"}}
+                    <div style={{width:36,height:20,borderRadius:10,background:botConfig?.seguimiento_activo?"#6366f1":"#374151",position:"relative",transition:"background .2s",cursor:"pointer"}}
                       onClick={()=>setBotConfig({...(botConfig||{}),seguimiento_activo:!botConfig?.seguimiento_activo})}>
                       <div style={{position:"absolute",top:2,left:botConfig?.seguimiento_activo?18:2,width:16,height:16,borderRadius:"50%",background:"white",transition:"left .2s"}}/>
                     </div>
@@ -7380,7 +7373,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 {botConfig?.seguimiento_activo && (
                   <div style={{marginTop:16}}>
                     {/* 7 días antes */}
-                    <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:2,padding:"12px 14px",marginBottom:12}}>
+                    <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:10,padding:"12px 14px",marginBottom:12}}>
                       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
                         <div style={{fontSize:12,fontWeight:600,color:C.accentLight}}>📆 7 días antes del turno</div>
                         <label style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer"}}>
@@ -7394,12 +7387,12 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         onChange={e=>setBotConfig({...(botConfig||{}),seguimiento_msg_7dias:e.target.value})}
                         placeholder={"Dejá vacío para que Claude genere el mensaje según el contexto del chat\nVariables: {nombre} {fecha} {hora} {tratamiento}"}
                         rows={3}
-                        style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
+                        style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
                       <div style={{fontSize:10,color:C.muted,marginTop:4}}>Si está vacío, Claude genera el mensaje personalizado usando el historial del chat del prospecto.</div>
                     </div>
 
                     {/* Post turno */}
-                    <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:2,padding:"12px 14px",marginBottom:12}}>
+                    <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:10,padding:"12px 14px",marginBottom:12}}>
                       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
                         <div style={{fontSize:12,fontWeight:600,color:C.accentLight}}>🌟 Post-turno</div>
                         <label style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer"}}>
@@ -7413,7 +7406,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         <span style={{fontSize:12,color:C.muted,whiteSpace:"nowrap"}}>Enviar a las</span>
                         <select value={botConfig?.seguimiento_post_horas||24}
                           onChange={e=>setBotConfig({...(botConfig||{}),seguimiento_post_horas:parseInt(e.target.value)})}
-                          style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:"4px 8px",color:C.text,fontSize:12}}>
+                          style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:6,padding:"4px 8px",color:C.text,fontSize:12}}>
                           <option value={2}>2 horas después</option>
                           <option value={4}>4 horas después</option>
                           <option value={24}>24 horas después</option>
@@ -7425,7 +7418,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         onChange={e=>setBotConfig({...(botConfig||{}),seguimiento_msg_post:e.target.value})}
                         placeholder={"Dejá vacío para que Claude genere el mensaje según el contexto del chat\nVariables: {nombre} {tratamiento}"}
                         rows={3}
-                        style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
+                        style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
                       <div style={{fontSize:10,color:C.muted,marginTop:4}}>Si está vacío, Claude pregunta cómo se sintió y si tiene dudas sobre el post-tratamiento.</div>
                     </div>
 
@@ -7447,7 +7440,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
               {/* Monedas */}
               {campos && (
-                <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+                <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                   <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>Monedas aceptadas</div>
                   <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Las monedas que usa la agencia para cobrar</div>
 
@@ -7455,7 +7448,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   {(campos.monedas||"").split(",").filter(Boolean).length > 0 && (
                     <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:12}}>
                       {(campos.monedas||"").split(",").filter(Boolean).map(code => (
-                        <div key={code} style={{display:"flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:4,background:C.accentGlow,border:`1px solid ${C.accent}`,fontSize:12,fontWeight:600,color:C.accentLight}}>
+                        <div key={code} style={{display:"flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:8,background:C.accentGlow,border:`1px solid ${C.accent}`,fontSize:12,fontWeight:600,color:C.accentLight}}>
                           {code}
                           <span onClick={()=>setCampos({...campos,monedas:(campos.monedas||"").split(",").filter(x=>x&&x!==code).join(",")})}
                             style={{cursor:"pointer",color:C.muted,fontSize:14,lineHeight:1}}>×</span>
@@ -7475,7 +7468,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
               {/* Métodos de pago */}
               {campos && (
-                <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+                <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                   <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>Métodos de pago</div>
                   <div style={{fontSize:12,color:C.muted,marginBottom:14}}>Los métodos que acepta la agencia. Aparecen en todos los modales de pago.</div>
                   {(() => {
@@ -7501,7 +7494,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                             const active = activos.includes(v);
                             return (
                               <div key={v} onClick={()=>toggle(v)}
-                                style={{padding:"7px 14px",borderRadius:4,border:`1px solid ${active?C.accent:C.border}`,
+                                style={{padding:"7px 14px",borderRadius:8,border:`1px solid ${active?C.accent:C.border}`,
                                   background:active?C.accentGlow:"transparent",cursor:"pointer",fontSize:12,
                                   fontWeight:active?700:400,color:active?C.accentLight:C.muted,transition:"all .15s"}}>
                                 {l}
@@ -7513,7 +7506,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         {custom.length > 0 && (
                           <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
                             {custom.map(v=>(
-                              <div key={v} style={{display:"flex",alignItems:"center",gap:4,padding:"5px 12px",borderRadius:4,background:C.accentGlow,border:`1px solid ${C.accent}`,fontSize:12,fontWeight:600,color:C.accentLight}}>
+                              <div key={v} style={{display:"flex",alignItems:"center",gap:4,padding:"5px 12px",borderRadius:8,background:C.accentGlow,border:`1px solid ${C.accent}`,fontSize:12,fontWeight:600,color:C.accentLight}}>
                                 {v}
                                 <span onClick={()=>toggle(v)} style={{cursor:"pointer",color:C.muted,fontSize:14,lineHeight:1}}>×</span>
                               </div>
@@ -7532,18 +7525,18 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               )}
 
               {/* Categorías de recordatorio */}
-              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                 <div style={{fontSize:13,fontWeight:600,marginBottom:2}}>Categorías de recordatorios</div>
                 <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Etiquetas para filtrar y clasificar recordatorios</div>
 
                 {categoriasRec.length === 0 ? (
-                  <div style={{fontSize:12,color:C.muted,marginBottom:16,padding:"10px 14px",background:C.bg,borderRadius:2,border:`1px solid ${C.border}`}}>
+                  <div style={{fontSize:12,color:C.muted,marginBottom:16,padding:"10px 14px",background:C.bg,borderRadius:8,border:`1px solid ${C.border}`}}>
                     Sin categorías creadas todavía
                   </div>
                 ) : (
                   <div style={{marginBottom:16}}>
                     {categoriasRec.map(c=>(
-                      <div key={c.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",background:C.bg,borderRadius:2,border:`1px solid ${C.border}`,marginBottom:8}}>
+                      <div key={c.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",background:C.bg,borderRadius:8,border:`1px solid ${C.border}`,marginBottom:8}}>
                         <div style={{display:"flex",alignItems:"center",gap:10}}>
                           <div style={{width:14,height:14,borderRadius:"50%",background:c.color,flexShrink:0}}/>
                           <span style={{fontSize:13,fontWeight:500}}>{c.nombre}</span>
@@ -7559,25 +7552,25 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 <div style={{display:"flex",gap:8,alignItems:"center"}}>
                   <div style={{width:32,height:32,flexShrink:0,position:"relative"}}>
                     <input type="color" value={newCatRec.color} onChange={e=>setNewCatRec({...newCatRec,color:e.target.value})}
-                      style={{width:"100%",height:"100%",padding:2,background:"transparent",border:`1px solid ${C.border}`,borderRadius:4,cursor:"pointer"}}/>
+                      style={{width:"100%",height:"100%",padding:2,background:"transparent",border:`1px solid ${C.border}`,borderRadius:6,cursor:"pointer"}}/>
                   </div>
                   <input value={newCatRec.nombre} onChange={e=>setNewCatRec({...newCatRec,nombre:e.target.value})}
                     onKeyDown={e=>e.key==="Enter"&&crearCategoriaRec()}
                     placeholder="Nombre de la categoría..."
-                    style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
+                    style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
                   <Btn onClick={crearCategoriaRec} disabled={savingCatRec||!newCatRec.nombre} small>{savingCatRec?"...":"+ Agregar"}</Btn>
                 </div>
               </div>
 
               {/* Notificaciones Push */}
-              <div id="push-settings-block" style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16,transition:"box-shadow .3s, border-color .3s"}}>
+              <div id="push-settings-block" style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16,transition:"box-shadow .3s, border-color .3s"}}>
                 <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>🔔 Notificaciones push</div>
                 <div style={{fontSize:12,color:C.muted,marginBottom:14}}>Recibí alertas en tu celular aunque el panel esté cerrado</div>
                 <PushSettings API={API} jH={jH} aH={aH} onActivado={onPushActivado}/>
               </div>
 
               {/* Importar pacientes */}
-              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+              <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                   <div>
                     <div style={{fontSize:13,fontWeight:600,marginBottom:3}}>Importar pacientes</div>
@@ -7588,7 +7581,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               </div>
 
               {campos && (
-                <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+                <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                   <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>Datos para agendar</div>
                   <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Qué le pide el bot al prospecto</div>
                   {[
@@ -7600,17 +7593,17 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     { key:"modalidad_activo", label:"Modalidad (presencial/virtual)" },
                     { key:"notas_activo", label:"Notas adicionales" },
                   ].map(f => (
-                    <div key={f.key} style={{marginBottom:12,padding:12,background:C.bg,borderRadius:2,border:`1px solid ${C.border}`}}>
+                    <div key={f.key} style={{marginBottom:12,padding:12,background:C.bg,borderRadius:8,border:`1px solid ${C.border}`}}>
                       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                         <span style={{fontSize:13}}>{f.label}</span>
                         <div onClick={()=>setCampos({...campos,[f.key]:!campos[f.key]})}
-                          style={{width:36,height:20,borderRadius:4,background:campos[f.key]?C.accent:C.border,cursor:"pointer",position:"relative",transition:"background .2s",flexShrink:0}}>
+                          style={{width:36,height:20,borderRadius:10,background:campos[f.key]?C.accent:C.border,cursor:"pointer",position:"relative",transition:"background .2s",flexShrink:0}}>
                           <div style={{position:"absolute",top:2,left:campos[f.key]?18:2,width:16,height:16,borderRadius:"50%",background:"white",transition:"left .2s"}}/>
                         </div>
                       </div>
                       {f.lk && campos[f.key] && (
                         <input value={campos[f.lk]??f.ld} onChange={e=>setCampos({...campos,[f.lk]:e.target.value})} placeholder={f.ld}
-                          style={{marginTop:8,width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:"6px 10px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
+                          style={{marginTop:8,width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:6,padding:"6px 10px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
                       )}
                     </div>
                   ))}
@@ -7620,7 +7613,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
               {/* Nombres de tipos de turno */}
               {campos && (
-                <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+                <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
                   <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>Terminología del estudio</div>
                   <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Cómo el estudio llama a cada tipo de encuentro. Aparece en el funnel y reportes.</div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
@@ -7629,7 +7622,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       <input value={campos.nombre_valoracion||"primera consulta"}
                         onChange={e=>setCampos({...campos,nombre_valoracion:e.target.value})}
                         placeholder="primera consulta, evaluación inicial..."
-                        style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
+                        style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
                       <div style={{fontSize:10,color:C.muted,marginTop:4}}>Primera reunión con el cliente</div>
                     </div>
                     <div>
@@ -7637,7 +7630,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       <input value={campos.nombre_tratamiento||"consulta"}
                         onChange={e=>setCampos({...campos,nombre_tratamiento:e.target.value})}
                         placeholder="consulta, asesoramiento, representación..."
-                        style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
+                        style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
                       <div style={{fontSize:10,color:C.muted,marginTop:4}}>Servicio legal que genera honorario</div>
                     </div>
                   </div>
@@ -7663,7 +7656,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
       {/* Modal importación CSV/Excel */}
       {showImport && (
         <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}}>
-          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:28,width:620,maxWidth:"95vw",maxHeight:MH92,overflowY:"auto"}}>
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:28,width:620,maxWidth:"95vw",maxHeight:MH92,overflowY:"auto"}}>
 
             {/* Header */}
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
@@ -7683,7 +7676,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               >
                 <label style={{display:"block",cursor:"pointer"}}>
                   <input type="file" accept=".csv,.xlsx,.xls" style={{display:"none"}} onChange={e=>handleImportFile(e.target.files[0])}/>
-                  <div className="dropzone" style={{border:`2px dashed ${C.border}`,borderRadius:2,padding:"48px 24px",textAlign:"center",background:C.bg,transition:"border-color .2s"}}>
+                  <div className="dropzone" style={{border:`2px dashed ${C.border}`,borderRadius:12,padding:"48px 24px",textAlign:"center",background:C.bg,transition:"border-color .2s"}}>
                     <div style={{fontSize:40,marginBottom:12}}>📂</div>
                     <div style={{fontWeight:600,fontSize:14,marginBottom:6}}>Arrastrá o tocá para seleccionar</div>
                     <div style={{fontSize:12,color:C.muted}}>CSV, Excel (.xlsx, .xls) - sin límite de registros</div>
@@ -7695,7 +7688,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
             {/* PASO 2: Mapear columnas */}
             {importStep === "mapear" && (
               <div>
-                <div style={{background:C.accentGlow,border:`1px solid ${C.accent}44`,borderRadius:4,padding:"10px 14px",marginBottom:16,fontSize:12}}>
+                <div style={{background:C.accentGlow,border:`1px solid ${C.accent}44`,borderRadius:8,padding:"10px 14px",marginBottom:16,fontSize:12}}>
                   ✅ <strong>{importRows.length} filas</strong> detectadas en <strong>{importFile?.name}</strong>
                 </div>
 
@@ -7708,7 +7701,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       <div key={field}>
                         <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:4}}>{labels[field]}</label>
                         <select value={importCols[field]||""} onChange={e=>setImportCols({...importCols,[field]:e.target.value})}
-                          style={{width:"100%",background:C.bg,border:`1px solid ${importCols[field]?C.accent:C.border}`,borderRadius:4,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
+                          style={{width:"100%",background:C.bg,border:`1px solid ${importCols[field]?C.accent:C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
                           <option value="">- No importar -</option>
                           {headers.map(h=><option key={h} value={h}>{h}</option>)}
                         </select>
@@ -7719,7 +7712,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
                 {/* Preview */}
                 <div style={{fontSize:12,fontWeight:600,color:C.muted,marginBottom:8,textTransform:"uppercase",letterSpacing:".5px"}}>Vista previa (primeros {importPreview.length})</div>
-                <div style={{overflowX:"auto",marginBottom:20,border:`1px solid ${C.border}`,borderRadius:4}}>
+                <div style={{overflowX:"auto",marginBottom:20,border:`1px solid ${C.border}`,borderRadius:8}}>
                   <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
                     <thead>
                       <tr style={{background:C.bg}}>
@@ -7756,8 +7749,8 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               <div style={{textAlign:"center",padding:"32px 0"}}>
                 <Spinner/>
                 <div style={{marginTop:16,fontSize:13,color:C.muted}}>Importando... {importProgress}%</div>
-                <div style={{marginTop:12,background:C.bg,borderRadius:2,height:8,overflow:"hidden"}}>
-                  <div style={{height:"100%",background:C.accent,width:`${importProgress}%`,transition:"width .3s",borderRadius:4}}/>
+                <div style={{marginTop:12,background:C.bg,borderRadius:8,height:8,overflow:"hidden"}}>
+                  <div style={{height:"100%",background:C.accent,width:`${importProgress}%`,transition:"width .3s",borderRadius:8}}/>
                 </div>
               </div>
             )}
@@ -7771,7 +7764,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     {label:"Actualizados",val:importResult.actualizados||0,color:C.accent},
                     {label:"Errores",val:importResult.errores,color:C.red},
                   ].map(({label,val,color})=>(
-                    <div key={label} style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:2,padding:"14px 16px",textAlign:"center"}}>
+                    <div key={label} style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:10,padding:"14px 16px",textAlign:"center"}}>
                       <div style={{fontSize:28,fontWeight:700,color}}>{val}</div>
                       <div style={{fontSize:11,color:C.muted,marginTop:2}}>{label}</div>
                     </div>
@@ -7781,7 +7774,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   {importResult.importados} nuevos · {importResult.actualizados||0} actualizados · de {importResult.total} filas procesadas
                 </div>
                 {importResult.errores > 0 && (
-                  <div style={{background:"rgba(239,68,68,0.05)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:4,padding:12,marginBottom:16}}>
+                  <div style={{background:"rgba(239,68,68,0.05)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:8,padding:12,marginBottom:16}}>
                     <div style={{fontSize:12,color:C.red}}>{importResult.errores} filas no pudieron importarse</div>
                   </div>
                 )}
@@ -7798,7 +7791,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
       {/* Modal pago unificado */}
       {showPago && pagoCtx && (
         <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.8)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1001}}>
-          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:28,width:420,maxWidth:"95vw"}}>
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:28,width:420,maxWidth:"95vw"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
               <div style={{fontSize:15,fontWeight:700}}>{pagoCtx.plan ? "Registrar pago de cuota" : "Registrar pago"}</div>
               <button onClick={()=>setShowPago(false)} style={{background:"transparent",border:"none",color:C.muted,fontSize:20,cursor:"pointer"}}>×</button>
@@ -7806,7 +7799,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
             <div style={{fontSize:12,color:C.muted,marginBottom:20}}>👤 {pagoCtx.paciente?.nombre}</div>
 
             {pagoCtx.plan && (
-              <div style={{background:C.bg,borderRadius:2,padding:"10px 14px",marginBottom:16,fontSize:12}}>
+              <div style={{background:C.bg,borderRadius:8,padding:"10px 14px",marginBottom:16,fontSize:12}}>
                 <div style={{fontWeight:600,marginBottom:4}}>{pagoCtx.plan.tratamiento}</div>
                 <div style={{display:"flex",justifyContent:"space-between",color:C.muted}}>
                   <span>Sesiones pagas: <strong style={{color:C.text}}>{pagoCtx.plan.sesiones_pagas}/{pagoCtx.plan.total_sesiones}</strong></span>
@@ -7820,7 +7813,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                 <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Concepto</label>
                 <input value={formPago.concepto} onChange={e=>setFormPago({...formPago,concepto:e.target.value})}
                   placeholder="Seña, producto, consulta..."
-                  style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
+                  style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
               </div>
             )}
 
@@ -7828,12 +7821,12 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
               <div>
                 <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Monto</label>
                 <input type="number" value={formPago.monto} onChange={e=>setFormPago({...formPago,monto:e.target.value})} autoFocus
-                  style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:15,fontFamily:"inherit",fontWeight:600}}/>
+                  style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:15,fontFamily:"inherit",fontWeight:600}}/>
               </div>
               <div>
                 <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Moneda</label>
                 <select value={formPago.moneda} onChange={e=>setFormPago({...formPago,moneda:e.target.value})}
-                  style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
+                  style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
                   {(campos?.monedas||"ARS").split(",").filter(Boolean).map(c=><option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
@@ -7846,7 +7839,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   const labels = {efectivo:"💵 Efectivo",transferencia:"🏦 Transferencia",tarjeta_debito:"💳 Débito",tarjeta_credito:"💳 Crédito",mercadopago:"📱 MercadoPago",paypal:"🅿️ PayPal",stripe:"💠 Stripe",pix:"🇧🇷 Pix",zelle:"🇺🇸 Zelle",venmo:"💜 Venmo",nequi:"🇨🇴 Nequi",daviplata:"🇨🇴 Daviplata",yape:"🇵🇪 Yape",cheque:"📄 Cheque",cripto:"🔗 Cripto"};
                   return (
                     <div key={v} onClick={()=>setFormPago({...formPago,forma_pago:v})}
-                      style={{padding:"6px 12px",borderRadius:4,cursor:"pointer",fontSize:12,fontWeight:formPago.forma_pago===v?700:400,
+                      style={{padding:"6px 12px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:formPago.forma_pago===v?700:400,
                         background:formPago.forma_pago===v?C.accent:"transparent",color:formPago.forma_pago===v?"white":C.muted,
                         border:`1px solid ${formPago.forma_pago===v?C.accent:C.border}`,transition:"all .15s"}}>
                       {labels[v]||v}
@@ -7871,7 +7864,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
       {/* Modal nuevo resultado */}
       {showNuevoRes && (
         <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.8)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}}>
-          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:28,width:540,maxWidth:"95vw",maxHeight:MH90,overflowY:"auto"}}>
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:28,width:540,maxWidth:"95vw",maxHeight:MH90,overflowY:"auto"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
               <div style={{fontSize:15,fontWeight:700}}>Agregar resultado</div>
               <button onClick={()=>setShowNuevoRes(false)} style={{background:"transparent",border:"none",color:C.muted,fontSize:20,cursor:"pointer"}}>×</button>
@@ -7879,12 +7872,12 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
 
             {/* Paciente */}
             {resContextPac ? (
-              <div style={{background:C.accentGlow,border:`1px solid ${C.accent}44`,borderRadius:4,padding:"8px 14px",marginBottom:14,fontSize:13,color:C.accentLight}}>👤 {resContextPac.nombre}</div>
+              <div style={{background:C.accentGlow,border:`1px solid ${C.accent}44`,borderRadius:8,padding:"8px 14px",marginBottom:14,fontSize:13,color:C.accentLight}}>👤 {resContextPac.nombre}</div>
             ) : (
               <div style={{marginBottom:14}}>
                 <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Cliente (opcional)</label>
                 <select value={formRes.paciente_id} onChange={e=>setFormRes({...formRes,paciente_id:e.target.value})}
-                  style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
+                  style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
                   <option value="">Sin prospecto</option>
                   {pacientes.map(p=><option key={p.id} value={p.id}>{p.nombre}</option>)}
                 </select>
@@ -7895,14 +7888,14 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
             <div style={{marginBottom:14}}>
               <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Servicio</label>
               <select value={formRes.tratamiento_id} onChange={e=>setFormRes({...formRes,tratamiento_id:e.target.value,tratamiento_libre:""})}
-                style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
+                style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
                 <option value="">Escribir manualmente...</option>
                 {tratamientos.map(t=><option key={t.id} value={t.id}>{t.nombre}</option>)}
               </select>
               {!formRes.tratamiento_id && (
                 <input value={formRes.tratamiento_libre} onChange={e=>setFormRes({...formRes,tratamiento_libre:e.target.value})}
                   placeholder="Ej: Ultraformer, Botox..."
-                  style={{marginTop:6,width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
+                  style={{marginTop:6,width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
               )}
             </div>
 
@@ -7920,7 +7913,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       setFile(f);
                       setUrl(URL.createObjectURL(f));
                     }}/>
-                    <div style={{border:`2px dashed ${url?C.accent:C.border}`,borderRadius:2,overflow:"hidden",height:140,display:"flex",alignItems:"center",justifyContent:"center",background:C.bg,position:"relative"}}>
+                    <div style={{border:`2px dashed ${url?C.accent:C.border}`,borderRadius:10,overflow:"hidden",height:140,display:"flex",alignItems:"center",justifyContent:"center",background:C.bg,position:"relative"}}>
                       {url
                         ? <img src={url} alt={label} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
                         : <div style={{textAlign:"center",color:C.muted}}>
@@ -7957,7 +7950,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
         const pacienteActual = esEdicion ? (selPac || {nombre: editTurnoData?.paciente_nombre}) : turnoPaciente;
         return (
           <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.8)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}}>
-            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:28,width:560,maxWidth:"96vw",maxHeight:MH92,overflowY:"auto"}}>
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:28,width:560,maxWidth:"96vw",maxHeight:MH92,overflowY:"auto"}}>
 
               {/* Header */}
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}>
@@ -7977,13 +7970,13 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                       {[{v:"pendiente",l:"Pendiente",c:"#6366f1"},{v:"confirmado",l:"✓ Confirmado",c:"#3b82f6"},{v:"realizado",l:"✓✓ Realizado",c:C.green},{v:"no_show",l:"No se presentó",c:C.red},{v:"cancelado",l:"Cancelado",c:"#64748b"}].map(s=>(
                         <div key={s.v} onClick={()=>setEditTurnoData({...editTurnoData,estado_turno:s.v})}
-                          style={{padding:"6px 13px",borderRadius:4,border:`1px solid ${editTurnoData.estado_turno===s.v?s.c:C.border}`,background:editTurnoData.estado_turno===s.v?`${s.c}22`:"transparent",cursor:"pointer",fontSize:12,fontWeight:editTurnoData.estado_turno===s.v?700:400,color:editTurnoData.estado_turno===s.v?s.c:C.muted,transition:"all .15s"}}>
+                          style={{padding:"6px 13px",borderRadius:8,border:`1px solid ${editTurnoData.estado_turno===s.v?s.c:C.border}`,background:editTurnoData.estado_turno===s.v?`${s.c}22`:"transparent",cursor:"pointer",fontSize:12,fontWeight:editTurnoData.estado_turno===s.v?700:400,color:editTurnoData.estado_turno===s.v?s.c:C.muted,transition:"all .15s"}}>
                           {s.l}
                         </div>
                       ))}
                     </div>
                     {(editTurnoData.estado_turno==="no_show"||editTurnoData.estado_turno==="cancelado") && (
-                      <div style={{marginTop:8,padding:"7px 12px",background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:4,fontSize:12,color:"#f87171"}}>
+                      <div style={{marginTop:8,padding:"7px 12px",background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:8,fontSize:12,color:"#f87171"}}>
                         ⚡ {editTurnoData.estado_turno==="no_show" ? "Se enviará seguimiento de recuperación automáticamente" : "Recordatorio automático en 3 días"}
                       </div>
                     )}
@@ -7994,21 +7987,21 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     <Field label="Servicio" value={editTurnoData.tratamiento} onChange={v=>setEditTurnoData({...editTurnoData,tratamiento:v})}/>
                     <div>
                       <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Profesional</label>
-                      <select value={editTurnoData.profesional||""} onChange={e=>setEditTurnoData({...editTurnoData,profesional:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
+                      <select value={editTurnoData.profesional||""} onChange={e=>setEditTurnoData({...editTurnoData,profesional:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
                         <option value="">Sin asignar</option>
                         {profesionales.map(p=><option key={p.id} value={p.nombre}>{p.nombre}{p.rol?` · ${p.rol}`:""}</option>)}
                       </select>
                     </div>
                     <div>
                       <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Fecha</label>
-                      <input type="date" value={editTurnoData.fecha||""} onChange={e=>setEditTurnoData({...editTurnoData,fecha:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
+                      <input type="date" value={editTurnoData.fecha||""} onChange={e=>setEditTurnoData({...editTurnoData,fecha:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
                     </div>
                     <div>
                       <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Horario</label>
                       <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                        <input type="time" value={editTurnoData.hora_inicio||""} onChange={e=>setEditTurnoData({...editTurnoData,hora_inicio:e.target.value})} style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 8px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
+                        <input type="time" value={editTurnoData.hora_inicio||""} onChange={e=>setEditTurnoData({...editTurnoData,hora_inicio:e.target.value})} style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 8px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
                         <span style={{color:C.muted,fontSize:12}}>a</span>
-                        <input type="time" value={editTurnoData.hora_fin||""} onChange={e=>setEditTurnoData({...editTurnoData,hora_fin:e.target.value})} style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 8px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
+                        <input type="time" value={editTurnoData.hora_fin||""} onChange={e=>setEditTurnoData({...editTurnoData,hora_fin:e.target.value})} style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 8px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
                       </div>
                     </div>
                   </div>
@@ -8016,26 +8009,26 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                   <div style={{fontSize:11,color:C.muted,textTransform:"uppercase",letterSpacing:".6px",fontWeight:500,marginBottom:12}}>Pago</div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
                     <div><label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Monto total</label>
-                      <input type="number" value={editTurnoData.monto||""} onChange={e=>setEditTurnoData({...editTurnoData,monto:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/></div>
+                      <input type="number" value={editTurnoData.monto||""} onChange={e=>setEditTurnoData({...editTurnoData,monto:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/></div>
                     <div><label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Sesiones totales</label>
-                      <input type="number" min="1" value={editTurnoData.cuotas||1} onChange={e=>setEditTurnoData({...editTurnoData,cuotas:parseInt(e.target.value)||1})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/></div>
+                      <input type="number" min="1" value={editTurnoData.cuotas||1} onChange={e=>setEditTurnoData({...editTurnoData,cuotas:parseInt(e.target.value)||1})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/></div>
                     <div><label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Pagado hasta ahora</label>
-                      <input type="number" value={editTurnoData.monto_pagado||""} onChange={e=>setEditTurnoData({...editTurnoData,monto_pagado:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/></div>
+                      <input type="number" value={editTurnoData.monto_pagado||""} onChange={e=>setEditTurnoData({...editTurnoData,monto_pagado:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/></div>
                     <div><label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Moneda</label>
-                      <select value={editTurnoData.moneda||""} onChange={e=>setEditTurnoData({...editTurnoData,moneda:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
+                      <select value={editTurnoData.moneda||""} onChange={e=>setEditTurnoData({...editTurnoData,moneda:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
                         {(campos?.monedas||"ARS").split(",").filter(Boolean).map(c=><option key={c} value={c}>{c}</option>)}
                       </select></div>
                     <div><label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Forma de pago</label>
-                      <select value={editTurnoData.forma_pago||""} onChange={e=>setEditTurnoData({...editTurnoData,forma_pago:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
+                      <select value={editTurnoData.forma_pago||""} onChange={e=>setEditTurnoData({...editTurnoData,forma_pago:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
                         {(campos?.metodos_pago||"efectivo,transferencia").split(",").filter(Boolean).map(v=><option key={v} value={v}>{METODOS_LABELS[v]||v}</option>)}
                       </select></div>
                     <div><label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Estado pago</label>
-                      <select value={editTurnoData.estado_pago||"pendiente"} onChange={e=>setEditTurnoData({...editTurnoData,estado_pago:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
+                      <select value={editTurnoData.estado_pago||"pendiente"} onChange={e=>setEditTurnoData({...editTurnoData,estado_pago:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
                         <option value="pendiente">Pendiente</option><option value="parcial">Parcial</option><option value="pagado">Pagado</option>
                       </select></div>
                   </div>
                   {editTurnoData.monto && editTurnoData.cuotas > 1 && (
-                    <div style={{background:C.accentGlow,border:`1px solid ${C.accent}44`,borderRadius:4,padding:"9px 14px",marginBottom:12,fontSize:12}}>
+                    <div style={{background:C.accentGlow,border:`1px solid ${C.accent}44`,borderRadius:8,padding:"9px 14px",marginBottom:12,fontSize:12}}>
                       💰 <strong>{editTurnoData.moneda||"ARS"} {(parseFloat(editTurnoData.monto||0)/parseInt(editTurnoData.cuotas||1)).toLocaleString("es-AR",{maximumFractionDigits:0})}</strong> por sesión · {editTurnoData.cuotas} sesiones
                     </div>
                   )}
@@ -8051,7 +8044,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       ))}
                     </div>
                   )}
-                  {errEditTurno && <div style={{background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:4,padding:"8px 12px",fontSize:12,color:C.red,marginTop:12}}>{errEditTurno}</div>}
+                  {errEditTurno && <div style={{background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,padding:"8px 12px",fontSize:12,color:C.red,marginTop:12}}>{errEditTurno}</div>}
                   <div style={{display:"flex",gap:8,justifyContent:"flex-end",marginTop:16}}>
                     <Btn onClick={cerrar} secondary>Cancelar</Btn>
                     <Btn onClick={guardarEditTurno} disabled={savingEditTurno}>{savingEditTurno?"Guardando...":"Guardar cambios"}</Btn>
@@ -8068,9 +8061,9 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:8,textTransform:"uppercase",letterSpacing:".6px"}}>Cliente</label>
                       <input value={turnoSearch} onChange={e=>buscarPacientesModal(e.target.value)}
                         placeholder="Buscar por nombre o teléfono..."
-                        style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",marginBottom:6}}/>
+                        style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit",marginBottom:6}}/>
                       {turnoSearchRes.length > 0 && (
-                        <div style={{border:`1px solid ${C.border}`,borderRadius:4,overflow:"hidden",marginBottom:8}}>
+                        <div style={{border:`1px solid ${C.border}`,borderRadius:8,overflow:"hidden",marginBottom:8}}>
                           {turnoSearchRes.map(p=>(
                             <div key={p.id} className="pi" onClick={()=>seleccionarPacienteTurno(p)}
                               style={{padding:"9px 14px",borderBottom:`1px solid ${C.border}`,cursor:"pointer"}}>
@@ -8084,7 +8077,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       <div style={{height:1,background:C.border,margin:"10px 0"}}/>
                       {turnoStep !== "nuevo_pac" && <Btn onClick={()=>setTurnoStep("nuevo_pac")} secondary small>+ Crear cliente nuevo</Btn>}
                       {turnoStep === "nuevo_pac" && (
-                        <div style={{marginTop:12,background:"rgba(99,102,241,0.06)",border:`1px solid ${C.border}`,borderRadius:4,padding:14}}>
+                        <div style={{marginTop:12,background:"rgba(99,102,241,0.06)",border:`1px solid ${C.border}`,borderRadius:10,padding:14}}>
                           <div style={{fontSize:11,color:C.accent,textTransform:"uppercase",letterSpacing:".6px",fontWeight:600,marginBottom:10}}>① Completá los datos del cliente</div>
                           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                             <Field label="Nombre *" value={formNuevoPac.nombre} onChange={v=>setFormNuevoPac({...formNuevoPac,nombre:v})} placeholder="Nombre completo"/>
@@ -8093,7 +8086,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                             <Field label="Email" value={formNuevoPac.email} onChange={v=>setFormNuevoPac({...formNuevoPac,email:v})}/>
                           </div>
                           {formTurno.fecha && (
-                            <div style={{marginTop:10,padding:"8px 12px",background:C.bg,borderRadius:2,border:`1px solid ${C.border}`,fontSize:12,color:C.muted}}>
+                            <div style={{marginTop:10,padding:"8px 12px",background:C.bg,borderRadius:8,border:`1px solid ${C.border}`,fontSize:12,color:C.muted}}>
                               📅 Turno: <span style={{color:C.text,fontWeight:600}}>{new Date(formTurno.fecha+'T12:00:00').toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'})}</span> a las <span style={{color:C.text,fontWeight:600}}>{formTurno.hora_inicio?.replace(':00','')+'hs'}</span>
                             </div>
                           )}
@@ -8105,7 +8098,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       )}
                     </div>
                   ) : (
-                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,padding:"8px 12px",background:C.accentGlow,border:`1px solid ${C.accent}44`,borderRadius:4}}>
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,padding:"8px 12px",background:C.accentGlow,border:`1px solid ${C.accent}44`,borderRadius:8}}>
                       <span style={{fontSize:13,fontWeight:600,color:C.accentLight}}>👤 {turnoPaciente.nombre}</span>
                       <button onClick={()=>{setTurnoPaciente(null);setTurnoSearch("");setTurnoSearchRes([]);setTurnoStep("buscar");}} style={{background:"transparent",border:"none",color:C.muted,cursor:"pointer",fontSize:12}}>Cambiar</button>
                     </div>
@@ -8124,31 +8117,31 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                               if(e.target.value==="__manual") setFormTurno({...formTurno,tratamiento_id:"",tratamiento_libre:""});
                               else setFormTurno({...formTurno,tratamiento_id:"",tratamiento_libre:e.target.value});
                             }}
-                            style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
+                            style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
                             <option value="__manual">✏️ Escribir manualmente...</option>
                             {SERVICIOS_LEGALES.map(s=><option key={s} value={s}>{s}</option>)}
                           </select>
                           {!SERVICIOS_LEGALES.includes(formTurno.tratamiento_libre) && (
-                            <input value={formTurno.tratamiento_libre} onChange={e=>setFormTurno({...formTurno,tratamiento_libre:e.target.value})} placeholder="Ej: Consulta inicial, asesoramiento..." style={{marginTop:6,width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
+                            <input value={formTurno.tratamiento_libre} onChange={e=>setFormTurno({...formTurno,tratamiento_libre:e.target.value})} placeholder="Ej: Consulta inicial, asesoramiento..." style={{marginTop:6,width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
                           )}
                         </div>
                         <div>
                           <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Profesional</label>
-                          <select value={formTurno.profesional_id} onChange={e=>setFormTurno({...formTurno,profesional_id:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
+                          <select value={formTurno.profesional_id} onChange={e=>setFormTurno({...formTurno,profesional_id:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
                             <option value="">Sin asignar</option>
                             {profesionales.map(p=><option key={p.id} value={p.id}>{p.nombre}{p.rol?` · ${p.rol}`:""}</option>)}
                           </select>
                         </div>
                         <div>
                           <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Fecha *</label>
-                          <input type="date" value={formTurno.fecha} onChange={e=>setFormTurno({...formTurno,fecha:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
+                          <input type="date" value={formTurno.fecha} onChange={e=>setFormTurno({...formTurno,fecha:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
                         </div>
                         <div>
                           <label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Horario</label>
                           <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                            <input type="time" value={formTurno.hora_inicio} onChange={e=>setFormTurno({...formTurno,hora_inicio:e.target.value})} style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 8px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
+                            <input type="time" value={formTurno.hora_inicio} onChange={e=>setFormTurno({...formTurno,hora_inicio:e.target.value})} style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 8px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
                             <span style={{color:C.muted,fontSize:12}}>a</span>
-                            <input type="time" value={formTurno.hora_fin} onChange={e=>setFormTurno({...formTurno,hora_fin:e.target.value})} style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 8px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
+                            <input type="time" value={formTurno.hora_fin} onChange={e=>setFormTurno({...formTurno,hora_fin:e.target.value})} style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 8px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
                           </div>
                         </div>
                       </div>
@@ -8159,17 +8152,17 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                           <input type="text" inputMode="numeric"
                             value={formTurno.monto ? Number(formTurno.monto).toLocaleString('es-AR') : ''}
                             onChange={e=>{const raw=e.target.value.replace(/\./g,'').replace(/[^0-9]/g,'');setFormTurno({...formTurno,monto:raw});}}
-                            placeholder="0" style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/></div>
+                            placeholder="0" style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/></div>
                         <div><label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Moneda</label>
-                          <select value={formTurno.moneda} onChange={e=>setFormTurno({...formTurno,moneda:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
+                          <select value={formTurno.moneda} onChange={e=>setFormTurno({...formTurno,moneda:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
                             {(campos?.monedas||"ARS").split(",").filter(Boolean).map(c=><option key={c} value={c}>{MONEDA_LABELS[c]||c}</option>)}
                           </select></div>
                         <div><label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Estado</label>
-                          <select value={formTurno.estado_pago} onChange={e=>setFormTurno({...formTurno,estado_pago:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
+                          <select value={formTurno.estado_pago} onChange={e=>setFormTurno({...formTurno,estado_pago:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
                             <option value="pendiente">Pendiente</option><option value="parcial">Parcial</option><option value="pagado">Pagado</option>
                           </select></div>
                         <div><label style={{fontSize:11,color:C.muted,fontWeight:500,display:"block",marginBottom:5}}>Forma de pago</label>
-                          <select value={formTurno.forma_pago} onChange={e=>setFormTurno({...formTurno,forma_pago:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
+                          <select value={formTurno.forma_pago} onChange={e=>setFormTurno({...formTurno,forma_pago:e.target.value})} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
                             {(campos?.metodos_pago||"efectivo,transferencia").split(",").filter(Boolean).map(v=><option key={v} value={v}>{METODOS_LABELS[v]||v}</option>)}
                           </select></div>
                       </div>
@@ -8178,14 +8171,14 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                         <div style={{display:"flex",gap:8}}>
                           {[{v:"paga",l:"💰 Paga"},{v:"gratis",l:"🆓 Gratis"},{v:"seña",l:"🤝 Seña"}].map(t=>(
                             <div key={t.v} onClick={()=>setFormTurno({...formTurno,tipo_consulta:t.v})}
-                              style={{flex:1,textAlign:"center",padding:"8px 4px",borderRadius:4,border:`1px solid ${formTurno.tipo_consulta===t.v?C.accent:C.border}`,background:formTurno.tipo_consulta===t.v?C.accentGlow:"transparent",cursor:"pointer",fontSize:12,fontWeight:formTurno.tipo_consulta===t.v?700:400,color:formTurno.tipo_consulta===t.v?C.accentLight:C.muted,transition:"all .15s"}}>
+                              style={{flex:1,textAlign:"center",padding:"8px 4px",borderRadius:8,border:`1px solid ${formTurno.tipo_consulta===t.v?C.accent:C.border}`,background:formTurno.tipo_consulta===t.v?C.accentGlow:"transparent",cursor:"pointer",fontSize:12,fontWeight:formTurno.tipo_consulta===t.v?700:400,color:formTurno.tipo_consulta===t.v?C.accentLight:C.muted,transition:"all .15s"}}>
                               {t.l}
                             </div>
                           ))}
                         </div>
                       </div>
                       <Field label="Notas" value={formTurno.notas_pago} onChange={v=>setFormTurno({...formTurno,notas_pago:v})} placeholder="Observaciones..." textarea/>
-                      {errTurno && <div style={{background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:4,padding:"8px 12px",fontSize:12,color:C.red,marginBottom:12}}>{errTurno}</div>}
+                      {errTurno && <div style={{background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,padding:"8px 12px",fontSize:12,color:C.red,marginBottom:12}}>{errTurno}</div>}
                       <div style={{display:"flex",gap:8,justifyContent:"flex-end",marginTop:12}}>
                         <Btn onClick={cerrar} secondary>Cancelar</Btn>
                         <Btn onClick={()=>crearTurno(turnoPaciente.id)} disabled={savingTurno||!turnoPaciente}>{savingTurno?"Guardando...":"Confirmar consulta ✓"}</Btn>
@@ -8393,9 +8386,9 @@ function CalendarioDisponibilidad({ clienteId, prospecto, API, aH, jH, onSelecci
 
       {/* Navegación mes */}
       <div style={{background:'#111b21',padding:'8px 20px',display:'flex',alignItems:'center',gap:12,flexShrink:0}}>
-        <button onClick={mesAnt} style={{background:'#2a3942',border:'none',color:'white',borderRadius:4,padding:'4px 10px',cursor:'pointer',fontSize:14}}>‹</button>
+        <button onClick={mesAnt} style={{background:'#2a3942',border:'none',color:'white',borderRadius:6,padding:'4px 10px',cursor:'pointer',fontSize:14}}>‹</button>
         <span style={{fontWeight:700,fontSize:15,color:'white',minWidth:160,textAlign:'center'}}>{MESES[fecha.getMonth()]} {fecha.getFullYear()}</span>
-        <button onClick={mesSig} style={{background:'#2a3942',border:'none',color:'white',borderRadius:4,padding:'4px 10px',cursor:'pointer',fontSize:14}}>›</button>
+        <button onClick={mesSig} style={{background:'#2a3942',border:'none',color:'white',borderRadius:6,padding:'4px 10px',cursor:'pointer',fontSize:14}}>›</button>
       </div>
 
       {/* Calendario */}
@@ -8420,7 +8413,7 @@ function CalendarioDisponibilidad({ clienteId, prospecto, API, aH, jH, onSelecci
                   const esHoy = dia.toDateString() === hoy.toDateString();
                   return (
                     <div key={di} style={{
-                      minHeight:80,border:`1px solid ${esHoy?'#f97316':'#2a3942'}`,borderRadius:4,
+                      minHeight:80,border:`1px solid ${esHoy?'#f97316':'#2a3942'}`,borderRadius:8,
                       padding:'4px',background:esPasado?'rgba(255,255,255,0.02)':'#111b21',
                       opacity:esPasado?0.4:1
                     }}>
@@ -8450,7 +8443,7 @@ function CalendarioDisponibilidad({ clienteId, prospecto, API, aH, jH, onSelecci
                                         }
                                       }}
                                       style={{
-                                        fontSize:9,padding:'2px 3px',borderRadius:2,border:'none',cursor:'pointer',
+                                        fontSize:9,padding:'2px 3px',borderRadius:3,border:'none',cursor:'pointer',
                                         fontWeight:slotsSeleccionados.some(s=>s.fecha===fechaStr&&s.hora===hora)?700:400,
                                         background:slotsSeleccionados.some(s=>s.fecha===fechaStr&&s.hora===hora)?'#f97316':'#10b981',
                                         color:slotsSeleccionados.some(s=>s.fecha===fechaStr&&s.hora===hora)?'white':'#022c22',
@@ -8464,14 +8457,14 @@ function CalendarioDisponibilidad({ clienteId, prospecto, API, aH, jH, onSelecci
                                 {!expandido && resto > 0 && (
                                   <button
                                     onClick={()=>setExpandidos(prev=>({...prev,[fechaStr]:true}))}
-                                    style={{fontSize:8,padding:'2px 3px',borderRadius:2,border:'1px solid #10b981',background:'transparent',color:'#10b981',cursor:'pointer',textAlign:'center',marginTop:1}}>
+                                    style={{fontSize:8,padding:'2px 3px',borderRadius:3,border:'1px solid #10b981',background:'transparent',color:'#10b981',cursor:'pointer',textAlign:'center',marginTop:1}}>
                                     +{resto} más
                                   </button>
                                 )}
                                 {expandido && libres.length > 4 && (
                                   <button
                                     onClick={()=>setExpandidos(prev=>({...prev,[fechaStr]:false}))}
-                                    style={{fontSize:8,padding:'2px 3px',borderRadius:2,border:'1px solid #374151',background:'transparent',color:'#8696a0',cursor:'pointer',textAlign:'center',marginTop:1}}>
+                                    style={{fontSize:8,padding:'2px 3px',borderRadius:3,border:'1px solid #374151',background:'transparent',color:'#8696a0',cursor:'pointer',textAlign:'center',marginTop:1}}>
                                     ver menos
                                   </button>
                                 )}
@@ -8510,7 +8503,7 @@ function CalendarioDisponibilidad({ clienteId, prospecto, API, aH, jH, onSelecci
             </div>
             <button
               onClick={()=>onSeleccionar(slotsSeleccionados)}
-              style={{padding:'9px 22px',borderRadius:4,border:'none',background:'#f97316',color:'white',fontSize:13,fontWeight:700,cursor:'pointer',flexShrink:0,alignSelf:'flex-end'}}>
+              style={{padding:'9px 22px',borderRadius:8,border:'none',background:'#f97316',color:'white',fontSize:13,fontWeight:700,cursor:'pointer',flexShrink:0,alignSelf:'flex-end'}}>
               Ofrecer {slotsSeleccionados.length>1?'opciones':'horario'}
             </button>
           </div>
@@ -8565,7 +8558,7 @@ function PushSettings({ API, jH, aH, onActivado }) {
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {[{key:"push_cierre",label:"🎯 Prospecto listo para cierre"},{key:"push_turno",label:"📅 Nueva solicitud de turno"}].map(item=>(
               <label key={item.key} style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer"}} onClick={()=>guardarPrefs({...prefs,[item.key]:!prefs[item.key]})}>
-                <div style={{width:36,height:20,borderRadius:4,background:prefs[item.key]?"#6366f1":"#374151",position:"relative",transition:"background .2s",flexShrink:0}}>
+                <div style={{width:36,height:20,borderRadius:10,background:prefs[item.key]?"#6366f1":"#374151",position:"relative",transition:"background .2s",flexShrink:0}}>
                   <div style={{position:"absolute",top:2,left:prefs[item.key]?18:2,width:16,height:16,borderRadius:"50%",background:"white",transition:"left .2s"}}/>
                 </div>
                 <span style={{fontSize:12}}>{item.label}</span>
@@ -8575,7 +8568,7 @@ function PushSettings({ API, jH, aH, onActivado }) {
         </div>
       ) : (
         <button onClick={suscribirse} disabled={cargando}
-          style={{padding:"8px 18px",borderRadius:4,border:"none",background:"#6366f1",color:"white",fontSize:13,fontWeight:600,cursor:cargando?"wait":"pointer"}}>
+          style={{padding:"8px 18px",borderRadius:8,border:"none",background:"#6366f1",color:"white",fontSize:13,fontWeight:600,cursor:cargando?"wait":"pointer"}}>
           {cargando?"Activando...":"🔔 Activar en este dispositivo"}
         </button>
       )}
@@ -8660,7 +8653,7 @@ function ScoreBadge({ score }) {
     : score >= 4 ? { color:'#f97316', bg:'rgba(249,115,22,0.15)', label:'Regular' }
     : { color:'#ef4444', bg:'rgba(239,68,68,0.15)', label:'Crítico' };
   return (
-    <span style={{background:cfg.bg,color:cfg.color,border:`1px solid ${cfg.color}44`,padding:'2px 10px',borderRadius:2,fontSize:11,fontWeight:700}}>
+    <span style={{background:cfg.bg,color:cfg.color,border:`1px solid ${cfg.color}44`,padding:'2px 10px',borderRadius:20,fontSize:11,fontWeight:700}}>
       {score}/10 · {cfg.label}
     </span>
   );
@@ -8877,12 +8870,12 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
       {/* Stats */}
       {stats && (
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:24}}>
-          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:16}}>
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:16}}>
             <div style={{fontSize:11,color:C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:1}}>Valoraciones</div>
             <div style={{fontSize:28,fontWeight:700,color:C.text}}>{stats.valoraciones?.total||0}</div>
             {stats.valoraciones?.score_promedio > 0 && <div style={{fontSize:12,color:C.muted,marginTop:4}}>Score promedio: <span style={{color:C.accentLight,fontWeight:600}}>{stats.valoraciones.score_promedio}/10</span></div>}
           </div>
-          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:16}}>
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:16}}>
             <div style={{fontSize:11,color:C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:1}}>Entrenamientos</div>
             <div style={{fontSize:28,fontWeight:700,color:C.text}}>{stats.entrenamientos?.total||0}</div>
             {stats.entrenamientos?.score_promedio > 0 && <div style={{fontSize:12,color:C.muted,marginTop:4}}>Score promedio: <span style={{color:C.accentLight,fontWeight:600}}>{stats.entrenamientos.score_promedio}/10</span></div>}
@@ -8892,14 +8885,14 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
 
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}}>
         {isPro && (
-        <div onClick={()=>setVista('feedback')} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:24,cursor:"pointer",transition:"border-color .15s"}}
+        <div onClick={()=>setVista('feedback')} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:24,cursor:"pointer",transition:"border-color .15s"}}
           onMouseEnter={e=>e.currentTarget.style.borderColor=C.accent} onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
           <div style={{fontSize:32,marginBottom:12}}>📋</div>
           <div style={{fontSize:14,fontWeight:600,color:C.text,marginBottom:6}}>Feedback de valoraciones</div>
           <div style={{fontSize:12,color:C.muted}}>Historial de valoraciones grabadas, transcripciones y coaching con IA</div>
         </div>
         )}
-        <div onClick={()=>setVista('entrenador')} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:24,cursor:"pointer",transition:"border-color .15s"}}
+        <div onClick={()=>setVista('entrenador')} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:24,cursor:"pointer",transition:"border-color .15s"}}
           onMouseEnter={e=>e.currentTarget.style.borderColor=C.accent} onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
           <div style={{fontSize:32,marginBottom:12}}>🤖</div>
           <div style={{fontSize:14,fontWeight:600,color:C.text,marginBottom:6}}>Entrenador IA</div>
@@ -8909,7 +8902,7 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
 
       {/* Grabar valoración — solo Pro */}
       {isPro && (
-        <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:24}}>
+        <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:24}}>
           <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
             <div style={{fontSize:28}}>🎙️</div>
             <div>
@@ -8918,10 +8911,10 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
             </div>
           </div>
           <div style={{display:"flex",gap:8,marginTop:12}}>
-            <button onClick={()=>setVista('grabar')} style={{flex:1,padding:"10px",borderRadius:4,border:"none",background:"#ef4444",color:"white",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+            <button onClick={()=>setVista('grabar')} style={{flex:1,padding:"10px",borderRadius:8,border:"none",background:"#ef4444",color:"white",fontSize:13,fontWeight:600,cursor:"pointer"}}>
               ⏺ Grabar ahora
             </button>
-            <label style={{flex:1,padding:"10px",borderRadius:4,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"center"}}>
+            <label style={{flex:1,padding:"10px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:13,fontWeight:600,cursor:"pointer",textAlign:"center"}}>
               📁 Subir archivo
               <input type="file" accept="audio/*,video/*" style={{display:"none"}} onChange={subirArchivo} disabled={procesando}/>
             </label>
@@ -8936,30 +8929,30 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
   if (vista === 'grabar') return (
     <div>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
-        <button onClick={()=>{setVista('menu');if(grabando)finalizarGrabacion();}} style={{padding:"6px 12px",borderRadius:4,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:12,cursor:"pointer"}}>← Volver</button>
+        <button onClick={()=>{setVista('menu');if(grabando)finalizarGrabacion();}} style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:12,cursor:"pointer"}}>← Volver</button>
         <div style={{fontSize:15,fontWeight:700}}>🎙️ Grabar valoración</div>
       </div>
 
       {/* Aviso videollamada */}
-      <div style={{background:"rgba(6,182,212,0.08)",border:"1px solid rgba(6,182,212,0.2)",borderRadius:4,padding:"12px 16px",marginBottom:20,fontSize:12,color:"#67e8f9"}}>
+      <div style={{background:"rgba(6,182,212,0.08)",border:"1px solid rgba(6,182,212,0.2)",borderRadius:10,padding:"12px 16px",marginBottom:20,fontSize:12,color:"#67e8f9"}}>
         💡 <strong>¿Por videollamada?</strong> Grabá la pantalla desde Google Meet o Zoom (activan la grabación con audio de ambas partes) y subí el archivo con el botón "Subir archivo" en el menú.
       </div>
 
       {/* Paciente opcional */}
-      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:16,marginBottom:16}}>
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:16,marginBottom:16}}>
         <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:6}}>Cliente (opcional)</label>
         <input value={pacienteGrab} onChange={e=>setPacienteGrab(e.target.value)}
           placeholder="Nombre del cliente..."
-          style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"8px 12px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
+          style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
       </div>
 
       {/* Grabador */}
-      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:32,textAlign:"center"}}>
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:32,textAlign:"center"}}>
         {!grabando && !procesando && (
           <>
             <div style={{fontSize:64,marginBottom:16}}>🎙️</div>
             <div style={{fontSize:13,color:C.muted,marginBottom:20}}>Presioná grabar para comenzar la sesión</div>
-            <button onClick={iniciarGrabacion} style={{padding:"14px 40px",borderRadius:4,border:"none",background:"#ef4444",color:"white",fontSize:15,fontWeight:700,cursor:"pointer"}}>
+            <button onClick={iniciarGrabacion} style={{padding:"14px 40px",borderRadius:10,border:"none",background:"#ef4444",color:"white",fontSize:15,fontWeight:700,cursor:"pointer"}}>
               ⏺ Comenzar grabación
             </button>
           </>
@@ -8975,10 +8968,10 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
             </div>
             <div style={{fontSize:12,color:C.muted,marginBottom:24}}>{grabPausado?'Pausado':'Grabando...'}</div>
             <div style={{display:"flex",gap:12,justifyContent:"center"}}>
-              <button onClick={pausarGrabacion} style={{padding:"10px 24px",borderRadius:4,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:13,cursor:"pointer"}}>
+              <button onClick={pausarGrabacion} style={{padding:"10px 24px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:13,cursor:"pointer"}}>
                 {grabPausado?'▶ Reanudar':'⏸ Pausar'}
               </button>
-              <button onClick={grabacionFinalizar} style={{padding:"10px 24px",borderRadius:4,border:"none",background:"#10b981",color:"white",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+              <button onClick={grabacionFinalizar} style={{padding:"10px 24px",borderRadius:8,border:"none",background:"#10b981",color:"white",fontSize:13,fontWeight:600,cursor:"pointer"}}>
                 ⏹ Finalizar y analizar
               </button>
             </div>
@@ -9001,7 +8994,7 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
   if (vista === 'feedback') return (
     <div>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
-        <button onClick={()=>{setVista('menu');setSubVista('historial');setSeleccionada(null);}} style={{padding:"6px 12px",borderRadius:4,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:12,cursor:"pointer"}}>← Volver</button>
+        <button onClick={()=>{setVista('menu');setSubVista('historial');setSeleccionada(null);}} style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:12,cursor:"pointer"}}>← Volver</button>
         <div style={{fontSize:15,fontWeight:700}}>📋 Feedback de valoraciones</div>
       </div>
 
@@ -9017,7 +9010,7 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
           ) : (
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
               {valoraciones.map((v,i) => (
-                <div key={i} onClick={()=>abrirDetalle(v)} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:"14px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:12}}
+                <div key={i} onClick={()=>abrirDetalle(v)} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:"14px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:12}}
                   onMouseEnter={e=>e.currentTarget.style.borderColor=C.accent} onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
                   <div style={{flex:1}}>
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
@@ -9040,7 +9033,7 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
 
       {subVista === 'detalle' && seleccionada && (
         <div>
-          <button onClick={()=>setSubVista('historial')} style={{padding:"6px 12px",borderRadius:4,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:12,cursor:"pointer",marginBottom:16}}>← Historial</button>
+          <button onClick={()=>setSubVista('historial')} style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:12,cursor:"pointer",marginBottom:16}}>← Historial</button>
           <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
             <div style={{fontSize:15,fontWeight:700}}>{seleccionada.paciente_nombre||'Sin paciente'}</div>
             <ScoreBadge score={seleccionada.score}/>
@@ -9048,25 +9041,25 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
 
           {/* Feedback */}
           {seleccionada.feedback_ia && (
-            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
               <div style={{fontSize:12,fontWeight:600,color:C.muted,marginBottom:12,textTransform:"uppercase",letterSpacing:1}}>📊 Análisis IA</div>
               {seleccionada.feedback_ia.resumen && <p style={{fontSize:13,color:C.text,marginBottom:12,lineHeight:1.6}}>{seleccionada.feedback_ia.resumen}</p>}
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
                 {seleccionada.feedback_ia.fortalezas?.length > 0 && (
-                  <div style={{background:"rgba(16,185,129,0.08)",border:"1px solid rgba(16,185,129,0.2)",borderRadius:4,padding:12}}>
+                  <div style={{background:"rgba(16,185,129,0.08)",border:"1px solid rgba(16,185,129,0.2)",borderRadius:8,padding:12}}>
                     <div style={{fontSize:11,fontWeight:600,color:"#10b981",marginBottom:8}}>✅ Fortalezas</div>
                     {seleccionada.feedback_ia.fortalezas.map((f,i)=><div key={i} style={{fontSize:12,color:C.text,marginBottom:4}}>· {f}</div>)}
                   </div>
                 )}
                 {seleccionada.feedback_ia.oportunidades?.length > 0 && (
-                  <div style={{background:"rgba(249,115,22,0.08)",border:"1px solid rgba(249,115,22,0.2)",borderRadius:4,padding:12}}>
+                  <div style={{background:"rgba(249,115,22,0.08)",border:"1px solid rgba(249,115,22,0.2)",borderRadius:8,padding:12}}>
                     <div style={{fontSize:11,fontWeight:600,color:"#f97316",marginBottom:8}}>🔧 A mejorar</div>
                     {seleccionada.feedback_ia.oportunidades.map((f,i)=><div key={i} style={{fontSize:12,color:C.text,marginBottom:4}}>· {f}</div>)}
                   </div>
                 )}
               </div>
               {seleccionada.feedback_ia.conclusion && (
-                <div style={{background:C.accentGlow,border:`1px solid ${C.accent}44`,borderRadius:4,padding:12,fontSize:12,color:C.accentLight,fontStyle:"italic"}}>
+                <div style={{background:C.accentGlow,border:`1px solid ${C.accent}44`,borderRadius:8,padding:12,fontSize:12,color:C.accentLight,fontStyle:"italic"}}>
                   💡 {seleccionada.feedback_ia.conclusion}
                 </div>
               )}
@@ -9075,7 +9068,7 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
 
           {/* Transcripción */}
           {seleccionada.transcripcion && (
-            <details style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:16,marginBottom:16}}>
+            <details style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:16,marginBottom:16}}>
               <summary style={{cursor:"pointer",fontSize:12,fontWeight:600,color:C.muted,textTransform:"uppercase",letterSpacing:1}}>📝 Transcripción completa</summary>
               <p style={{fontSize:12,color:C.text,lineHeight:1.7,marginTop:12,whiteSpace:"pre-wrap"}}>{seleccionada.transcripcion}</p>
             </details>
@@ -9083,25 +9076,25 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
 
           {/* Botón generar propuesta — solo Pro */}
           {isPro && seleccionada?.transcripcion && (
-            <div style={{background:"rgba(99,102,241,0.08)",border:`1px solid ${C.accent}44`,borderRadius:2,padding:16,marginBottom:16,display:"flex",alignItems:"center",gap:14}}>
+            <div style={{background:"rgba(99,102,241,0.08)",border:`1px solid ${C.accent}44`,borderRadius:12,padding:16,marginBottom:16,display:"flex",alignItems:"center",gap:14}}>
               <div style={{flex:1}}>
                 <div style={{fontSize:13,fontWeight:600,color:C.accentLight,marginBottom:3}}>📄 Generar propuesta desde esta valoración</div>
                 <div style={{fontSize:11,color:C.muted}}>La IA va a usar la transcripción para armar la propuesta automáticamente</div>
               </div>
-              <button onClick={generarPropuestaDesdeValoracion} style={{padding:"9px 18px",borderRadius:4,border:"none",background:C.accent,color:"white",fontSize:12,fontWeight:600,cursor:"pointer",flexShrink:0}}>
+              <button onClick={generarPropuestaDesdeValoracion} style={{padding:"9px 18px",borderRadius:8,border:"none",background:C.accent,color:"white",fontSize:12,fontWeight:600,cursor:"pointer",flexShrink:0}}>
                 ✨ Generar propuesta
               </button>
             </div>
           )}
 
           {/* Chat de coaching */}
-          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20}}>
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20}}>
             <div style={{fontSize:12,fontWeight:600,color:C.muted,marginBottom:12,textTransform:"uppercase",letterSpacing:1}}>💬 Coaching con IA</div>
             <div style={{maxHeight:300,overflowY:"auto",marginBottom:12,display:"flex",flexDirection:"column",gap:8}}>
               {coachingHistorial.length === 0 && <div style={{fontSize:12,color:C.muted,textAlign:"center",padding:16}}>Preguntale a la IA cómo mejorar esta valoración</div>}
               {coachingHistorial.filter(m=>m.role!=='system').map((m,i)=>(
                 <div key={i} style={{display:"flex",justifyContent:m.role==='user'?'flex-end':'flex-start'}}>
-                  <div style={{maxWidth:"80%",background:m.role==='user'?C.accent:C.bg,borderRadius:4,padding:"8px 12px",fontSize:12,color:"white",lineHeight:1.5}}>
+                  <div style={{maxWidth:"80%",background:m.role==='user'?C.accent:C.bg,borderRadius:10,padding:"8px 12px",fontSize:12,color:"white",lineHeight:1.5}}>
                     {m.content}
                   </div>
                 </div>
@@ -9111,8 +9104,8 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
             <div style={{display:"flex",gap:8}}>
               <input value={coachingMsg} onChange={e=>setCoachingMsg(e.target.value)} onKeyDown={e=>e.key==='Enter'&&enviarCoaching()}
                 placeholder='Ej: "¿Cómo podría haber manejado mejor la objeción del precio?"'
-                style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
-              <button onClick={enviarCoaching} disabled={coachingLoading||!coachingMsg.trim()} style={{padding:"8px 16px",borderRadius:4,border:"none",background:C.accent,color:"white",fontSize:12,cursor:"pointer"}}>
+                style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.text,fontSize:12,fontFamily:"inherit"}}/>
+              <button onClick={enviarCoaching} disabled={coachingLoading||!coachingMsg.trim()} style={{padding:"8px 16px",borderRadius:8,border:"none",background:C.accent,color:"white",fontSize:12,cursor:"pointer"}}>
                 Enviar
               </button>
             </div>
@@ -9126,19 +9119,19 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
   if (vista === 'entrenador') return (
     <div>
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
-        <button onClick={()=>{setVista('menu');setEntActivo(false);setEntFeedback(null);setEntHistorial([]);}} style={{padding:"6px 12px",borderRadius:4,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:12,cursor:"pointer"}}>← Volver</button>
+        <button onClick={()=>{setVista('menu');setEntActivo(false);setEntFeedback(null);setEntHistorial([]);}} style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:12,cursor:"pointer"}}>← Volver</button>
         <div style={{fontSize:15,fontWeight:700}}>🤖 Entrenador IA</div>
       </div>
 
       {!entActivo && !entFeedback && (
         <div>
-          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
             <div style={{fontSize:12,fontWeight:600,color:C.muted,marginBottom:12,textTransform:"uppercase",letterSpacing:1}}>Configurar sesión</div>
             <div style={{marginBottom:14}}>
               <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:6}}>Modo</label>
               <div style={{display:"flex",gap:8}}>
                 {[{v:'chat',l:'💬 Chat'},{v:'valoracion',l:'🏥 Valoración presencial'}].map(m=>(
-                  <button key={m.v} onClick={()=>setModoEnt(m.v)} style={{flex:1,padding:"10px",borderRadius:4,border:`1px solid ${modoEnt===m.v?C.accent:C.border}`,background:modoEnt===m.v?"rgba(99,102,241,0.15)":C.bg,color:modoEnt===m.v?C.accentLight:C.muted,fontSize:12,fontWeight:600,cursor:"pointer"}}>
+                  <button key={m.v} onClick={()=>setModoEnt(m.v)} style={{flex:1,padding:"10px",borderRadius:8,border:`1px solid ${modoEnt===m.v?C.accent:C.border}`,background:modoEnt===m.v?"rgba(99,102,241,0.15)":C.bg,color:modoEnt===m.v?C.accentLight:C.muted,fontSize:12,fontWeight:600,cursor:"pointer"}}>
                     {m.l}
                   </button>
                 ))}
@@ -9146,7 +9139,7 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
             </div>
             <div style={{marginBottom:16}}>
               <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:6}}>Perfil del cliente</label>
-              <select value={perfilEnt} onChange={e=>setPerfilEnt(e.target.value)} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
+              <select value={perfilEnt} onChange={e=>setPerfilEnt(e.target.value)} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,fontFamily:"inherit"}}>
                 <option value="indeciso">😕 Indeciso — "lo tengo que pensar"</option>
                 <option value="precio">💸 Sensible al precio — compara y pregunta costos</option>
                 <option value="ansioso">😰 Ansioso — muchas preguntas y miedos</option>
@@ -9161,19 +9154,19 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
               <textarea value={contextoEnt} onChange={e=>setContextoEnt(e.target.value)}
                 placeholder={perfilEnt === 'personalizado' ? 'Describí al prospecto y la situación. La IA va a actuar exactamente según este contexto, sin mezclar perfiles predefinidos.' : 'Ej: "El prospecto ya habló con otra agencia y le salió más barato", "Viene recomendado por un colega"...'}
                 rows={3}
-                style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"9px 12px",color:C.text,fontSize:12,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
+                style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:12,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
               <div style={{fontSize:10,color:C.muted,marginTop:4}}>También podés pegar el texto de un chat real para que la IA lo tenga en cuenta</div>
             </div>
-            <button onClick={iniciarEntrenador} style={{width:"100%",padding:"11px",borderRadius:4,border:"none",background:C.accent,color:"white",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+            <button onClick={iniciarEntrenador} style={{width:"100%",padding:"11px",borderRadius:8,border:"none",background:C.accent,color:"white",fontSize:13,fontWeight:600,cursor:"pointer"}}>
               🚀 Iniciar sesión
             </button>
           </div>
 
           {/* Analizar chat — screenshot o texto */}
-          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
             <div style={{fontSize:12,fontWeight:600,color:C.muted,marginBottom:8,textTransform:"uppercase",letterSpacing:1}}>📸 Analizar chat real</div>
             <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Subí un screenshot o pegá el texto de un chat para recibir feedback directo</div>
-            <label htmlFor="screenshot-upload" style={{display:"block",padding:"10px",borderRadius:4,border:`2px dashed ${C.border}`,textAlign:"center",cursor:"pointer",fontSize:12,color:C.muted}}>
+            <label htmlFor="screenshot-upload" style={{display:"block",padding:"10px",borderRadius:8,border:`2px dashed ${C.border}`,textAlign:"center",cursor:"pointer",fontSize:12,color:C.muted}}>
               📁 Subir screenshot
             </label>
             <input type="file" id="screenshot-upload" accept="image/*" style={{display:"none"}} onChange={e=>{subirScreenshot(e);iniciarEntrenador();}}/>
@@ -9184,7 +9177,7 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
             <div>
               <div style={{fontSize:12,fontWeight:600,color:C.muted,marginBottom:10,textTransform:"uppercase",letterSpacing:1}}>Sesiones anteriores</div>
               {sesiones.slice(0,5).map((s,i)=>(
-                <div key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:"12px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:10}}>
+                <div key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"12px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:10}}>
                   <span style={{fontSize:16}}>{s.modo==='chat'?'💬':'🏥'}</span>
                   <div style={{flex:1}}>
                     <div style={{fontSize:12,fontWeight:500,color:C.text,marginBottom:2}}>
@@ -9203,10 +9196,10 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
 
       {entActivo && (
         <div>
-          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,overflow:"hidden",marginBottom:12}}>
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,overflow:"hidden",marginBottom:12}}>
             <div style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <span style={{fontSize:12,color:C.muted}}>{modoEnt==='chat'?'💬 Simulando chat WhatsApp':'🏥 Simulando valoración presencial'} · Perfil: {perfilEnt}</span>
-              <button onClick={finalizarEntrenador} disabled={entLoading||entHistorial.length===0} style={{padding:"5px 12px",borderRadius:4,border:"none",background:"#10b981",color:"white",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+              <button onClick={finalizarEntrenador} disabled={entLoading||entHistorial.length===0} style={{padding:"5px 12px",borderRadius:6,border:"none",background:"#10b981",color:"white",fontSize:11,fontWeight:600,cursor:"pointer"}}>
                 {entLoading?'Finalizando...':'✅ Finalizar y ver feedback'}
               </button>
             </div>
@@ -9230,8 +9223,8 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
             {screenshot && <span style={{fontSize:11,color:"#10b981",flexShrink:0}}>📸 Con imagen</span>}
             <input value={entMsg} onChange={e=>setEntMsg(e.target.value)} onKeyDown={e=>e.key==='Enter'&&!e.shiftKey&&enviarEntrenador()}
               placeholder={modoEnt==='chat'?'Escribí como si fuera el comercial...':'Tu respuesta en la valoración...'}
-              style={{flex:1,background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
-            <button onClick={enviarEntrenador} disabled={entLoading||(!entMsg.trim()&&!screenshot)} style={{padding:"10px 16px",borderRadius:4,border:"none",background:C.accent,color:"white",fontSize:13,cursor:"pointer",flexShrink:0}}>
+              style={{flex:1,background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"inherit"}}/>
+            <button onClick={enviarEntrenador} disabled={entLoading||(!entMsg.trim()&&!screenshot)} style={{padding:"10px 16px",borderRadius:8,border:"none",background:C.accent,color:"white",fontSize:13,cursor:"pointer",flexShrink:0}}>
               {entLoading?'...':'Enviar'}
             </button>
           </div>
@@ -9244,39 +9237,39 @@ function VentasPanel({ client, API, aH, jH, user, rango }) {
             <div style={{fontSize:15,fontWeight:700}}>Resultado de la sesión</div>
             <ScoreBadge score={entFeedback.score}/>
           </div>
-          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20,marginBottom:16}}>
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20,marginBottom:16}}>
             {entFeedback.resumen && <p style={{fontSize:13,color:C.text,lineHeight:1.6,marginBottom:12}}>{entFeedback.resumen}</p>}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
               {entFeedback.fortalezas?.length > 0 && (
-                <div style={{background:"rgba(16,185,129,0.08)",border:"1px solid rgba(16,185,129,0.2)",borderRadius:4,padding:12}}>
+                <div style={{background:"rgba(16,185,129,0.08)",border:"1px solid rgba(16,185,129,0.2)",borderRadius:8,padding:12}}>
                   <div style={{fontSize:11,fontWeight:600,color:"#10b981",marginBottom:8}}>✅ Lo que hiciste bien</div>
                   {entFeedback.fortalezas.map((f,i)=><div key={i} style={{fontSize:12,color:C.text,marginBottom:4}}>· {f}</div>)}
                 </div>
               )}
               {entFeedback.oportunidades?.length > 0 && (
-                <div style={{background:"rgba(249,115,22,0.08)",border:"1px solid rgba(249,115,22,0.2)",borderRadius:4,padding:12}}>
+                <div style={{background:"rgba(249,115,22,0.08)",border:"1px solid rgba(249,115,22,0.2)",borderRadius:8,padding:12}}>
                   <div style={{fontSize:11,fontWeight:600,color:"#f97316",marginBottom:8}}>🔧 A mejorar</div>
                   {entFeedback.oportunidades.map((f,i)=><div key={i} style={{fontSize:12,color:C.text,marginBottom:4}}>· {f}</div>)}
                 </div>
               )}
             </div>
             {entFeedback.frases_sugeridas?.length > 0 && (
-              <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:2,padding:12,marginBottom:12}}>
+              <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:12,marginBottom:12}}>
                 <div style={{fontSize:11,fontWeight:600,color:C.accentLight,marginBottom:8}}>💬 Frases que funcionan mejor</div>
-                {entFeedback.frases_sugeridas.map((f,i)=><div key={i} style={{fontSize:12,color:C.text,marginBottom:6,padding:"6px 10px",background:C.surface,borderRadius:2}}>"{f}"</div>)}
+                {entFeedback.frases_sugeridas.map((f,i)=><div key={i} style={{fontSize:12,color:C.text,marginBottom:6,padding:"6px 10px",background:C.surface,borderRadius:6}}>"{f}"</div>)}
               </div>
             )}
             {entFeedback.conclusion && (
-              <div style={{background:C.accentGlow,border:`1px solid ${C.accent}44`,borderRadius:4,padding:12,fontSize:12,color:C.accentLight,fontStyle:"italic"}}>
+              <div style={{background:C.accentGlow,border:`1px solid ${C.accent}44`,borderRadius:8,padding:12,fontSize:12,color:C.accentLight,fontStyle:"italic"}}>
                 💡 {entFeedback.conclusion}
               </div>
             )}
           </div>
           <div style={{display:"flex",gap:8}}>
-            <button onClick={()=>{setEntFeedback(null);setEntHistorial([]);}} style={{flex:1,padding:"10px",borderRadius:4,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:13,cursor:"pointer"}}>
+            <button onClick={()=>{setEntFeedback(null);setEntHistorial([]);}} style={{flex:1,padding:"10px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:13,cursor:"pointer"}}>
               🔄 Nueva sesión
             </button>
-            <button onClick={()=>{setEntFeedback(null);setEntHistorial([]);setVista('menu');}} style={{flex:1,padding:"10px",borderRadius:4,border:"none",background:C.accent,color:"white",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+            <button onClick={()=>{setEntFeedback(null);setEntHistorial([]);setVista('menu');}} style={{flex:1,padding:"10px",borderRadius:8,border:"none",background:C.accent,color:"white",fontSize:13,fontWeight:600,cursor:"pointer"}}>
               ✓ Listo
             </button>
           </div>
@@ -9377,12 +9370,12 @@ function ValoracionesPaciente({ paciente, client, API, aH, jH, user }) {
   };
 
   return (
-    <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,marginBottom:16,overflow:"hidden"}}>
+    <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,marginBottom:16,overflow:"hidden"}}>
       <div style={{padding:"12px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}} onClick={()=>setExpandido(!expandido)}>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <span>🎙️</span>
           <span style={{fontSize:12,fontWeight:600,color:C.text}}>Valoraciones grabadas</span>
-          {valoraciones.length > 0 && <span style={{background:C.accentGlow,color:C.accentLight,borderRadius:4,padding:"1px 8px",fontSize:10,fontWeight:600}}>{valoraciones.length}</span>}
+          {valoraciones.length > 0 && <span style={{background:C.accentGlow,color:C.accentLight,borderRadius:10,padding:"1px 8px",fontSize:10,fontWeight:600}}>{valoraciones.length}</span>}
         </div>
         <span style={{color:C.muted,fontSize:12}}>{expandido?'▲':'▼'}</span>
       </div>
@@ -9392,10 +9385,10 @@ function ValoracionesPaciente({ paciente, client, API, aH, jH, user }) {
           {/* Botones grabar/subir */}
           {!grabando && !procesando && (
             <div style={{display:"flex",gap:8,marginBottom:12}}>
-              <button onClick={iniciarGrabacion} style={{flex:1,padding:"8px",borderRadius:4,border:"none",background:"#ef4444",color:"white",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+              <button onClick={iniciarGrabacion} style={{flex:1,padding:"8px",borderRadius:7,border:"none",background:"#ef4444",color:"white",fontSize:11,fontWeight:600,cursor:"pointer"}}>
                 ⏺ Grabar valoración
               </button>
-              <label style={{flex:1,padding:"8px",borderRadius:4,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:11,fontWeight:600,cursor:"pointer",textAlign:"center"}}>
+              <label style={{flex:1,padding:"8px",borderRadius:7,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:11,fontWeight:600,cursor:"pointer",textAlign:"center"}}>
                 📁 Subir audio/video
                 <input type="file" accept="audio/*,video/*" style={{display:"none"}} onChange={subirArchivo}/>
               </label>
@@ -9404,7 +9397,7 @@ function ValoracionesPaciente({ paciente, client, API, aH, jH, user }) {
 
           {/* Grabando */}
           {grabando && (
-            <div style={{background:C.bg,borderRadius:2,padding:14,marginBottom:12,textAlign:"center"}}>
+            <div style={{background:C.bg,borderRadius:8,padding:14,marginBottom:12,textAlign:"center"}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:8}}>
                 {!grabPausado && <div style={{width:8,height:8,borderRadius:"50%",background:"#ef4444",animation:"pulse 1s infinite"}}/>}
                 <span style={{fontSize:20,fontWeight:700,color:grabPausado?C.muted:"#ef4444",fontFamily:"monospace"}}>
@@ -9412,10 +9405,10 @@ function ValoracionesPaciente({ paciente, client, API, aH, jH, user }) {
                 </span>
               </div>
               <div style={{display:"flex",gap:8,justifyContent:"center"}}>
-                <button onClick={pausarGrabacion} style={{padding:"6px 14px",borderRadius:4,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:11,cursor:"pointer"}}>
+                <button onClick={pausarGrabacion} style={{padding:"6px 14px",borderRadius:6,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:11,cursor:"pointer"}}>
                   {grabPausado?'▶ Reanudar':'⏸ Pausar'}
                 </button>
-                <button onClick={finalizarYProcesar} style={{padding:"6px 14px",borderRadius:4,border:"none",background:"#10b981",color:"white",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+                <button onClick={finalizarYProcesar} style={{padding:"6px 14px",borderRadius:6,border:"none",background:"#10b981",color:"white",fontSize:11,fontWeight:600,cursor:"pointer"}}>
                   ⏹ Finalizar
                 </button>
               </div>
@@ -9429,7 +9422,7 @@ function ValoracionesPaciente({ paciente, client, API, aH, jH, user }) {
           {valoraciones.length === 0 ? (
             <div style={{fontSize:11,color:C.muted,textAlign:"center",padding:8}}>Sin valoraciones grabadas</div>
           ) : valoraciones.map((v,i) => (
-            <details key={i} style={{marginBottom:8,background:C.bg,borderRadius:2,overflow:"hidden"}}>
+            <details key={i} style={{marginBottom:8,background:C.bg,borderRadius:8,overflow:"hidden"}}>
               <summary style={{padding:"10px 12px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",listStyle:"none"}}>
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
                   <ScoreBadge score={v.score}/>
@@ -9448,7 +9441,7 @@ function ValoracionesPaciente({ paciente, client, API, aH, jH, user }) {
                 <button onClick={()=>{
                   sessionStorage.setItem('propuesta_desde_valoracion', JSON.stringify({info_cruda: v.transcripcion, paciente_id: paciente.id, valoracion_id: v.id}));
                   window.dispatchEvent(new CustomEvent('edge_goto_propuestas'));
-                }} style={{padding:"5px 12px",borderRadius:4,border:"none",background:C.accent,color:"white",fontSize:10,fontWeight:600,cursor:"pointer"}}>
+                }} style={{padding:"5px 12px",borderRadius:6,border:"none",background:C.accent,color:"white",fontSize:10,fontWeight:600,cursor:"pointer"}}>
                   ✨ Generar propuesta
                 </button>
               </div>
@@ -9523,7 +9516,7 @@ function TrackerClientesPanel({ prospectos, onVerCliente }) {
           {label:'Con email', value:conEmail, icon:'📧', color:C.accentLight},
           {label:'Fuentes activas', value:Object.keys(porFuente).length, icon:'📡', color:'#8b5cf6'},
         ].map((kpi,i)=>(
-          <div key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:'14px 16px'}}>
+          <div key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:'14px 16px'}}>
             <div style={{fontSize:18,marginBottom:5}}>{kpi.icon}</div>
             <div style={{fontSize:22,fontWeight:800,color:kpi.color,marginBottom:2}}>{kpi.value}</div>
             <div style={{fontSize:10,color:C.muted,letterSpacing:.3}}>{kpi.label}</div>
@@ -9533,7 +9526,7 @@ function TrackerClientesPanel({ prospectos, onVerCliente }) {
 
       {/* Gráfico por fuente */}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:24}}>
-        <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20}}>
+        <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20}}>
           <div style={{fontSize:13,fontWeight:600,marginBottom:16}}>📊 Prospectos por fuente</div>
           {Object.entries(porFuente).sort((a,b)=>b[1]-a[1]).map(([fuente, cant])=>{
             const meta = getFuente(fuente);
@@ -9553,7 +9546,7 @@ function TrackerClientesPanel({ prospectos, onVerCliente }) {
           {Object.keys(porFuente).length === 0 && <div style={{fontSize:12,color:C.muted,textAlign:'center',padding:'12px 0'}}>Sin datos de fuente aún</div>}
         </div>
 
-        <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:20}}>
+        <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:20}}>
           <div style={{fontSize:13,fontWeight:600,marginBottom:16}}>🏷️ Prospectos por etapa</div>
           {Object.entries(porEtapa).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([etapa, cant])=>{
             const pct = Math.round((cant/total)*100);
@@ -9575,25 +9568,25 @@ function TrackerClientesPanel({ prospectos, onVerCliente }) {
       </div>
 
       {/* Tabla */}
-      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,overflow:'hidden'}}>
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,overflow:'hidden'}}>
         {/* Filtros */}
         <div style={{padding:'14px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',gap:10,flexWrap:'wrap',alignItems:'center'}}>
           <input value={busqueda} onChange={e=>setBusqueda(e.target.value)}
             placeholder="Buscar por nombre, teléfono, email..."
-            style={{flex:1,minWidth:180,background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:'8px 12px',color:C.text,fontSize:12,fontFamily:'inherit'}}/>
+            style={{flex:1,minWidth:180,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:'8px 12px',color:C.text,fontSize:12,fontFamily:'inherit'}}/>
           <select value={filtroFuente} onChange={e=>setFiltroFuente(e.target.value)}
-            style={{background:C.bg,border:`1px solid ${filtroFuente?C.accent:C.border}`,borderRadius:4,padding:'8px 12px',color:filtroFuente?C.accentLight:C.muted,fontSize:12,fontFamily:'inherit'}}>
+            style={{background:C.bg,border:`1px solid ${filtroFuente?C.accent:C.border}`,borderRadius:8,padding:'8px 12px',color:filtroFuente?C.accentLight:C.muted,fontSize:12,fontFamily:'inherit'}}>
             <option value=''>Todas las fuentes</option>
             {Object.keys(porFuente).map(f=><option key={f} value={f}>{getFuente(f).label}</option>)}
           </select>
           <select value={filtroEtapa} onChange={e=>setFiltroEtapa(e.target.value)}
-            style={{background:C.bg,border:`1px solid ${filtroEtapa?C.accent:C.border}`,borderRadius:4,padding:'8px 12px',color:filtroEtapa?C.accentLight:C.muted,fontSize:12,fontFamily:'inherit'}}>
+            style={{background:C.bg,border:`1px solid ${filtroEtapa?C.accent:C.border}`,borderRadius:8,padding:'8px 12px',color:filtroEtapa?C.accentLight:C.muted,fontSize:12,fontFamily:'inherit'}}>
             <option value=''>Todas las etapas</option>
             {Object.keys(porEtapa).map(e=><option key={e} value={e}>{e.replace(/_/g,' ')}</option>)}
           </select>
           {(busqueda||filtroFuente||filtroEtapa) && (
             <button onClick={()=>{setBusqueda('');setFiltroFuente('');setFiltroEtapa('');}}
-              style={{background:'transparent',border:`1px solid ${C.border}`,borderRadius:4,padding:'7px 12px',color:C.muted,fontSize:11,cursor:'pointer'}}>× Limpiar</button>
+              style={{background:'transparent',border:`1px solid ${C.border}`,borderRadius:8,padding:'7px 12px',color:C.muted,fontSize:11,cursor:'pointer'}}>× Limpiar</button>
           )}
           <span style={{fontSize:11,color:C.muted,marginLeft:'auto'}}>{lista.length} cliente{lista.length!==1?'s':''}</span>
         </div>
@@ -9627,12 +9620,12 @@ function TrackerClientesPanel({ prospectos, onVerCliente }) {
               <div style={{fontSize:12,color:C.muted,alignSelf:'center',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.email||<span style={{color:C.border}}>Sin email</span>}</div>
               <div style={{fontSize:12,color:C.text,alignSelf:'center',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.tratamiento||'—'}</div>
               <div style={{alignSelf:'center'}}>
-                <span style={{fontSize:11,padding:'2px 7px',borderRadius:2,background:`${fuente.color}18`,color:fuente.color,border:`1px solid ${fuente.color}40`,fontWeight:600}}>
+                <span style={{fontSize:11,padding:'2px 7px',borderRadius:20,background:`${fuente.color}18`,color:fuente.color,border:`1px solid ${fuente.color}40`,fontWeight:600}}>
                   {fuente.icon} {fuente.label}
                 </span>
               </div>
               <div style={{alignSelf:'center'}}>
-                <span style={{fontSize:10,padding:'2px 8px',borderRadius:2,background:`${etapaColor}15`,color:etapaColor,border:`1px solid ${etapaColor}30`,fontWeight:500}}>
+                <span style={{fontSize:10,padding:'2px 8px',borderRadius:20,background:`${etapaColor}15`,color:etapaColor,border:`1px solid ${etapaColor}30`,fontWeight:500}}>
                   {(p.etapa||'—').replace(/_/g,' ')}
                 </span>
               </div>
@@ -9737,11 +9730,11 @@ function HonorariosDashboard({ client, API, aH, jH, onIrAHonorarios }) {
         </div>
         <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
           <select value={mes} onChange={e=>setMes(Number(e.target.value))}
-            style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:"7px 14px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
+            style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"7px 14px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
             {meses.map((m,i)=><option key={i+1} value={i+1}>{m}</option>)}
           </select>
           <select value={año} onChange={e=>setAño(Number(e.target.value))}
-            style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:"7px 14px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
+            style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"7px 14px",color:C.text,fontSize:12,fontFamily:"inherit"}}>
             {[2024,2025,2026,2027].map(y=><option key={y} value={y}>{y}</option>)}
           </select>
         </div>
@@ -9757,7 +9750,7 @@ function HonorariosDashboard({ client, API, aH, jH, onIrAHonorarios }) {
           {label:"Días prom. respuesta", value:promDias!==null?`${promDias}d`:"—", icon:"⏱️", color:C.muted},
           {label:"Seguimientos pend.", value:pendSeg, icon:"🔔", color:pendSeg>0?C.yellow:C.green},
         ].map((kpi,i)=>(
-          <div key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:"14px 16px"}}>
+          <div key={i} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:"14px 16px"}}>
             <div style={{fontSize:18,marginBottom:5}}>{kpi.icon}</div>
             <div style={{fontSize:20,fontWeight:800,color:kpi.color,marginBottom:2}}>{kpi.value}</div>
             <div style={{fontSize:10,color:C.muted,letterSpacing:.3,lineHeight:1.3}}>{kpi.label}</div>
@@ -9766,7 +9759,7 @@ function HonorariosDashboard({ client, API, aH, jH, onIrAHonorarios }) {
       </div>
 
       {/* Tabla tracker */}
-      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,overflow:"hidden"}}>
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,overflow:"hidden"}}>
         <div style={{padding:"13px 18px",borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div style={{fontSize:13,fontWeight:700,color:C.text}}>Pipeline de seguimiento — {meses[mes-1]} {año}</div>
           <div style={{fontSize:11,color:C.muted}}>{totalConsultas} cliente{totalConsultas!==1?'s':''}</div>
@@ -9801,7 +9794,7 @@ function HonorariosDashboard({ client, API, aH, jH, onIrAHonorarios }) {
                     onClick={()=>setExpandido(isOpen?null:pid)}>
 
                     {/* Avatar */}
-                    <div style={{width:36,height:36,borderRadius:4,background:acepto?"rgba(16,185,129,0.15)":C.accentGlow,border:`1px solid ${acepto?"rgba(16,185,129,0.3)":C.accent+"44"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>
+                    <div style={{width:36,height:36,borderRadius:9,background:acepto?"rgba(16,185,129,0.15)":C.accentGlow,border:`1px solid ${acepto?"rgba(16,185,129,0.3)":C.accent+"44"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>
                       {acepto?"✅":"⚖️"}
                     </div>
 
@@ -9815,10 +9808,10 @@ function HonorariosDashboard({ client, API, aH, jH, onIrAHonorarios }) {
 
                     {/* Estado presupuesto */}
                     <div style={{flex:"0 0 130px"}}>
-                      {estadoPreso==='sin_presupuesto' && <span style={{fontSize:11,padding:"3px 9px",borderRadius:2,background:"rgba(100,100,100,0.15)",color:C.muted,fontWeight:600}}>Sin presupuesto</span>}
-                      {estadoPreso==='borrador' && <span style={{fontSize:11,padding:"3px 9px",borderRadius:2,background:"rgba(100,100,100,0.15)",color:C.muted,fontWeight:600}}>📝 Borrador</span>}
-                      {estadoPreso==='enviado' && <span style={{fontSize:11,padding:"3px 9px",borderRadius:2,background:C.accentGlow,color:C.accentLight,fontWeight:600}}>📤 Enviado</span>}
-                      {estadoPreso==='aceptado' && <span style={{fontSize:11,padding:"3px 9px",borderRadius:2,background:"rgba(16,185,129,0.15)",color:C.green,fontWeight:600}}>✅ Aceptado</span>}
+                      {estadoPreso==='sin_presupuesto' && <span style={{fontSize:11,padding:"3px 9px",borderRadius:20,background:"rgba(100,100,100,0.15)",color:C.muted,fontWeight:600}}>Sin presupuesto</span>}
+                      {estadoPreso==='borrador' && <span style={{fontSize:11,padding:"3px 9px",borderRadius:20,background:"rgba(100,100,100,0.15)",color:C.muted,fontWeight:600}}>📝 Borrador</span>}
+                      {estadoPreso==='enviado' && <span style={{fontSize:11,padding:"3px 9px",borderRadius:20,background:C.accentGlow,color:C.accentLight,fontWeight:600}}>📤 Enviado</span>}
+                      {estadoPreso==='aceptado' && <span style={{fontSize:11,padding:"3px 9px",borderRadius:20,background:"rgba(16,185,129,0.15)",color:C.green,fontWeight:600}}>✅ Aceptado</span>}
                     </div>
 
                     {/* Días transcurridos */}
@@ -9834,7 +9827,7 @@ function HonorariosDashboard({ client, API, aH, jH, onIrAHonorarios }) {
                     {/* Seguimientos — pills */}
                     <div style={{flex:1,display:"flex",gap:6,justifyContent:"center"}}>
                       {[['S1',seg1h],['S2',seg2h],['S3',seg3h]].map(([label,hecho])=>(
-                        <div key={label} style={{width:28,height:28,borderRadius:4,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,
+                        <div key={label} style={{width:28,height:28,borderRadius:7,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,
                           background:hecho?"rgba(16,185,129,0.2)":"rgba(100,100,100,0.1)",
                           color:hecho?C.green:C.muted,
                           border:`1px solid ${hecho?"rgba(16,185,129,0.35)":C.border}`}}>
@@ -9856,12 +9849,12 @@ function HonorariosDashboard({ client, API, aH, jH, onIrAHonorarios }) {
                         <div>
                           <div style={{fontSize:11,fontWeight:700,color:C.muted,marginBottom:10,textTransform:"uppercase",letterSpacing:".6px"}}>Presupuesto</div>
                           {row.propuesta ? (
-                            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:"10px 12px",marginBottom:8}}>
+                            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:"10px 12px",marginBottom:8}}>
                               <div style={{fontSize:12,fontWeight:600,color:C.text,marginBottom:2}}>{row.propuesta.titulo||'Sin título'}</div>
                               <div style={{fontSize:10,color:C.muted}}>Estado: {row.propuesta.estado||'borrador'}</div>
                             </div>
                           ) : (
-                            <div style={{fontSize:11,color:C.muted,marginBottom:8,padding:"10px",background:C.surface,borderRadius:2,border:`1px dashed ${C.border}`,textAlign:"center"}}>
+                            <div style={{fontSize:11,color:C.muted,marginBottom:8,padding:"10px",background:C.surface,borderRadius:8,border:`1px dashed ${C.border}`,textAlign:"center"}}>
                               Sin presupuesto<br/>
                               <span style={{fontSize:10}}>Crealo desde Honorarios →</span>
                             </div>
@@ -9870,13 +9863,13 @@ function HonorariosDashboard({ client, API, aH, jH, onIrAHonorarios }) {
                             <label style={{fontSize:10,color:C.muted,display:"block",marginBottom:3}}>Fecha de envío</label>
                             <input type="date" value={getEdit(pid,'fecha_envio',row.fecha_envio)||''}
                               onChange={e=>setEdit(pid,'fecha_envio',e.target.value)}
-                              style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:"6px 10px",color:C.text,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
+                              style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:7,padding:"6px 10px",color:C.text,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
                           </div>
                           <div style={{marginTop:8}}>
                             <label style={{fontSize:10,color:C.muted,display:"block",marginBottom:3}}>Monto honorario ($)</label>
                             <input type="number" placeholder="Ej: 150000" value={getEdit(pid,'monto_honorario',row.monto_honorario)||''}
                               onChange={e=>setEdit(pid,'monto_honorario',e.target.value)}
-                              style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:"6px 10px",color:C.text,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
+                              style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:7,padding:"6px 10px",color:C.text,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
                           </div>
                         </div>
 
@@ -9889,7 +9882,7 @@ function HonorariosDashboard({ client, API, aH, jH, onIrAHonorarios }) {
                             <div style={{display:"flex",gap:8}}>
                               {[{v:true,l:"✅ Sí, aceptó"},{v:false,l:"❌ No aceptó"}].map(opt=>(
                                 <button key={String(opt.v)} onClick={()=>setEdit(pid,'acepto',opt.v)}
-                                  style={{flex:1,padding:"7px 6px",borderRadius:4,border:`1px solid ${getEdit(pid,'acepto',row.acepto)===opt.v?(opt.v?"rgba(16,185,129,0.5)":"rgba(239,68,68,0.4)"):C.border}`,
+                                  style={{flex:1,padding:"7px 6px",borderRadius:8,border:`1px solid ${getEdit(pid,'acepto',row.acepto)===opt.v?(opt.v?"rgba(16,185,129,0.5)":"rgba(239,68,68,0.4)"):C.border}`,
                                     background:getEdit(pid,'acepto',row.acepto)===opt.v?(opt.v?"rgba(16,185,129,0.15)":"rgba(239,68,68,0.1)"):"transparent",
                                     color:getEdit(pid,'acepto',row.acepto)===opt.v?(opt.v?C.green:C.red):C.muted,
                                     fontSize:11,fontWeight:600,cursor:"pointer"}}>
@@ -9903,14 +9896,14 @@ function HonorariosDashboard({ client, API, aH, jH, onIrAHonorarios }) {
                               <label style={{fontSize:10,color:C.muted,display:"block",marginBottom:3}}>Fecha de aceptación</label>
                               <input type="date" value={getEdit(pid,'fecha_aceptacion',row.fecha_aceptacion)||''}
                                 onChange={e=>setEdit(pid,'fecha_aceptacion',e.target.value)}
-                                style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:"6px 10px",color:C.text,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
+                                style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:7,padding:"6px 10px",color:C.text,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}}/>
                             </div>
                           )}
                           <div>
                             <label style={{fontSize:10,color:C.muted,display:"block",marginBottom:3}}>Notas internas</label>
                             <textarea value={getEdit(pid,'notas',row.notas)||''} onChange={e=>setEdit(pid,'notas',e.target.value)}
                               rows={3} placeholder="Observaciones, objeciones, próximos pasos..."
-                              style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:"7px 10px",color:C.text,fontSize:12,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box",lineHeight:1.5}}/>
+                              style={{width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:7,padding:"7px 10px",color:C.text,fontSize:12,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box",lineHeight:1.5}}/>
                           </div>
                         </div>
 
@@ -9925,7 +9918,7 @@ function HonorariosDashboard({ client, API, aH, jH, onIrAHonorarios }) {
                             {n:3,hecho:'seg3_hecho',fecha:'seg3_fecha',nota:'seg3_nota',
                              hint:"10-14 días: decisión final, oferta especial o cerrar"},
                           ].map(seg => (
-                            <div key={seg.n} style={{marginBottom:12,background:C.surface,border:`1px solid ${getEdit(pid,seg.hecho,row[seg.hecho])?"rgba(16,185,129,0.3)":C.border}`,borderRadius:2,padding:"10px 12px",transition:"border-color .2s"}}>
+                            <div key={seg.n} style={{marginBottom:12,background:C.surface,border:`1px solid ${getEdit(pid,seg.hecho,row[seg.hecho])?"rgba(16,185,129,0.3)":C.border}`,borderRadius:8,padding:"10px 12px",transition:"border-color .2s"}}>
                               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
                                 <input type="checkbox" checked={!!getEdit(pid,seg.hecho,row[seg.hecho])}
                                   onChange={e=>setEdit(pid,seg.hecho,e.target.checked)}
@@ -9935,10 +9928,10 @@ function HonorariosDashboard({ client, API, aH, jH, onIrAHonorarios }) {
                               <div style={{fontSize:9,color:C.muted,marginBottom:6,lineHeight:1.4}}>{seg.hint}</div>
                               <input type="date" value={getEdit(pid,seg.fecha,row[seg.fecha])||''}
                                 onChange={e=>setEdit(pid,seg.fecha,e.target.value)}
-                                style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"5px 8px",color:C.text,fontSize:11,fontFamily:"inherit",boxSizing:"border-box",marginBottom:5}}/>
+                                style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:6,padding:"5px 8px",color:C.text,fontSize:11,fontFamily:"inherit",boxSizing:"border-box",marginBottom:5}}/>
                               <input placeholder={`Nota seg. ${seg.n}...`} value={getEdit(pid,seg.nota,row[seg.nota])||''}
                                 onChange={e=>setEdit(pid,seg.nota,e.target.value)}
-                                style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:"5px 8px",color:C.text,fontSize:11,fontFamily:"inherit",boxSizing:"border-box"}}/>
+                                style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:6,padding:"5px 8px",color:C.text,fontSize:11,fontFamily:"inherit",boxSizing:"border-box"}}/>
                             </div>
                           ))}
                         </div>
@@ -9948,16 +9941,16 @@ function HonorariosDashboard({ client, API, aH, jH, onIrAHonorarios }) {
                       <div style={{display:"flex",gap:8,justifyContent:"flex-end",paddingTop:12,borderTop:`1px solid ${C.border}`}}>
                         {onIrAHonorarios && (
                           <button onClick={()=>onIrAHonorarios(pid)}
-                            style={{padding:"7px 14px",borderRadius:4,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:11,cursor:"pointer"}}>
+                            style={{padding:"7px 14px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:11,cursor:"pointer"}}>
                             📄 Ver / crear presupuesto
                           </button>
                         )}
                         <button onClick={()=>{setExpandido(null);setEdits(ed=>{const n={...ed};delete n[pid];return n;});}}
-                          style={{padding:"7px 14px",borderRadius:4,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:11,cursor:"pointer"}}>
+                          style={{padding:"7px 14px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.muted,fontSize:11,cursor:"pointer"}}>
                           Cancelar
                         </button>
                         <button onClick={()=>guardar(row)} disabled={guardando===pid}
-                          style={{padding:"7px 16px",borderRadius:4,border:"none",background:C.accent,color:"white",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                          style={{padding:"7px 16px",borderRadius:8,border:"none",background:C.accent,color:"white",fontSize:11,fontWeight:700,cursor:"pointer"}}>
                           {guardando===pid?"Guardando…":"💾 Guardar cambios"}
                         </button>
                       </div>
@@ -10100,7 +10093,7 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
   }, []);
 
   // ── Helpers de estilo ─────────────────────────────────────────────────────
-  const inputSt = {width:'100%',background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:'8px 12px',color:C.text,fontSize:13,fontFamily:'inherit',boxSizing:'border-box'};
+  const inputSt = {width:'100%',background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:'8px 12px',color:C.text,fontSize:13,fontFamily:'inherit',boxSizing:'border-box'};
   const labelSt = {fontSize:11,color:C.muted,fontWeight:500,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:'.5px'};
   const fieldSt = {marginBottom:12};
   const bloqueBodySt = {padding:'16px',borderBottom:`1px solid ${C.border}`};
@@ -10330,16 +10323,16 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
     <div>
       {/* Header del editor */}
       <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:20,flexWrap:'wrap'}}>
-        <button onClick={()=>setVista('lista')} style={{padding:'6px 12px',borderRadius:4,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:12,cursor:'pointer',flexShrink:0}}>← Volver</button>
+        <button onClick={()=>setVista('lista')} style={{padding:'6px 12px',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:12,cursor:'pointer',flexShrink:0}}>← Volver</button>
         <input value={titulo} onChange={e=>setTitulo(e.target.value)} placeholder="Título del presupuesto de honorarios..."
-          style={{flex:1,minWidth:180,background:C.surface,border:`1px solid ${C.border}`,borderRadius:4,padding:'8px 12px',color:C.text,fontSize:14,fontWeight:600,fontFamily:'inherit'}}/>
+          style={{flex:1,minWidth:180,background:C.surface,border:`1px solid ${C.border}`,borderRadius:8,padding:'8px 12px',color:C.text,fontSize:14,fontWeight:600,fontFamily:'inherit'}}/>
         <div style={{display:'flex',gap:8,flexShrink:0,flexWrap:'wrap'}}>
           <button onClick={()=>generarPropuesta(false)} disabled={generando}
-            style={{padding:'8px 14px',borderRadius:4,border:'none',background:generando?'#374151':C.accent,color:'white',fontSize:12,fontWeight:600,cursor:'pointer'}}>
+            style={{padding:'8px 14px',borderRadius:8,border:'none',background:generando?'#374151':C.accent,color:'white',fontSize:12,fontWeight:600,cursor:'pointer'}}>
             {generando?'✨ Generando...':'✨ Generar IA'}
           </button>
           <button onClick={()=>guardar(false)} disabled={guardando}
-            style={{padding:'8px 14px',borderRadius:4,border:'none',background:C.green,color:'white',fontSize:12,fontWeight:600,cursor:'pointer'}}>
+            style={{padding:'8px 14px',borderRadius:8,border:'none',background:C.green,color:'white',fontSize:12,fontWeight:600,cursor:'pointer'}}>
             {guardando?'Guardando...':'💾 Guardar'}
           </button>
           {contenidoGenerado && (
@@ -10347,7 +10340,7 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
               const pac = pacientes?.find(p=>p.id===parseInt(pacienteId));
               if (pac?.email) setEmailEnvio(pac.email);
               setShowEnviar(true);
-            }} style={{padding:'8px 14px',borderRadius:4,border:'none',background:'#0891b2',color:'white',fontSize:12,fontWeight:600,cursor:'pointer'}}>✉ Enviar</button>
+            }} style={{padding:'8px 14px',borderRadius:8,border:'none',background:'#0891b2',color:'white',fontSize:12,fontWeight:600,cursor:'pointer'}}>✉ Enviar</button>
           )}
         </div>
       </div>
@@ -10355,33 +10348,33 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
       {/* Modal enviar */}
       {showEnviar && (
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center'}} onClick={()=>setShowEnviar(false)}>
-          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:24,width:420}} onClick={e=>e.stopPropagation()}>
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:24,width:420}} onClick={e=>e.stopPropagation()}>
             <div style={{fontSize:14,fontWeight:600,marginBottom:4}}>Enviar presupuesto</div>
             <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Elegí cómo enviárselo al cliente</div>
             <div style={{marginBottom:14}}>
               <label style={labelSt}>📧 Email</label>
               <input value={emailEnvio} onChange={e=>setEmailEnvio(e.target.value)} placeholder="Email del cliente..."
-                style={{width:'100%',background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:'9px 12px',color:C.text,fontSize:13,fontFamily:'inherit',boxSizing:'border-box'}}/>
+                style={{width:'100%',background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:'9px 12px',color:C.text,fontSize:13,fontFamily:'inherit',boxSizing:'border-box'}}/>
             </div>
             {propActual?.uuid && (
               <div style={{marginBottom:14}}>
                 <label style={labelSt}>🔗 Link público</label>
                 <div style={{display:'flex',gap:8}}>
                   <input readOnly value={`https://api.edgecrm.net/tratamiento/${propActual.uuid}`}
-                    style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:4,padding:'9px 12px',fontSize:12,color:C.text,fontFamily:'inherit',boxSizing:'border-box'}}/>
+                    style={{flex:1,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:'9px 12px',fontSize:12,color:C.text,fontFamily:'inherit',boxSizing:'border-box'}}/>
                   <button onClick={()=>navigator.clipboard.writeText(`https://api.edgecrm.net/tratamiento/${propActual.uuid}`)}
-                    style={{padding:'8px 12px',borderRadius:4,border:'none',background:C.accent,color:'white',fontSize:12,fontWeight:600,cursor:'pointer',flexShrink:0}}>📋</button>
+                    style={{padding:'8px 12px',borderRadius:8,border:'none',background:C.accent,color:'white',fontSize:12,fontWeight:600,cursor:'pointer',flexShrink:0}}>📋</button>
                 </div>
               </div>
             )}
             {client?.plan === 'pro' && pacientes?.find(p=>p.id===parseInt(pacienteId))?.telefono && (
               <div style={{marginBottom:14}}>
                 <label style={labelSt}>💬 WhatsApp</label>
-                <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:2,padding:'9px 12px',fontSize:13,color:C.muted}}>{pacientes.find(p=>p.id===parseInt(pacienteId)).telefono}</div>
+                <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:'9px 12px',fontSize:13,color:C.muted}}>{pacientes.find(p=>p.id===parseInt(pacienteId)).telefono}</div>
               </div>
             )}
             <div style={{display:'flex',gap:8,justifyContent:'flex-end',flexWrap:'wrap'}}>
-              <button onClick={()=>setShowEnviar(false)} style={{padding:'8px 14px',borderRadius:4,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:12,cursor:'pointer'}}>Cancelar</button>
+              <button onClick={()=>setShowEnviar(false)} style={{padding:'8px 14px',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:12,cursor:'pointer'}}>Cancelar</button>
               {client?.plan === 'pro' && pacientes?.find(p=>p.id===parseInt(pacienteId))?.telefono && (
                 <button onClick={async()=>{
                   setEnviando(true);
@@ -10391,12 +10384,12 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
                   const msg = `Hola ${pac?.nombre?.split(' ')[0]||''}! Te enviamos tu propuesta de honorarios${contenidoGenerado?.titulo?`: *${contenidoGenerado.titulo}*`:''}.\n\n${link?`Podés verla completa acá:\n${link}\n\n`:''}Ante cualquier consulta escribinos.`;
                   await fetch(`${API}/api/enviar-mensaje`, {method:'POST',headers:jH(),body:JSON.stringify({telefono:pac.telefono,texto:msg,cliente_id:client.id})});
                   setShowEnviar(false); setEnviando(false);
-                }} disabled={enviando} style={{padding:'8px 14px',borderRadius:4,border:'none',background:'#25d366',color:'white',fontSize:12,fontWeight:600,cursor:'pointer'}}>
+                }} disabled={enviando} style={{padding:'8px 14px',borderRadius:8,border:'none',background:'#25d366',color:'white',fontSize:12,fontWeight:600,cursor:'pointer'}}>
                   {enviando?'Enviando...':'💬 WhatsApp'}
                 </button>
               )}
               <button onClick={enviarEmail} disabled={!emailEnvio.trim()||enviando}
-                style={{padding:'8px 14px',borderRadius:4,border:'none',background:'#0891b2',color:'white',fontSize:12,fontWeight:600,cursor:'pointer'}}>
+                style={{padding:'8px 14px',borderRadius:8,border:'none',background:'#0891b2',color:'white',fontSize:12,fontWeight:600,cursor:'pointer'}}>
                 {enviando?'Enviando...':'📧 Enviar email'}
               </button>
             </div>
@@ -10408,7 +10401,7 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
       <div style={{display:'grid',gridTemplateColumns:'3fr 2fr',gap:20,alignItems:'start'}}>
 
         {/* COL IZQUIERDA: 4 bloques acordeón */}
-        <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,overflow:'hidden'}}>
+        <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,overflow:'hidden'}}>
 
           {/* ▼ BLOQUE 1: Datos del cliente */}
           <AccordionHeader idx={0} label="Bloque 1 · Datos del cliente" />
@@ -10521,7 +10514,7 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
                   {b2Incluye.map((item,i)=>(
                     <div key={i} style={{display:'flex',gap:6,marginBottom:6}}>
                       <input value={item} onChange={e=>setB2Incluye(prev=>{const n=[...prev];n[i]=e.target.value;return n;})} style={{...inputSt,flex:1}}/>
-                      {b2Incluye.length>1&&<button onClick={()=>setB2Incluye(prev=>prev.filter((_,j)=>j!==i))} style={{padding:'4px 8px',borderRadius:4,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,cursor:'pointer',fontSize:12}}>×</button>}
+                      {b2Incluye.length>1&&<button onClick={()=>setB2Incluye(prev=>prev.filter((_,j)=>j!==i))} style={{padding:'4px 8px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,cursor:'pointer',fontSize:12}}>×</button>}
                     </div>
                   ))}
                   <button onClick={()=>setB2Incluye(prev=>[...prev,''])} style={{fontSize:11,color:C.accent,background:'transparent',border:'none',cursor:'pointer',padding:0}}>+ Agregar</button>
@@ -10531,7 +10524,7 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
                   {b2NoIncluye.map((item,i)=>(
                     <div key={i} style={{display:'flex',gap:6,marginBottom:6}}>
                       <input value={item} onChange={e=>setB2NoIncluye(prev=>{const n=[...prev];n[i]=e.target.value;return n;})} style={{...inputSt,flex:1}}/>
-                      {b2NoIncluye.length>1&&<button onClick={()=>setB2NoIncluye(prev=>prev.filter((_,j)=>j!==i))} style={{padding:'4px 8px',borderRadius:4,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,cursor:'pointer',fontSize:12}}>×</button>}
+                      {b2NoIncluye.length>1&&<button onClick={()=>setB2NoIncluye(prev=>prev.filter((_,j)=>j!==i))} style={{padding:'4px 8px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,cursor:'pointer',fontSize:12}}>×</button>}
                     </div>
                   ))}
                   <button onClick={()=>setB2NoIncluye(prev=>[...prev,''])} style={{fontSize:11,color:C.accent,background:'transparent',border:'none',cursor:'pointer',padding:0}}>+ Agregar</button>
@@ -10566,7 +10559,7 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
                     </div>
                   </div>
                   {cotizacion && (b3Moneda==='USD'||b3Moneda==='UVA'||b3Moneda==='JUL') && (
-                    <div style={{display:'inline-flex',alignItems:'center',gap:8,background:C.accentGlow,border:`1px solid ${C.accent}33`,borderRadius:2,padding:'4px 12px',fontSize:11,color:C.text,marginBottom:8}}>
+                    <div style={{display:'inline-flex',alignItems:'center',gap:8,background:C.accentGlow,border:`1px solid ${C.accent}33`,borderRadius:20,padding:'4px 12px',fontSize:11,color:C.text,marginBottom:8}}>
                       <span style={{color:C.accent,fontWeight:600}}>●</span>
                       <span>USD blue <strong>${cotizacion.blue?.toLocaleString('es-AR')}</strong></span>
                       <span style={{color:C.muted}}>·</span>
@@ -10589,7 +10582,7 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
                     </div>
                   </div>
                   {cotizacion && b3Moneda==='USD' && (
-                    <div style={{display:'inline-flex',alignItems:'center',gap:8,background:C.accentGlow,border:`1px solid ${C.accent}33`,borderRadius:2,padding:'4px 12px',fontSize:11,color:C.text,marginBottom:8}}>
+                    <div style={{display:'inline-flex',alignItems:'center',gap:8,background:C.accentGlow,border:`1px solid ${C.accent}33`,borderRadius:20,padding:'4px 12px',fontSize:11,color:C.text,marginBottom:8}}>
                       <span style={{color:C.accent,fontWeight:600}}>●</span>
                       <span>USD blue <strong>${cotizacion.blue?.toLocaleString('es-AR')}</strong></span>
                       <span style={{color:C.muted}}>·</span>
@@ -10619,7 +10612,7 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
                     <div key={i} style={{display:'flex',gap:8,marginBottom:8}}>
                       <input value={et.nombre} onChange={e=>setB3Etapas(prev=>{const n=[...prev];n[i]={...n[i],nombre:e.target.value};return n;})} placeholder="Ej: Mediación" style={{...inputSt,flex:2}}/>
                       <input value={et.valor} onChange={e=>setB3Etapas(prev=>{const n=[...prev];n[i]={...n[i],valor:e.target.value};return n;})} placeholder="$" style={{...inputSt,flex:1}}/>
-                      {b3Etapas.length>1&&<button onClick={()=>setB3Etapas(prev=>prev.filter((_,j)=>j!==i))} style={{padding:'4px 8px',borderRadius:4,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,cursor:'pointer',fontSize:12}}>×</button>}
+                      {b3Etapas.length>1&&<button onClick={()=>setB3Etapas(prev=>prev.filter((_,j)=>j!==i))} style={{padding:'4px 8px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,cursor:'pointer',fontSize:12}}>×</button>}
                     </div>
                   ))}
                   <button onClick={()=>setB3Etapas(prev=>[...prev,{nombre:'',valor:''}])} style={{fontSize:11,color:C.accent,background:'transparent',border:'none',cursor:'pointer',padding:0}}>+ Agregar etapa</button>
@@ -10641,7 +10634,7 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
               </div>
               <div style={fieldSt}>
                 <label style={labelSt}>Gastos no incluidos</label>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:10,background:C.bg,borderRadius:2,padding:'10px 12px',border:`1px solid ${C.border}`}}>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:10,background:C.bg,borderRadius:8,padding:'10px 12px',border:`1px solid ${C.border}`}}>
                   {GASTOS_PREDEFINIDOS.map(g=>(
                     <label key={g} style={{display:'flex',alignItems:'center',gap:6,cursor:'pointer',fontSize:12,padding:'2px 0'}}>
                       <input type="checkbox" checked={b3GastosNoInc.includes(g)}
@@ -10654,7 +10647,7 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
                 {b3GastosNoInc.filter(g=>!GASTOS_PREDEFINIDOS.includes(g)).map((g,i)=>(
                   <div key={g} style={{display:'flex',gap:6,marginBottom:6}}>
                     <input value={g} readOnly style={{...inputSt,flex:1,color:C.muted}}/>
-                    <button onClick={()=>setB3GastosNoInc(prev=>prev.filter(x=>x!==g))} style={{padding:'4px 8px',borderRadius:4,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,cursor:'pointer',fontSize:12}}>×</button>
+                    <button onClick={()=>setB3GastosNoInc(prev=>prev.filter(x=>x!==g))} style={{padding:'4px 8px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,cursor:'pointer',fontSize:12}}>×</button>
                   </div>
                 ))}
                 <div style={{display:'flex',gap:8,marginTop:4}}>
@@ -10662,7 +10655,7 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
                     onKeyDown={e=>{if(e.key==='Enter'&&b3GastoCustom.trim()){setB3GastosNoInc(prev=>[...prev,b3GastoCustom.trim()]);setB3GastoCustom('');}}}
                     placeholder="Agregar gasto personalizado..." style={{...inputSt,flex:1}}/>
                   <button onClick={()=>{if(b3GastoCustom.trim()){setB3GastosNoInc(prev=>[...prev,b3GastoCustom.trim()]);setB3GastoCustom('');}}}
-                    style={{padding:'8px 14px',borderRadius:4,border:'none',background:C.accent,color:'white',fontSize:12,fontWeight:600,cursor:'pointer',flexShrink:0}}>+</button>
+                    style={{padding:'8px 14px',borderRadius:8,border:'none',background:C.accent,color:'white',fontSize:12,fontWeight:600,cursor:'pointer',flexShrink:0}}>+</button>
                 </div>
               </div>
               <div style={fieldSt}><label style={labelSt}>Condiciones adicionales</label><textarea value={b3Condiciones} onChange={e=>setB3Condiciones(e.target.value)} rows={2} style={{...inputSt,resize:'vertical',lineHeight:1.5}}/></div>
@@ -10673,12 +10666,12 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
           <AccordionHeader idx={3} label="Bloque 4 · Información en crudo" />
           {abiertos[3] && (
             <div style={{padding:'16px'}}>
-              <div style={{background:`${C.accent}10`,border:`1px solid ${C.accent}25`,borderRadius:4,padding:'10px 12px',marginBottom:12,fontSize:12,color:C.muted,lineHeight:1.5}}>
+              <div style={{background:`${C.accent}10`,border:`1px solid ${C.accent}25`,borderRadius:8,padding:'10px 12px',marginBottom:12,fontSize:12,color:C.muted,lineHeight:1.5}}>
                 💡 <strong style={{color:C.text}}>Dos formas de generar:</strong> completá los bloques 1–3 y hacé clic en <strong style={{color:C.accent}}>✨ Generar IA</strong> arriba, o escribí toda la info acá abajo y usá <strong style={{color:'#8b5cf6'}}>Autocompletar</strong>.
               </div>
               <div style={{display:'flex',gap:8,marginBottom:10}}>
                 <button onClick={()=>{const compilado = compilarInfoCruda(); if(compilado.trim()) setInfoCruda(compilado);}}
-                  style={{flex:1,padding:'8px',borderRadius:4,border:`1px solid ${C.border}`,background:'transparent',color:C.text,fontSize:12,fontWeight:600,cursor:'pointer'}}>
+                  style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',color:C.text,fontSize:12,fontWeight:600,cursor:'pointer'}}>
                   📋 Compilar datos del formulario
                 </button>
               </div>
@@ -10689,7 +10682,7 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
                   rows={7} style={{...inputSt,resize:'vertical',lineHeight:1.6}}/>
               </div>
               <button onClick={autocompletar} disabled={autocompletando||!infoCruda.trim()}
-                style={{width:'100%',padding:'10px',borderRadius:4,border:'none',background:autocompletando?'#374151':'#8b5cf6',color:'white',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+                style={{width:'100%',padding:'10px',borderRadius:8,border:'none',background:autocompletando?'#374151':'#8b5cf6',color:'white',fontSize:13,fontWeight:600,cursor:'pointer'}}>
                 {autocompletando?'✨ Autocompletando formulario...':'✨ Autocompletar bloques 1–3 desde el texto'}
               </button>
             </div>
@@ -10702,7 +10695,7 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
               {historialChat.length > 0 && (
                 <div style={{marginBottom:12,maxHeight:200,overflowY:'auto',display:'flex',flexDirection:'column',gap:8}}>
                   {historialChat.filter(m=>m.role==='assistant').map((m,i)=>(
-                    <div key={i} style={{background:`${C.accent}15`,border:`1px solid ${C.accent}30`,borderRadius:4,padding:'10px 12px',fontSize:12,color:C.text,lineHeight:1.5}}>
+                    <div key={i} style={{background:`${C.accent}15`,border:`1px solid ${C.accent}30`,borderRadius:8,padding:'10px 12px',fontSize:12,color:C.text,lineHeight:1.5}}>
                       <span style={{fontSize:10,color:C.accent,fontWeight:700,display:'block',marginBottom:4}}>✨ IA</span>
                       {m.content}
                     </div>
@@ -10718,7 +10711,7 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
                   : 'Respondé la pregunta de la IA para continuar generando el presupuesto...'}
                 rows={3} style={{...inputSt,resize:'vertical',lineHeight:1.5}}/>
               <button onClick={()=>generarPropuesta(true)} disabled={generando||!mensajeEdicion.trim()}
-                style={{width:'100%',marginTop:8,padding:'9px',borderRadius:4,border:'none',background:generando?'#374151':'#8b5cf6',color:'white',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+                style={{width:'100%',marginTop:8,padding:'9px',borderRadius:8,border:'none',background:generando?'#374151':'#8b5cf6',color:'white',fontSize:13,fontWeight:600,cursor:'pointer'}}>
                 {generando?'Procesando...':contenidoGenerado?'💬 Aplicar cambio con IA':'💬 Enviar respuesta a la IA'}
               </button>
             </div>
@@ -10728,7 +10721,7 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
         {/* COL DERECHA: Selector de plantilla + Preview */}
         <div style={{position:'sticky',top:20}}>
           {plantillas.length > 0 && (
-            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:'12px 16px',marginBottom:12}}>
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:'12px 16px',marginBottom:12}}>
               <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
                 <span style={{fontSize:11,fontWeight:700,letterSpacing:'.7px',textTransform:'uppercase',color:C.muted,flex:1}}>Plantilla</span>
                 <button onClick={()=>setVista('plantillas')} style={{fontSize:11,color:C.accent,background:'transparent',border:'none',cursor:'pointer',padding:0}}>📐 Gestionar</button>
@@ -10739,7 +10732,7 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
               </select>
             </div>
           )}
-          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,overflow:'hidden'}}>
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,overflow:'hidden'}}>
             <div style={{padding:'10px 16px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:8}}>
               <span style={{fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'.7px',color:C.muted,flex:1}}>Preview en vivo</span>
               {contenidoGenerado && <span style={{fontSize:10,color:C.green}}>● Actualizado</span>}
@@ -10763,33 +10756,33 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
   if (vista === 'plantillas') return (
     <div>
       <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20}}>
-        <button onClick={()=>setVista('lista')} style={{padding:'6px 12px',borderRadius:4,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:12,cursor:'pointer'}}>← Volver</button>
+        <button onClick={()=>setVista('lista')} style={{padding:'6px 12px',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:12,cursor:'pointer'}}>← Volver</button>
         <div>
           <div style={{fontSize:16,fontWeight:700}}>📐 Plantillas de honorarios</div>
           <div style={{fontSize:12,color:C.muted}}>Modelos reutilizables para el estudio</div>
         </div>
-        <button onClick={()=>nueva()} style={{marginLeft:'auto',padding:'8px 16px',borderRadius:4,border:'none',background:C.accent,color:'white',fontSize:12,fontWeight:600,cursor:'pointer'}}>+ Nueva plantilla</button>
+        <button onClick={()=>nueva()} style={{marginLeft:'auto',padding:'8px 16px',borderRadius:8,border:'none',background:C.accent,color:'white',fontSize:12,fontWeight:600,cursor:'pointer'}}>+ Nueva plantilla</button>
       </div>
       {plantillas.length === 0 ? (
         <div style={{textAlign:'center',padding:60,color:C.muted}}>
           <div style={{fontSize:36,marginBottom:12}}>📐</div>
           <div style={{fontWeight:600,marginBottom:6}}>No hay plantillas guardadas</div>
           <div style={{fontSize:11,marginBottom:20}}>Creá un presupuesto y guardalo como plantilla para reutilizarlo</div>
-          <button onClick={()=>nueva()} style={{padding:'9px 18px',borderRadius:4,border:'none',background:C.accent,color:'white',fontSize:13,fontWeight:600,cursor:'pointer'}}>Crear primera plantilla</button>
+          <button onClick={()=>nueva()} style={{padding:'9px 18px',borderRadius:8,border:'none',background:C.accent,color:'white',fontSize:13,fontWeight:600,cursor:'pointer'}}>Crear primera plantilla</button>
         </div>
       ) : (
         <div style={{display:'flex',flexDirection:'column',gap:10}}>
           {plantillas.map(p=>(
-            <div key={p.id} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:'14px 16px',display:'flex',alignItems:'center',gap:12}}>
-              <div style={{width:36,height:36,borderRadius:4,background:C.accentGlow,border:`1px solid ${C.accent}44`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>📐</div>
+            <div key={p.id} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:'14px 16px',display:'flex',alignItems:'center',gap:12}}>
+              <div style={{width:36,height:36,borderRadius:9,background:C.accentGlow,border:`1px solid ${C.accent}44`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>📐</div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:13,fontWeight:600,color:C.text,marginBottom:2}}>{p.nombre_plantilla||p.titulo||'Sin nombre'}</div>
                 <div style={{fontSize:11,color:C.muted}}>{new Date(p.actualizado_en).toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'})}</div>
               </div>
               <div style={{display:'flex',gap:6,flexShrink:0}}>
-                <button onClick={()=>nueva(p)} style={{padding:'5px 14px',borderRadius:4,border:'none',background:C.accent,color:'white',fontSize:11,fontWeight:600,cursor:'pointer'}}>Usar</button>
-                <button onClick={()=>abrirEditor(p)} style={{padding:'5px 12px',borderRadius:4,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:11,cursor:'pointer'}}>✏️ Editar</button>
-                <button onClick={()=>eliminar(p.id)} style={{padding:'5px 12px',borderRadius:4,border:'1px solid rgba(239,68,68,0.3)',background:'transparent',color:'#f87171',fontSize:11,cursor:'pointer'}}>🗑️</button>
+                <button onClick={()=>nueva(p)} style={{padding:'5px 14px',borderRadius:6,border:'none',background:C.accent,color:'white',fontSize:11,fontWeight:600,cursor:'pointer'}}>Usar</button>
+                <button onClick={()=>abrirEditor(p)} style={{padding:'5px 12px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:11,cursor:'pointer'}}>✏️ Editar</button>
+                <button onClick={()=>eliminar(p.id)} style={{padding:'5px 12px',borderRadius:6,border:'1px solid rgba(239,68,68,0.3)',background:'transparent',color:'#f87171',fontSize:11,cursor:'pointer'}}>🗑️</button>
               </div>
             </div>
           ))}
@@ -10807,30 +10800,30 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
           <div style={{fontSize:12,color:C.muted}}>Presupuestos de honorarios profesionales</div>
         </div>
         <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-          {plantillas.length>0&&<button onClick={()=>setVista('plantillas')} style={{padding:'8px 14px',borderRadius:4,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:12,cursor:'pointer'}}>📐 Plantillas ({plantillas.length})</button>}
-          <button onClick={()=>nueva()} style={{padding:'9px 18px',borderRadius:4,border:'none',background:C.accent,color:'white',fontSize:13,fontWeight:600,cursor:'pointer'}}>+ Nuevo presupuesto</button>
+          {plantillas.length>0&&<button onClick={()=>setVista('plantillas')} style={{padding:'8px 14px',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:12,cursor:'pointer'}}>📐 Plantillas ({plantillas.length})</button>}
+          <button onClick={()=>nueva()} style={{padding:'9px 18px',borderRadius:8,border:'none',background:C.accent,color:'white',fontSize:13,fontWeight:600,cursor:'pointer'}}>+ Nuevo presupuesto</button>
         </div>
       </div>
 
       {notificaciones.filter(n=>n.referencia_tipo==='propuesta').map(n=>(
-        <div key={n.id} style={{background:'rgba(16,185,129,0.08)',border:'1px solid rgba(16,185,129,0.25)',borderRadius:4,padding:'12px 16px',marginBottom:12,display:'flex',alignItems:'center',gap:12}}>
+        <div key={n.id} style={{background:'rgba(16,185,129,0.08)',border:'1px solid rgba(16,185,129,0.25)',borderRadius:10,padding:'12px 16px',marginBottom:12,display:'flex',alignItems:'center',gap:12}}>
           <span style={{fontSize:16}}>📄</span>
           <div style={{flex:1}}>
             <div style={{fontSize:12,fontWeight:600,color:'#10b981'}}>{n.titulo}</div>
             <div style={{fontSize:11,color:C.muted}}>{n.descripcion}</div>
           </div>
           <button onClick={()=>{const prop=propuestas.find(p=>p.id===n.referencia_id);if(prop)abrirEditor(prop);onLeerNotificacion?.(n.id);}}
-            style={{padding:'5px 12px',borderRadius:4,border:'none',background:'#10b981',color:'white',fontSize:11,fontWeight:600,cursor:'pointer',flexShrink:0}}>Ver presupuesto</button>
+            style={{padding:'5px 12px',borderRadius:6,border:'none',background:'#10b981',color:'white',fontSize:11,fontWeight:600,cursor:'pointer',flexShrink:0}}>Ver presupuesto</button>
           <button onClick={()=>onLeerNotificacion?.(n.id)}
-            style={{padding:'5px 8px',borderRadius:4,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:11,cursor:'pointer'}}>×</button>
+            style={{padding:'5px 8px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:11,cursor:'pointer'}}>×</button>
         </div>
       ))}
 
       {cargando ? <div style={{textAlign:'center',padding:40,color:C.muted}}>Cargando...</div> : (
         <div style={{display:'flex',flexDirection:'column',gap:10}}>
           {propuestas.map(p=>(
-            <div key={p.id} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:'14px 16px',display:'flex',alignItems:'center',gap:12}}>
-              <div style={{width:36,height:36,borderRadius:4,background:C.accentGlow,border:`1px solid ${C.accent}44`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>⚖️</div>
+            <div key={p.id} style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:'14px 16px',display:'flex',alignItems:'center',gap:12}}>
+              <div style={{width:36,height:36,borderRadius:9,background:C.accentGlow,border:`1px solid ${C.accent}44`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>⚖️</div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:13,fontWeight:600,color:C.text,marginBottom:2}}>{p.titulo||'Sin título'}</div>
                 <div style={{fontSize:11,color:C.muted}}>
@@ -10840,8 +10833,8 @@ function PropuestasPanel({ client, API, aH, jH, pacientes, notificaciones=[], on
                 </div>
               </div>
               <div style={{display:'flex',gap:6,flexShrink:0}}>
-                <button onClick={()=>abrirEditor(p)} style={{padding:'5px 12px',borderRadius:4,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:11,cursor:'pointer'}}>✏️ Editar</button>
-                <button onClick={()=>eliminar(p.id)} style={{padding:'5px 12px',borderRadius:4,border:'1px solid rgba(239,68,68,0.3)',background:'transparent',color:'#f87171',fontSize:11,cursor:'pointer'}}>🗑️</button>
+                <button onClick={()=>abrirEditor(p)} style={{padding:'5px 12px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:11,cursor:'pointer'}}>✏️ Editar</button>
+                <button onClick={()=>eliminar(p.id)} style={{padding:'5px 12px',borderRadius:6,border:'1px solid rgba(239,68,68,0.3)',background:'transparent',color:'#f87171',fontSize:11,cursor:'pointer'}}>🗑️</button>
               </div>
             </div>
           ))}
@@ -10877,7 +10870,7 @@ function PropuestaPreviewIframe({ contenido, cliente, propActual, previewTick=0 
     };
     fetchHtml();
   }, [contenido, cliente, previewTick]);
-  return <iframe ref={iframeRef} style={{width:"100%",minHeight:700,border:"none",borderRadius:2,background:"#FAF8F5"}} title="Preview propuesta"/>;
+  return <iframe ref={iframeRef} style={{width:"100%",minHeight:700,border:"none",borderRadius:12,background:"#FAF8F5"}} title="Preview propuesta"/>;
 }
 
 function PropuestaPreview({ contenido: c, cliente }) {
@@ -10895,7 +10888,7 @@ function PropuestaPreview({ contenido: c, cliente }) {
       <div style={{padding:20,background:"#f8fafc"}}>
         {/* Diagnóstico */}
         {c.diagnostico && (
-          <div style={{background:"#fff",borderRadius:4,padding:18,marginBottom:14,boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
+          <div style={{background:"#fff",borderRadius:10,padding:18,marginBottom:14,boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
             <div style={{color:color,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>📋 Diagnóstico</div>
             <p style={{color:"#374151",lineHeight:1.6,margin:0,fontSize:13}}>{c.diagnostico}</p>
           </div>
@@ -10903,13 +10896,13 @@ function PropuestaPreview({ contenido: c, cliente }) {
 
         {/* Tratamientos */}
         {c.tratamientos?.length > 0 && (
-          <div style={{background:"#fff",borderRadius:4,padding:18,marginBottom:14,boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
+          <div style={{background:"#fff",borderRadius:10,padding:18,marginBottom:14,boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
             <div style={{color:color,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>✨ Plan de tratamiento</div>
             {c.tratamientos.map((t,i) => {
               const area = detectarAreaAnatomica(t.nombre + ' ' + (t.area||''));
               const imgUrl = t.imagen_override || getAnatomicalImage(area, 'f');
               return (
-              <div key={i} style={{border:"1px solid #e5e7eb",borderRadius:4,marginBottom:12,overflow:"hidden"}}>
+              <div key={i} style={{border:"1px solid #e5e7eb",borderRadius:10,marginBottom:12,overflow:"hidden"}}>
                 <div style={{position:"relative",height:180,overflow:"hidden",background:"#f8fafc"}}>
                   <img src={imgUrl} alt={t.area||t.nombre} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"top"}}/>
                   <div style={{position:"absolute",inset:0,background:`linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)`}}/>
@@ -10923,7 +10916,7 @@ function PropuestaPreview({ contenido: c, cliente }) {
                 </div>
                 <div style={{padding:"12px 14px"}}>
                   <p style={{color:"#374151",fontSize:12,margin:"0 0 10px",lineHeight:1.6}}>{t.descripcion}</p>
-                  {t.sesiones && <span style={{background:"#ede9fe",color:color,padding:"3px 12px",borderRadius:2,fontSize:11,fontWeight:600}}>{t.sesiones} sesiones{t.frecuencia?` · ${t.frecuencia}`:''}</span>}
+                  {t.sesiones && <span style={{background:"#ede9fe",color:color,padding:"3px 12px",borderRadius:20,fontSize:11,fontWeight:600}}>{t.sesiones} sesiones{t.frecuencia?` · ${t.frecuencia}`:''}</span>}
                 </div>
               </div>
               );
@@ -10933,13 +10926,13 @@ function PropuestaPreview({ contenido: c, cliente }) {
 
         {/* Resultados */}
         {c.resultados_esperados && (
-          <div style={{background:"linear-gradient(135deg,#ede9fe,#ddd6fe)",borderRadius:4,padding:18,marginBottom:14}}>
+          <div style={{background:"linear-gradient(135deg,#ede9fe,#ddd6fe)",borderRadius:10,padding:18,marginBottom:14}}>
             <div style={{color:color,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>🎯 Resultados esperados</div>
             <p style={{color:"#374151",lineHeight:1.6,margin:"0 0 12px",fontSize:13}}>{c.resultados_esperados}</p>
             {c.progreso_porcentaje && (
               <>
-                <div style={{background:"rgba(255,255,255,0.6)",borderRadius:2,height:8,overflow:"hidden"}}>
-                  <div style={{background:color,height:"100%",width:`${c.progreso_porcentaje}%`,borderRadius:4}}/>
+                <div style={{background:"rgba(255,255,255,0.6)",borderRadius:6,height:8,overflow:"hidden"}}>
+                  <div style={{background:color,height:"100%",width:`${c.progreso_porcentaje}%`,borderRadius:6}}/>
                 </div>
                 <div style={{textAlign:"right",fontSize:11,color:color,fontWeight:600,marginTop:4}}>{c.progreso_porcentaje}% mejora esperada</div>
               </>
@@ -10949,7 +10942,7 @@ function PropuestaPreview({ contenido: c, cliente }) {
 
         {/* Timeline */}
         {c.timeline?.length > 0 && (
-          <div style={{background:"#fff",borderRadius:4,padding:18,marginBottom:14,boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
+          <div style={{background:"#fff",borderRadius:10,padding:18,marginBottom:14,boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
             <div style={{color:color,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:14}}>📅 Plan de acción</div>
             {c.timeline.map((f,i) => (
               <div key={i} style={{display:"flex",gap:12,marginBottom:14}}>
@@ -10965,7 +10958,7 @@ function PropuestaPreview({ contenido: c, cliente }) {
 
         {/* Precio */}
         {c.precio && (
-          <div style={{background:"#fff",borderRadius:4,padding:18,marginBottom:14,boxShadow:"0 1px 4px rgba(0,0,0,0.06)",textAlign:"center"}}>
+          <div style={{background:"#fff",borderRadius:10,padding:18,marginBottom:14,boxShadow:"0 1px 4px rgba(0,0,0,0.06)",textAlign:"center"}}>
             <div style={{color:color,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>💰 Inversión</div>
             <div style={{fontSize:28,fontWeight:700,color:"#111827"}}>{c.precio}</div>
             {c.forma_pago && <div style={{fontSize:12,color:"#6b7280",marginTop:6}}>{c.forma_pago}</div>}
@@ -10974,7 +10967,7 @@ function PropuestaPreview({ contenido: c, cliente }) {
 
         {/* Próximos pasos */}
         {c.proximos_pasos && (
-          <div style={{background:"#0f172a",borderRadius:4,padding:18}}>
+          <div style={{background:"#0f172a",borderRadius:10,padding:18}}>
             <div style={{color:"#818cf8",fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>🚀 Próximos pasos</div>
             <p style={{color:"#e2e8f0",lineHeight:1.6,margin:0,fontSize:13}}>{c.proximos_pasos}</p>
           </div>
@@ -11292,13 +11285,13 @@ function EdgePanel({ token, user, onLogout }) {
                       setTimeout(()=>{ setSelProspect(p); setMensajes([]); }, 80);
                     }
                   }}
-                  style={{padding:"3px 12px",borderRadius:2,border:"1px solid #f97316",background:"rgba(249,115,22,0.15)",color:"#fb923c",fontSize:11,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>
+                  style={{padding:"3px 12px",borderRadius:20,border:"1px solid #f97316",background:"rgba(249,115,22,0.15)",color:"#fb923c",fontSize:11,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>
                   {p.nombre||p.telefono} {p.tratamiento?`— ${p.tratamiento}`:""}
                 </button>
               ))}
             </div>
             <button onClick={()=>{ setView("client"); setActiveTab("conversations"); setSelProspect(null); }}
-              style={{padding:"2px 10px",borderRadius:2,border:"1px solid rgba(249,115,22,0.4)",background:"transparent",color:"#fb923c",fontSize:10,fontWeight:600,cursor:"pointer",flexShrink:0,whiteSpace:"nowrap"}}>
+              style={{padding:"2px 10px",borderRadius:20,border:"1px solid rgba(249,115,22,0.4)",background:"transparent",color:"#fb923c",fontSize:10,fontWeight:600,cursor:"pointer",flexShrink:0,whiteSpace:"nowrap"}}>
               Ver todos
             </button>
           </div>
@@ -11312,10 +11305,10 @@ function EdgePanel({ token, user, onLogout }) {
             </div>
           </div>
           {user?.rol === 'admin' && (
-          <div style={{display:"flex",gap:3,background:C.bg,borderRadius:2,padding:3,border:`1px solid ${C.border}`,flexShrink:0}}>
+          <div style={{display:"flex",gap:3,background:C.bg,borderRadius:8,padding:3,border:`1px solid ${C.border}`,flexShrink:0}}>
             {["admin","client"].map(v => (
               <button key={v} onClick={()=>{setView(v);if(v==="admin")fetchAdmin();}}
-                style={{padding:"4px 10px",borderRadius:4,border:"none",cursor:"pointer",fontSize:11,fontWeight:500,background:view===v?C.accent:"transparent",color:view===v?"white":C.muted,transition:"all .2s",fontFamily:"inherit"}}>
+                style={{padding:"4px 10px",borderRadius:6,border:"none",cursor:"pointer",fontSize:11,fontWeight:500,background:view===v?C.accent:"transparent",color:view===v?"white":C.muted,transition:"all .2s",fontFamily:"inherit"}}>
                 {v==="admin"?"Admin":"Cliente"}
               </button>
             ))}
@@ -11326,7 +11319,7 @@ function EdgePanel({ token, user, onLogout }) {
             {[{k:'sm',l:'A',s:10},{k:'md',l:'A',s:13},{k:'lg',l:'A',s:16}].map(({k,l,s})=>(
               <button key={k} onClick={()=>{localStorage.setItem('skyward_ui_scale',k);window.location.reload();}}
                 title={k==='sm'?'Tamaño normal':k==='md'?'Tamaño grande':'Tamaño muy grande'}
-                style={{background:_storedScale===k?C.accentGlow:"transparent",border:`1px solid ${_storedScale===k?C.accent:C.border}`,borderRadius:2,width:22,height:22,cursor:"pointer",color:_storedScale===k?C.accentLight:C.muted,fontSize:s,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1,padding:0,fontFamily:"Georgia,serif"}}>
+                style={{background:_storedScale===k?C.accentGlow:"transparent",border:`1px solid ${_storedScale===k?C.accent:C.border}`,borderRadius:5,width:22,height:22,cursor:"pointer",color:_storedScale===k?C.accentLight:C.muted,fontSize:s,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1,padding:0,fontFamily:"Georgia,serif"}}>
                 {l}
               </button>
             ))}
@@ -11338,7 +11331,7 @@ function EdgePanel({ token, user, onLogout }) {
               <span style={{fontSize:11,fontWeight:600,color:C.text}}>{user?.nombre||''}</span>
               {user?.cargo && <span style={{fontSize:10,color:C.muted}}>{user.cargo}</span>}
             </div>
-            <button onClick={onLogout} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"4px 8px",borderRadius:4,fontSize:11,cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>Salir</button>
+            <button onClick={onLogout} style={{background:"transparent",border:`1px solid ${C.border}`,color:C.muted,padding:"4px 8px",borderRadius:6,fontSize:11,cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>Salir</button>
           </div>
         </div>
 
@@ -11384,7 +11377,7 @@ function EdgePanel({ token, user, onLogout }) {
 
       {modalUsr && (
         <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}}>
-          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:32,width:400,maxWidth:"92vw"}}>
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:32,width:400,maxWidth:"92vw"}}>
             {okUsr ? (
               <div style={{textAlign:"center",padding:"20px 0"}}>
                 <div style={{fontSize:40,marginBottom:12}}>✅</div>
@@ -11407,14 +11400,14 @@ function EdgePanel({ token, user, onLogout }) {
                       {v:"staff",   label:"Secretario/a",     desc:"Clientes y Agenda"},
                     ].map(r=>(
                       <div key={r.v} onClick={()=>setFormUsr({...formUsr,rango:r.v})}
-                        style={{flex:1,minWidth:100,padding:"10px 14px",borderRadius:4,border:`1px solid ${(formUsr.rango||"staff")===r.v?C.accent:C.border}`,background:(formUsr.rango||"staff")===r.v?C.accentGlow:"transparent",cursor:"pointer",transition:"all .15s"}}>
+                        style={{flex:1,minWidth:100,padding:"10px 14px",borderRadius:8,border:`1px solid ${(formUsr.rango||"staff")===r.v?C.accent:C.border}`,background:(formUsr.rango||"staff")===r.v?C.accentGlow:"transparent",cursor:"pointer",transition:"all .15s"}}>
                         <div style={{fontSize:13,fontWeight:600,color:(formUsr.rango||"staff")===r.v?C.accentLight:C.text}}>{r.label}</div>
                         <div style={{fontSize:11,color:C.muted,marginTop:2}}>{r.desc}</div>
                       </div>
                     ))}
                   </div>
                 </div>
-                {errUsr && <div style={{background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:4,padding:"8px 12px",fontSize:12,color:C.red,marginBottom:16}}>{errUsr}</div>}
+                {errUsr && <div style={{background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:8,padding:"8px 12px",fontSize:12,color:C.red,marginBottom:16}}>{errUsr}</div>}
                 <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
                   <Btn onClick={()=>{setModalUsr(null);setErrUsr(null);}} secondary>Cancelar</Btn>
                   <Btn onClick={crearUsr} disabled={savingUsr}>{savingUsr?"Creando...":"Crear usuario"}</Btn>
@@ -11454,7 +11447,7 @@ function LoginForm({ onLogin }) {
 
   return (
     <div style={{height:APP_H,overflowY:'auto',display:'flex',alignItems:'center',justifyContent:'center',background:C.bg,backgroundImage:'radial-gradient(ellipse at 60% 20%, rgba(232,78,15,0.06) 0%, transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(251,186,0,0.04) 0%, transparent 50%)'}}>
-      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:2,padding:'40px 44px',width:400,maxWidth:'94vw',boxShadow:'0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(232,78,15,0.08)'}}>
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:20,padding:'40px 44px',width:400,maxWidth:'94vw',boxShadow:'0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(232,78,15,0.08)'}}>
         {/* Logo + Brand */}
         <div style={{textAlign:'center',marginBottom:36}}>
           <img src="/logo.svg" alt="Skyward" style={{height:72,width:"auto",marginBottom:16,filter:'drop-shadow(0 4px 12px rgba(232,78,15,0.35))'}}/>
@@ -11467,19 +11460,19 @@ function LoginForm({ onLogin }) {
           <label style={{fontSize:10,color:C.muted,fontWeight:600,display:'block',marginBottom:6,letterSpacing:1.2,textTransform:'uppercase'}}>Email</label>
           <input value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==='Enter'&&login()}
             type="email" placeholder="tu@email.com" autoFocus
-            style={{width:'100%',padding:'11px 14px',borderRadius:4,border:`1.5px solid ${C.border}`,background:C.bg,color:C.text,fontSize:14,outline:'none',fontFamily:'inherit',boxSizing:'border-box',transition:'border-color .2s'}}
+            style={{width:'100%',padding:'11px 14px',borderRadius:10,border:`1.5px solid ${C.border}`,background:C.bg,color:C.text,fontSize:14,outline:'none',fontFamily:'inherit',boxSizing:'border-box',transition:'border-color .2s'}}
             onFocus={e=>e.target.style.borderColor=C.accent} onBlur={e=>e.target.style.borderColor=C.border}/>
         </div>
         <div style={{marginBottom:24}}>
           <label style={{fontSize:10,color:C.muted,fontWeight:600,display:'block',marginBottom:6,letterSpacing:1.2,textTransform:'uppercase'}}>Contraseña</label>
           <input value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==='Enter'&&login()}
             type="password" placeholder="••••••••"
-            style={{width:'100%',padding:'11px 14px',borderRadius:4,border:`1.5px solid ${C.border}`,background:C.bg,color:C.text,fontSize:14,outline:'none',fontFamily:'inherit',boxSizing:'border-box',transition:'border-color .2s'}}
+            style={{width:'100%',padding:'11px 14px',borderRadius:10,border:`1.5px solid ${C.border}`,background:C.bg,color:C.text,fontSize:14,outline:'none',fontFamily:'inherit',boxSizing:'border-box',transition:'border-color .2s'}}
             onFocus={e=>e.target.style.borderColor=C.accent} onBlur={e=>e.target.style.borderColor=C.border}/>
         </div>
-        {err && <div style={{background:'rgba(239,68,68,0.08)',border:'1px solid rgba(239,68,68,0.25)',borderRadius:4,padding:'10px 14px',fontSize:12,color:C.red,marginBottom:18}}>{err}</div>}
+        {err && <div style={{background:'rgba(239,68,68,0.08)',border:'1px solid rgba(239,68,68,0.25)',borderRadius:10,padding:'10px 14px',fontSize:12,color:C.red,marginBottom:18}}>{err}</div>}
         <button onClick={login} disabled={loading}
-          style={{width:'100%',padding:'13px',borderRadius:4,border:'none',background:`linear-gradient(135deg, ${C.accent} 0%, #c73d0a 100%)`,color:'white',fontSize:14,fontWeight:700,cursor:loading?'not-allowed':'pointer',opacity:loading?0.75:1,fontFamily:'inherit',letterSpacing:0.3,boxShadow:loading?'none':'0 4px 16px rgba(232,78,15,0.35)',transition:'all .2s'}}>
+          style={{width:'100%',padding:'13px',borderRadius:10,border:'none',background:`linear-gradient(135deg, ${C.accent} 0%, #c73d0a 100%)`,color:'white',fontSize:14,fontWeight:700,cursor:loading?'not-allowed':'pointer',opacity:loading?0.75:1,fontFamily:'inherit',letterSpacing:0.3,boxShadow:loading?'none':'0 4px 16px rgba(232,78,15,0.35)',transition:'all .2s'}}>
           {loading ? 'Ingresando...' : 'Ingresar al CRM'}
         </button>
       </div>

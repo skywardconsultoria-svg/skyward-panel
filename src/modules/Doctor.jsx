@@ -506,6 +506,7 @@ function PlazosExpedienteTab({ C, clienteId, expedienteId }) {
           expedientes={[]}
           onSave={onSave}
           onDelete={onDelete}
+          onSuccess={cargar}
           onClose={() => { setModalOpen(false); setEventoEdit(null); }}
         />
       )}
@@ -1435,7 +1436,7 @@ function fmtDatetimeLocal(iso) {
 }
 
 // ── EventoModal ────────────────────────────────────────────────
-function EventoModal({ C, clienteId, evento, fechaInicio, expedienteIdPreset, expedientes, onSave, onDelete, onClose }) {
+function EventoModal({ C, clienteId, evento, fechaInicio, expedienteIdPreset, expedientes, onSave, onDelete, onSuccess, onClose }) {
   const isNew = !evento;
   const initFecha = fechaInicio ? fmtDatetimeLocal(fechaInicio) : "";
   const [form, setForm] = useState({
@@ -1482,6 +1483,7 @@ function EventoModal({ C, clienteId, evento, fechaInicio, expedienteIdPreset, ex
       );
       if (!r.ok) throw new Error((await r.json()).error);
       onSave(await r.json());
+      onSuccess?.();
     } catch (e) { setErr(e.message); } finally { setSaving(false); }
   };
 
@@ -1491,6 +1493,7 @@ function EventoModal({ C, clienteId, evento, fechaInicio, expedienteIdPreset, ex
     try {
       await fetch(`${API}/api/doctor/agenda/${evento.id}?cliente_id=${clienteId}`, { method: "DELETE", headers: aH() });
       onDelete(evento.id);
+      onSuccess?.();
     } catch (e) { setErr(e.message); } finally { setDeleting(false); }
   };
 
@@ -1795,7 +1798,7 @@ function VistaAgenda({ C, fechaRef, eventos, onEventoClick }) {
 }
 
 // ── ProximosVencimientos ──────────────────────────────────────
-function ProximosVencimientos({ C, clienteId, onEventoClick }) {
+function ProximosVencimientos({ C, clienteId, refreshKey, onEventoClick }) {
   const [eventos, setEventos] = useState([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
@@ -1803,7 +1806,7 @@ function ProximosVencimientos({ C, clienteId, onEventoClick }) {
     setLoading(true);
     fetch(`${API}/api/doctor/agenda/proximos?cliente_id=${clienteId}&dias=30`, { headers: aH() })
       .then(r => r.ok ? r.json() : []).then(setEventos).catch(() => {}).finally(() => setLoading(false));
-  }, [clienteId]);
+  }, [clienteId, refreshKey]);
   const colorDias = d => d <= 3 ? "#ef4444" : d <= 7 ? "#FBBA00" : "#10B981";
   return (
     <div style={{ width:252, flexShrink:0, borderLeft:`1px solid ${C.border}`, display:"flex", flexDirection:"column", minHeight:0 }}>
@@ -1837,7 +1840,7 @@ function ProximosVencimientos({ C, clienteId, onEventoClick }) {
 }
 
 // ── AgendaModule ──────────────────────────────────────────────
-function AgendaModule({ C, clienteId }) {
+function AgendaModule({ C, clienteId, onAgendaChange }) {
   const hoy = new Date();
   const [vista, setVista]       = useState("mes");
   const [fechaRef, setFechaRef] = useState(new Date(hoy.getFullYear(), hoy.getMonth(), 1));
@@ -1847,6 +1850,7 @@ function AgendaModule({ C, clienteId }) {
   const [eventoSel, setEventoSel]   = useState(null);
   const [fechaModal, setFechaModal] = useState(null);
   const [expedientes, setExpedientes] = useState([]);
+  const [proximosKey, setProximosKey] = useState(0);
 
   useEffect(() => {
     if (!clienteId) return;
@@ -1888,8 +1892,13 @@ function AgendaModule({ C, clienteId }) {
   const abrirCrear  = (fecha) => { setEventoSel(null); setFechaModal(fecha || new Date()); setModalOpen(true); };
   const abrirEditar = (ev)    => { setEventoSel(ev);   setFechaModal(null); setModalOpen(true); };
   const cerrar      = ()      => { setModalOpen(false); setEventoSel(null); setFechaModal(null); };
-  const onSave = (ev) => { setEventos(prev => { const i = prev.findIndex(e=>e.id===ev.id); return i>=0?prev.map(e=>e.id===ev.id?ev:e):[...prev,ev]; }); cerrar(); };
-  const onDelete = (id) => { setEventos(prev => prev.filter(e=>e.id!==id)); cerrar(); };
+  const onSave   = (ev)  => { setEventos(prev => { const i = prev.findIndex(e=>e.id===ev.id); return i>=0?prev.map(e=>e.id===ev.id?ev:e):[...prev,ev]; }); cerrar(); };
+  const onDelete = (id)  => { setEventos(prev => prev.filter(e=>e.id!==id)); cerrar(); };
+  const onSuccess = useCallback(() => {
+    cargarEventos();
+    setProximosKey(p => p + 1);
+    onAgendaChange?.();
+  }, [cargarEventos, onAgendaChange]);
 
   const VISTAS_BTN = [{ key:"mes",label:"Mes"},{ key:"semana",label:"Semana"},{ key:"dia",label:"Día"},{ key:"agenda",label:"Agenda"}];
 
@@ -1920,11 +1929,11 @@ function AgendaModule({ C, clienteId }) {
         {vista==="dia"    && <VistaDia    C={C} fechaRef={fechaRef} eventos={eventos} onEventoClick={abrirEditar} onSlotClick={abrirCrear} />}
         {vista==="agenda" && <VistaAgenda C={C} fechaRef={fechaRef} eventos={eventos} onEventoClick={abrirEditar} />}
       </div>
-      <ProximosVencimientos C={C} clienteId={clienteId} onEventoClick={abrirEditar} />
+      <ProximosVencimientos C={C} clienteId={clienteId} refreshKey={proximosKey} onEventoClick={abrirEditar} />
       {modalOpen && (
         <EventoModal C={C} clienteId={clienteId} evento={eventoSel} fechaInicio={fechaModal}
           expedienteIdPreset={null} expedientes={expedientes}
-          onSave={onSave} onDelete={onDelete} onClose={cerrar} />
+          onSave={onSave} onDelete={onDelete} onSuccess={onSuccess} onClose={cerrar} />
       )}
     </div>
   );
@@ -1966,21 +1975,20 @@ export default function DoctorModule({ C, clienteId }) {
   }, [clienteId]);
 
   // Badge de vencimientos próximos (≤3 días) en sub-nav Agenda
-  useEffect(() => {
+  const refreshBadge = useCallback(() => {
     if (!clienteId) return;
     fetch(`${API}/api/doctor/agenda/proximos?cliente_id=${clienteId}&dias=3`, { headers: aH() })
       .then((r) => r.ok ? r.json() : [])
       .then((data) => setAgendaBadge(Array.isArray(data) ? data.length : 0))
       .catch(() => {});
-    // Refrescar cada 5 minutos
-    const t = setInterval(() => {
-      fetch(`${API}/api/doctor/agenda/proximos?cliente_id=${clienteId}&dias=3`, { headers: aH() })
-        .then((r) => r.ok ? r.json() : [])
-        .then((data) => setAgendaBadge(Array.isArray(data) ? data.length : 0))
-        .catch(() => {});
-    }, 5 * 60 * 1000);
-    return () => clearInterval(t);
   }, [clienteId]);
+
+  useEffect(() => {
+    refreshBadge();
+    // Refrescar cada 5 minutos
+    const t = setInterval(refreshBadge, 5 * 60 * 1000);
+    return () => clearInterval(t);
+  }, [refreshBadge]);
 
   // Atajo de teclado Cmd/Ctrl+I → toggle panel IA
   useEffect(() => {
@@ -2062,7 +2070,7 @@ export default function DoctorModule({ C, clienteId }) {
 
         {/* Agenda */}
         {subTab === "agenda" && (
-          <AgendaModule C={C} clienteId={clienteId} />
+          <AgendaModule C={C} clienteId={clienteId} onAgendaChange={refreshBadge} />
         )}
 
         {/* Expedientes — con sub-vistas */}

@@ -425,25 +425,38 @@ function MovimientosTab({ C, clienteId, expedienteId }) {
 function PlazosExpedienteTab({ C, clienteId, expedienteId }) {
   const [eventos, setEventos]   = useState([]);
   const [loading, setLoading]   = useState(true);
+  const [fetchError, setFetchError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [eventoEdit, setEventoEdit] = useState(null);
 
   const cargar = useCallback(async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const r = await fetch(
         `${API}/api/doctor/expedientes/${expedienteId}/agenda?cliente_id=${clienteId}`,
         { headers: aH() }
       );
-      if (r.ok) setEventos(await r.json());
-    } catch (e) { /* silenciar */ } finally { setLoading(false); }
+      if (r.ok) {
+        setEventos(await r.json());
+      } else {
+        const body = await r.json().catch(() => ({}));
+        console.error("PlazosExpedienteTab:", r.status, body);
+        setFetchError(body.error || `Error ${r.status} al cargar los plazos.`);
+      }
+    } catch (e) {
+      console.error("PlazosExpedienteTab:", e);
+      setFetchError("No se pudieron cargar los plazos. Verificá la conexión.");
+    } finally { setLoading(false); }
   }, [clienteId, expedienteId]);
 
   useEffect(() => { cargar(); }, [cargar]);
 
-  const onSave = (ev, esNuevo) => {
-    if (esNuevo) setEventos((p) => [ev, ...p]);
-    else setEventos((p) => p.map((e) => (e.id === ev.id ? ev : e)));
+  const onSave = (ev) => {
+    setEventos((prev) => {
+      const idx = prev.findIndex((e) => e.id === ev.id);
+      return idx >= 0 ? prev.map((e) => (e.id === ev.id ? ev : e)) : [ev, ...prev];
+    });
     setModalOpen(false);
     setEventoEdit(null);
   };
@@ -455,6 +468,14 @@ function PlazosExpedienteTab({ C, clienteId, expedienteId }) {
   };
 
   if (loading) return <Spinner C={C} />;
+  if (fetchError) return (
+    <div style={{ padding: 24 }}>
+      <div style={{ background: "#ef444422", border: "1px solid #ef4444", borderRadius: 8, padding: "14px 18px", color: "#ef4444", fontSize: 13 }}>
+        ⚠️ {fetchError}
+        <button onClick={cargar} style={{ marginLeft: 12, background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontWeight: 600, fontSize: 13, textDecoration: "underline" }}>Reintentar</button>
+      </div>
+    </div>
+  );
 
   return (
     <div>
@@ -1578,10 +1599,19 @@ function EventoModal({ C, clienteId, evento, fechaInicio, expedienteIdPreset, ex
           <label htmlFor="ag_todo_dia" style={{ fontSize:13, color:C.text, cursor:"pointer" }}>Todo el día</label>
         </div>
 
-        <Field C={C} label="Expediente vinculado (opcional)">
-          <Sel C={C} value={form.expediente_id} onChange={e=>set("expediente_id",e.target.value)}
-            options={[{ value:"", label:"— Sin expediente —" }, ...expedientes.map(e=>({ value:e.id, label:e.caratula }))]} />
-        </Field>
+        {expedienteIdPreset ? (
+          <Field C={C} label="Expediente vinculado">
+            <div style={{ fontSize: 13, color: C.text, padding: "8px 0" }}>
+              {expedientes.find(e => String(e.id) === String(expedienteIdPreset))?.caratula
+                || `Expediente #${expedienteIdPreset}`}
+            </div>
+          </Field>
+        ) : (
+          <Field C={C} label="Expediente vinculado (opcional)">
+            <Sel C={C} value={form.expediente_id} onChange={e=>set("expediente_id",e.target.value)}
+              options={[{ value:"", label:"— Sin expediente —" }, ...expedientes.map(e=>({ value:e.id, label:e.caratula }))]} />
+          </Field>
+        )}
         <Field C={C} label="Estado">
           <Sel C={C} value={form.estado} onChange={e=>set("estado",e.target.value)} options={ESTADOS_AGENDA} />
         </Field>

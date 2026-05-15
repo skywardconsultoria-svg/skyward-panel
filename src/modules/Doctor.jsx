@@ -1269,6 +1269,25 @@ async function streamIA(payload, onToken, onDone, onError) {
   } catch (e) { onError(humanizarErrorIA(e.message)); }
 }
 
+// POST /api/doctor/ai/mejorar-escrito — SSE streaming
+async function streamMejorarEscrito({ clienteId, contenido, instruccion }, onToken, onDone, onError) {
+  try {
+    const res = await fetch(`${API}/api/doctor/ai/mejorar-escrito`, {
+      method: "POST", headers: jH(),
+      body: JSON.stringify({ cliente_id: clienteId, contenido, instruccion }),
+    });
+    if (!res.ok) {
+      if (res.status === 429) {
+        const d = await res.json().catch(() => ({}));
+        return onError(d.error || "Límite diario alcanzado. Volvé mañana.");
+      }
+      const d = await res.json().catch(() => ({}));
+      return onError(humanizarErrorIA(d.error || `Error ${res.status}`));
+    }
+    await streamSSE(res, onToken, onDone, onError);
+  } catch (e) { onError(humanizarErrorIA(e.message)); }
+}
+
 // ── Panel lateral IA ──────────────────────────────────────────
 
 function DoctorIAPanel({ C, clienteId, expedienteId, iaOpen, setIaOpen, triggerResumir }) {
@@ -2742,6 +2761,13 @@ function EscritoEditor({ C, clienteId, escrito, expedientes, onGuardado, onElimi
   const [versionModal, setVersionModal]   = useState(false);
   const [versionComent, setVersionComent] = useState("");
   const [savingVers, setSavingVers]       = useState(false);
+  // Mejorar con IA
+  const [iaOpen, setIaOpen]             = useState(false);
+  const [iaInstruccion, setIaInstruccion] = useState("");
+  const [iaOut, setIaOut]               = useState("");
+  const [iaStreaming, setIaStreaming]    = useState(false);
+  const [iaErr, setIaErr]               = useState("");
+  const iaScrollRef                     = useRef(null);
 
   const editorRef = useRef(null);
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
@@ -2841,6 +2867,96 @@ function EscritoEditor({ C, clienteId, escrito, expedientes, onGuardado, onElimi
     scheduleAutoSave();
   };
 
+  // ── Export ────────────────────────────────────────────────────
+
+  const exportarTxt = () => {
+    const texto = editorRef.current?.innerText || "";
+    const blob = new Blob([texto], { type: "text/plain;charset=utf-8" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href = url;
+    a.download = `${form.titulo || "escrito"}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportarPDF = () => {
+    // TODO: reemplazar con jsPDF o librería similar cuando haya demanda.
+    // window.print() en ventana emergente no funciona bien en todos los contextos
+    // (mobile, algunos bloqueadores de popups, Safari en iOS).
+    const html  = editorRef.current?.innerHTML || "";
+    const titulo = form.titulo || "Escrito";
+    const win = window.open("", "_blank");
+    if (!win) { alert("Permitir pop-ups para exportar a PDF."); return; }
+    win.document.write(`<!DOCTYPE html><html><head>
+      <meta charset="utf-8">
+      <title>${titulo}</title>
+      <style>
+        body{font-family:Georgia,"Times New Roman",serif;font-size:12pt;line-height:1.7;
+             margin:2.5cm 3cm;color:#000}
+        h1{font-size:15pt;margin:0 0 6pt}
+        h2{font-size:13pt;margin:10pt 0 4pt}
+        h3{font-size:12pt;margin:8pt 0 3pt}
+        p{margin:0 0 8pt}
+        ul,ol{margin:0 0 8pt;padding-left:20pt}
+        @media print{body{margin:0}@page{margin:2.5cm 3cm}}
+      </style>
+    </head><body>
+      <h1>${titulo}</h1>
+      <hr style="border:none;border-top:1px solid #ccc;margin:8pt 0 14pt">
+      ${html}
+    </body></html>`);
+    win.document.close();
+    win.focus();
+    setTimeout(() => win.print(), 300);
+  };
+
+  // ── Mejorar con IA ─────────────────────────────────────────────
+
+  const toggleIA = () => {
+    setIaOpen(p => { if (!p) setHistorialOpen(false); return !p; });
+    setIaOut(""); setIaErr("");
+  };
+
+  const iniciarMejora = async () => {
+    const texto = editorRef.current?.innerText || "";
+    if (!texto.trim()) return setIaErr("El escrito está vacío.");
+    setIaOut(""); setIaErr(""); setIaStreaming(true);
+    let acc = "";
+    await streamMejorarEscrito(
+      { clienteId, contenido: texto, instruccion: iaInstruccion },
+      (t) => {
+        acc += t;
+        setIaOut(acc);
+        if (iaScrollRef.current) iaScrollRef.current.scrollTop = 9999;
+      },
+      () => setIaStreaming(false),
+      (e) => { setIaErr(e); setIaStreaming(false); }
+    );
+  };
+
+  const aceptarMejora = () => {
+    if (!editorRef.current || !iaOut) return;
+    // Convertir texto plano con saltos de línea a párrafos HTML
+    const html = iaOut
+      .split(/\n{2,}/)
+      .map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`)
+      .join("");
+    editorRef.current.innerHTML = html;
+    scheduleAutoSave();
+    setIaOpen(false);
+    setIaOut("");
+    setIaInstruccion("");
+  };
+
+  // ── Historial (con cierre de IA al abrir) ──────────────────────
+
+  const toggleHistorial = () => {
+    setHistorialOpen(p => { if (!p) setIaOpen(false); return !p; });
+  };
+
+  // ── Eliminar ───────────────────────────────────────────────────
+
   const eliminar = async () => {
     if (!window.confirm("¿Eliminar este escrito? No se puede deshacer.")) return;
     setDeleting(true);
@@ -2880,15 +2996,30 @@ function EscritoEditor({ C, clienteId, escrito, expedientes, onGuardado, onElimi
         {autoSaveLabel}
         {!isNew && (
           <>
-            <Btn C={C} variant="ghost" onClick={() => setHistorialOpen(p => !p)} style={{ fontSize: 12 }}>
+            <Btn C={C} variant="ghost" onClick={toggleIA}
+              style={{ fontSize: 12, color: iaOpen ? C.accent : undefined }}>
+              ✨ IA
+            </Btn>
+            <Btn C={C} variant="ghost" onClick={toggleHistorial}
+              style={{ fontSize: 12, color: historialOpen ? C.accent : undefined }}>
               🕐 Historial
             </Btn>
             <Btn C={C} variant="ghost" onClick={() => setVersionModal(true)} style={{ fontSize: 12 }}>
               📌 Versión
             </Btn>
-            <Btn C={C} variant="ghost" onClick={eliminar} disabled={deleting}
-              style={{ color: "#ef4444", fontSize: 12 }}>{deleting ? "…" : "🗑"}</Btn>
           </>
+        )}
+        <Btn C={C} variant="ghost" onClick={exportarTxt}
+          title="Exportar como texto plano" style={{ fontSize: 12 }}>
+          📥 .txt
+        </Btn>
+        <Btn C={C} variant="ghost" onClick={exportarPDF}
+          title="Imprimir / Exportar a PDF" style={{ fontSize: 12 }}>
+          🖨️ PDF
+        </Btn>
+        {!isNew && (
+          <Btn C={C} variant="ghost" onClick={eliminar} disabled={deleting}
+            style={{ color: "#ef4444", fontSize: 12 }}>{deleting ? "…" : "🗑"}</Btn>
         )}
         <Btn C={C} onClick={guardar} disabled={saving} style={{ fontSize: 12 }}>
           {saving ? "Guardando…" : "💾 Guardar"}
@@ -2923,6 +3054,72 @@ function EscritoEditor({ C, clienteId, escrito, expedientes, onGuardado, onElimi
             placeholder="Escribí el contenido del escrito..."
           />
         </div>
+        {/* Panel lateral: Mejorar con IA */}
+        {iaOpen && !isNew && (
+          <div style={{ width: 340, borderLeft: `1px solid ${C.border}`,
+            display: "flex", flexDirection: "column", minHeight: 0, flexShrink: 0 }}>
+            {/* Header panel IA */}
+            <div style={{ padding: "10px 14px", borderBottom: `1px solid ${C.border}`,
+              display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: C.text }}>✨ Mejorar con IA</span>
+              <button onClick={toggleIA}
+                style={{ background: "none", border: "none", cursor: "pointer",
+                  color: C.muted, fontSize: 18, lineHeight: 1 }}>×</button>
+            </div>
+            {/* Instrucción personalizada */}
+            <div style={{ padding: "10px 14px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+              <div style={{ fontSize: 11, color: C.muted, marginBottom: 6 }}>
+                Instrucción personalizada (opcional)
+              </div>
+              <textarea
+                value={iaInstruccion}
+                onChange={e => setIaInstruccion(e.target.value)}
+                placeholder="Ej: Reformulá el objeto petitorio en tono más formal…"
+                rows={3}
+                style={{ ...inputSt(C), width: "100%", resize: "vertical", fontSize: 12,
+                  boxSizing: "border-box", fontFamily: "inherit" }}
+              />
+              <Btn C={C} onClick={iniciarMejora} disabled={iaStreaming}
+                style={{ marginTop: 8, width: "100%", fontSize: 12,
+                  background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", border: "none" }}>
+                {iaStreaming ? "⏳ Mejorando…" : "✨ Mejorar"}
+              </Btn>
+            </div>
+            {/* Output streaming */}
+            <div style={{ flex: 1, overflowY: "auto", padding: 12 }} ref={iaScrollRef}>
+              {iaErr && (
+                <div style={{ fontSize: 12, color: "#ef4444", marginBottom: 8 }}>{iaErr}</div>
+              )}
+              {!iaOut && !iaErr && !iaStreaming && (
+                <div style={{ fontSize: 12, color: C.muted, textAlign: "center", paddingTop: 24 }}>
+                  La IA va a sugerir una versión mejorada del texto actual.<br />
+                  <span style={{ fontSize: 11 }}>Podés aceptarla o descartarla.</span>
+                </div>
+              )}
+              {(iaOut || iaStreaming) && (
+                <div style={{ fontSize: 12, color: C.text, lineHeight: 1.7,
+                  whiteSpace: "pre-wrap", fontFamily: "Georgia, serif" }}>
+                  {iaOut}
+                  {iaStreaming && <span style={{ color: C.accent }}>▌</span>}
+                </div>
+              )}
+            </div>
+            {/* Acciones: aceptar / descartar */}
+            {iaOut && !iaStreaming && (
+              <div style={{ padding: "10px 14px", borderTop: `1px solid ${C.border}`,
+                display: "flex", gap: 8, flexShrink: 0 }}>
+                <Btn C={C} variant="ghost" onClick={() => { setIaOut(""); setIaErr(""); }}
+                  style={{ flex: 1, fontSize: 12 }}>
+                  Descartar
+                </Btn>
+                <Btn C={C} onClick={aceptarMejora} style={{ flex: 1, fontSize: 12 }}>
+                  ✓ Aceptar
+                </Btn>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Panel lateral: historial de versiones */}
         {historialOpen && !isNew && (
           <div style={{ width: 280, borderLeft: `1px solid ${C.border}`,

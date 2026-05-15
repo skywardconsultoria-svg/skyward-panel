@@ -2508,13 +2508,345 @@ function PersonasModule({ C, clienteId }) {
   );
 }
 
+// ── Escritos + Plantillas ─────────────────────────────────────
+
+const CATEGORIAS_ESCRITO = [
+  { value: "demanda",         label: "Demanda" },
+  { value: "contestacion",    label: "Contestación" },
+  { value: "cedula",          label: "Cédula" },
+  { value: "oficio",          label: "Oficio" },
+  { value: "mandamiento",     label: "Mandamiento" },
+  { value: "recurso",         label: "Recurso" },
+  { value: "carta_documento", label: "Carta Documento" },
+  { value: "telegrama",       label: "Telegrama" },
+  { value: "convenio",        label: "Convenio" },
+  { value: "acuerdo",         label: "Acuerdo" },
+  { value: "nota",            label: "Nota" },
+];
+
+const ESTADOS_ESCRITO = [
+  { value: "borrador",   label: "Borrador" },
+  { value: "revision",   label: "En revisión" },
+  { value: "final",      label: "Final" },
+  { value: "presentado", label: "Presentado" },
+];
+
+const ESTADO_ESCRITO_COLOR = {
+  borrador: "#6b7280", revision: "#f59e0b",
+  final: "#10b981",    presentado: "#3b82f6",
+};
+
+// ── Editor rich-text (contentEditable + execCommand) ──────────
+// Nota: document.execCommand está deprecado pero funcional en todos los browsers.
+// TODO: reemplazar con librería de PDF real (jsPDF o similar) cuando haya demanda de usuarios.
+// window.print() no funciona bien en todos los contextos (mobile, algunas configuraciones de browser).
+
+function RichTextEditor({ C, initialValue, onChange, placeholder, editorRef: extRef, style }) {
+  const innerRef = useRef(null);
+  const ref = extRef || innerRef;
+
+  // Inicializar contenido una sola vez al montar
+  useEffect(() => {
+    if (ref.current) ref.current.innerHTML = initialValue || "";
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const exec = (cmd, val) => {
+    ref.current?.focus();
+    document.execCommand(cmd, false, val ?? null);
+    onChange?.(ref.current?.innerHTML || "");
+  };
+
+  const Sep = () => (
+    <div style={{ width: 1, background: C.border, margin: "0 2px", alignSelf: "stretch" }} />
+  );
+
+  const TBtn = ({ label, cmd, val, title }) => (
+    <button
+      onMouseDown={e => { e.preventDefault(); exec(cmd, val); }}
+      title={title || label}
+      style={{
+        background: "none", border: `1px solid ${C.border}`, borderRadius: 4,
+        cursor: "pointer", color: C.text, padding: "2px 7px", fontSize: 12,
+        fontWeight: 600, lineHeight: "20px", fontFamily: "inherit",
+      }}>
+      {label}
+    </button>
+  );
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0,
+      border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden", ...style }}>
+      {/* Toolbar */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 3, padding: "6px 10px",
+        borderBottom: `1px solid ${C.border}`, background: C.bg, flexShrink: 0 }}>
+        <TBtn label="B"  cmd="bold"      title="Negrita (Ctrl+B)" />
+        <TBtn label="I"  cmd="italic"    title="Itálica (Ctrl+I)" />
+        <TBtn label="U"  cmd="underline" title="Subrayado (Ctrl+U)" />
+        <Sep />
+        <TBtn label="H1" cmd="formatBlock" val="h1" title="Título 1" />
+        <TBtn label="H2" cmd="formatBlock" val="h2" title="Título 2" />
+        <TBtn label="H3" cmd="formatBlock" val="h3" title="Título 3" />
+        <TBtn label="¶" cmd="formatBlock" val="p" title="Párrafo normal" />
+        <Sep />
+        <TBtn label="≡" cmd="insertUnorderedList" title="Lista con viñetas" />
+        <TBtn label="1."     cmd="insertOrderedList"   title="Lista numerada" />
+        <Sep />
+        <TBtn label="⇦" cmd="justifyLeft"   title="Alinear izquierda" />
+        <TBtn label="⇔" cmd="justifyCenter" title="Centrar" />
+        <TBtn label="⇨" cmd="justifyRight"  title="Alinear derecha" />
+      </div>
+      {/* Área editable */}
+      <div
+        ref={ref}
+        contentEditable
+        suppressContentEditableWarning
+        onInput={() => onChange?.(ref.current?.innerHTML || "")}
+        style={{
+          flex: 1, overflowY: "auto", padding: 20, outline: "none",
+          color: C.text, fontSize: 14, lineHeight: 1.7,
+          fontFamily: 'Georgia, "Times New Roman", serif',
+          minHeight: 300,
+        }}
+      />
+    </div>
+  );
+}
+
+// ── Editor de un escrito individual ───────────────────────────
+
+function EscritoEditor({ C, clienteId, escrito, expedientes, onGuardado, onEliminado, onVolver }) {
+  const isNew = !escrito;
+  const [form, setForm] = useState({
+    titulo:        escrito?.titulo        || "",
+    categoria:     escrito?.categoria     || "nota",
+    estado:        escrito?.estado        || "borrador",
+    expediente_id: escrito?.expediente_id || "",
+  });
+  const [saving, setSaving]   = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [err, setErr]         = useState("");
+  const editorRef             = useRef(null);
+  const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  const guardar = async () => {
+    if (!form.titulo.trim()) return setErr("El título es obligatorio.");
+    setSaving(true); setErr("");
+    try {
+      const html  = editorRef.current?.innerHTML || "";
+      const texto = editorRef.current?.innerText  || "";
+      const body  = {
+        cliente_id:    clienteId,
+        ...form,
+        expediente_id: form.expediente_id || null,
+        contenido:     texto,
+        contenido_html: html,
+      };
+      const url    = isNew
+        ? `${API}/api/doctor/escritos`
+        : `${API}/api/doctor/escritos/${escrito.id}`;
+      const r = await fetch(url, { method: isNew ? "POST" : "PUT", headers: jH(), body: JSON.stringify(body) });
+      if (!r.ok) throw new Error((await r.json()).error);
+      onGuardado(await r.json());
+    } catch (e) { setErr(e.message); } finally { setSaving(false); }
+  };
+
+  const eliminar = async () => {
+    if (!window.confirm("¿Eliminar este escrito? No se puede deshacer.")) return;
+    setDeleting(true);
+    try {
+      const r = await fetch(
+        `${API}/api/doctor/escritos/${escrito.id}?cliente_id=${clienteId}`,
+        { method: "DELETE", headers: aH() }
+      );
+      if (!r.ok) throw new Error((await r.json()).error);
+      onEliminado(escrito.id);
+    } catch (e) { setErr(e.message); } finally { setDeleting(false); }
+  };
+
+  return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+      {/* Header del editor */}
+      <div style={{ padding: "12px 20px", borderBottom: `1px solid ${C.border}`,
+        display: "flex", alignItems: "center", gap: 8, flexShrink: 0, flexWrap: "wrap" }}>
+        <button onClick={onVolver}
+          style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 20, padding: 0, flexShrink: 0 }}>
+          ←
+        </button>
+        <Input C={C} value={form.titulo} onChange={e => set("titulo", e.target.value)}
+          placeholder="Título del escrito..."
+          style={{ flex: 1, minWidth: 180, fontWeight: 700, fontSize: 14 }} />
+        <Sel C={C} value={form.categoria} onChange={e => set("categoria", e.target.value)}
+          options={CATEGORIAS_ESCRITO} style={{ fontSize: 12 }} />
+        <Sel C={C} value={form.estado} onChange={e => set("estado", e.target.value)}
+          options={ESTADOS_ESCRITO} style={{ fontSize: 12 }} />
+        {!isNew && (
+          <Btn C={C} variant="ghost" onClick={eliminar} disabled={deleting}
+            style={{ color: "#ef4444", fontSize: 12 }}>{deleting ? "…" : "🗑"}</Btn>
+        )}
+        <Btn C={C} onClick={guardar} disabled={saving} style={{ fontSize: 12 }}>
+          {saving ? "Guardando…" : "💾 Guardar"}
+        </Btn>
+      </div>
+      {/* Expediente vinculado */}
+      <div style={{ padding: "8px 20px", borderBottom: `1px solid ${C.border}`,
+        display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+        <span style={{ fontSize: 12, color: C.muted, whiteSpace: "nowrap" }}>📁 Expediente:</span>
+        <Sel C={C} value={form.expediente_id} onChange={e => set("expediente_id", e.target.value)}
+          options={[{ value: "", label: "— Sin expediente —" },
+            ...expedientes.map(e => ({ value: e.id, label: e.caratula }))]}
+          style={{ fontSize: 12, flex: 1, maxWidth: 420 }} />
+        {!isNew && (
+          <span style={{ fontSize: 10, color: C.muted, whiteSpace: "nowrap" }}>
+            v{escrito.version_actual} · {fmtFecha(escrito.updated_at)}
+          </span>
+        )}
+      </div>
+      {err && (
+        <div style={{ padding: "6px 20px", background: "#ef444422",
+          color: "#ef4444", fontSize: 12, flexShrink: 0 }}>{err}</div>
+      )}
+      {/* Editor */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, padding: 16 }}>
+        <RichTextEditor
+          C={C}
+          initialValue={escrito?.contenido_html || escrito?.contenido || ""}
+          editorRef={editorRef}
+          placeholder="Escribí el contenido del escrito..."
+        />
+      </div>
+    </div>
+  );
+}
+
+// ── Módulo Escritos ────────────────────────────────────────────
+
+function EscritorModule({ C, clienteId }) {
+  const [view, setView]               = useState("lista");
+  const [escritos, setEscritos]       = useState([]);
+  const [expedientes, setExpedientes] = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [escritoActivo, setEscritoActivo] = useState(null);
+  const [filCat, setFilCat]           = useState("");
+  const [filEst, setFilEst]           = useState("");
+
+  const cargar = useCallback(async () => {
+    if (!clienteId) return;
+    setLoading(true);
+    try {
+      let url = `${API}/api/doctor/escritos?cliente_id=${clienteId}`;
+      if (filCat) url += `&categoria=${filCat}`;
+      if (filEst) url += `&estado=${filEst}`;
+      const [es, exps] = await Promise.all([
+        fetch(url, { headers: aH() }).then(r => r.ok ? r.json() : []),
+        fetch(`${API}/api/doctor/expedientes?cliente_id=${clienteId}`, { headers: aH() })
+          .then(r => r.ok ? r.json() : []),
+      ]);
+      setEscritos(es);
+      setExpedientes(exps);
+    } catch (_) {} finally { setLoading(false); }
+  }, [clienteId, filCat, filEst]);
+
+  useEffect(() => { cargar(); }, [cargar]);
+
+  const abrirEditor = (escrito = null) => {
+    setEscritoActivo(escrito);
+    setView("editor");
+  };
+
+  const onGuardado = (escrito) => {
+    setEscritos(prev => {
+      const idx = prev.findIndex(e => e.id === escrito.id);
+      return idx >= 0 ? prev.map(e => e.id === escrito.id ? escrito : e) : [escrito, ...prev];
+    });
+    setEscritoActivo(escrito); // actualizar datos en el editor
+  };
+
+  const onEliminado = (id) => {
+    setEscritos(prev => prev.filter(e => e.id !== id));
+    setView("lista");
+  };
+
+  if (view === "editor") {
+    return (
+      <EscritoEditor
+        key={escritoActivo?.id || "nuevo"}
+        C={C}
+        clienteId={clienteId}
+        escrito={escritoActivo}
+        expedientes={expedientes}
+        onGuardado={onGuardado}
+        onEliminado={onEliminado}
+        onVolver={() => setView("lista")}
+      />
+    );
+  }
+
+  // ── Vista lista ──
+  return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
+      {/* Header */}
+      <div style={{ padding: "16px 24px", borderBottom: `1px solid ${C.border}`,
+        display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: C.text, flex: 1 }}>Escritos</div>
+        <Btn C={C} onClick={() => abrirEditor(null)} style={{ fontSize: 12 }}>+ Nuevo escrito</Btn>
+      </div>
+      {/* Filtros */}
+      <div style={{ padding: "10px 24px", borderBottom: `1px solid ${C.border}`,
+        display: "flex", gap: 10, flexShrink: 0 }}>
+        <Sel C={C} value={filCat} onChange={e => setFilCat(e.target.value)}
+          options={[{ value: "", label: "Todas las categorías" }, ...CATEGORIAS_ESCRITO]}
+          style={{ fontSize: 12, flex: 1 }} />
+        <Sel C={C} value={filEst} onChange={e => setFilEst(e.target.value)}
+          options={[{ value: "", label: "Todos los estados" }, ...ESTADOS_ESCRITO]}
+          style={{ fontSize: 12, flex: 1 }} />
+      </div>
+      {/* Lista */}
+      <div style={{ flex: 1, overflowY: "auto", padding: 16 }}>
+        {loading ? <Spinner C={C} /> :
+         escritos.length === 0
+           ? <EmptyState C={C} icon="📄" title="Sin escritos"
+               sub="Creá tu primer escrito con el botón de arriba." />
+           : escritos.map(e => (
+               <div key={e.id} onClick={() => abrirEditor(e)}
+                 style={{
+                   padding: "12px 16px", background: C.surface, borderRadius: 10,
+                   border: `1px solid ${C.border}`, cursor: "pointer", marginBottom: 8,
+                   borderLeft: `4px solid ${ESTADO_ESCRITO_COLOR[e.estado] || C.accent}`,
+                   display: "flex", gap: 12, alignItems: "flex-start", transition: "background .12s",
+                 }}
+                 onMouseEnter={ev => ev.currentTarget.style.background = C.bg}
+                 onMouseLeave={ev => ev.currentTarget.style.background = C.surface}>
+                 <div style={{ flex: 1 }}>
+                   <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 4 }}>
+                     {e.titulo}
+                   </div>
+                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                     <Chip label={labelDe(CATEGORIAS_ESCRITO, e.categoria)} color={C.accent} />
+                     <Chip label={labelDe(ESTADOS_ESCRITO, e.estado)}
+                       color={ESTADO_ESCRITO_COLOR[e.estado] || "#6b7280"} />
+                     {e.expediente_caratula && (
+                       <span style={{ fontSize: 11, color: C.muted }}>📁 {e.expediente_caratula}</span>
+                     )}
+                   </div>
+                 </div>
+                 <div style={{ fontSize: 10, color: C.muted, whiteSpace: "nowrap", paddingTop: 2 }}>
+                   v{e.version_actual} · {fmtFecha(e.updated_at)}
+                 </div>
+               </div>
+             ))
+        }
+      </div>
+    </div>
+  );
+}
+
 // ── Sub-navegación Doctor ─────────────────────────────────────
 
 const SUB_NAV = [
   { key: "expedientes", label: "📁 Expedientes",  fase: null },
   { key: "agenda",      label: "📅 Agenda",        fase: null },
   { key: "personas",    label: "👥 Personas",       fase: null },
-  { key: "escritos",    label: "📄 Escritos",       fase: "Fase 5" },
+  { key: "escritos",    label: "📄 Escritos",       fase: null },
   { key: "cuentas",     label: "💰 Cuentas",        fase: "Fase 6" },
   { key: "ia",          label: "🤖 Doctor IA",      fase: null },
   { key: "procuracion", label: "⚖️ Procuración",    fase: "Fase 7" },
@@ -2645,6 +2977,11 @@ export default function DoctorModule({ C, clienteId }) {
         {/* Personas */}
         {subTab === "personas" && (
           <PersonasModule C={C} clienteId={clienteId} />
+        )}
+
+        {/* Escritos */}
+        {subTab === "escritos" && (
+          <EscritorModule C={C} clienteId={clienteId} />
         )}
 
         {/* Expedientes — con sub-vistas */}

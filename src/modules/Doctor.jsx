@@ -537,7 +537,7 @@ function PlazosExpedienteTab({ C, clienteId, expedienteId }) {
 
 // ── Ficha del expediente ──────────────────────────────────────
 
-function ExpedienteDetalle({ C, clienteId, expedienteId, usuarios, onVolver, onResumirIA }) {
+function ExpedienteDetalle({ C, clienteId, expedienteId, usuarios, onVolver, onResumirIA, onEscritoCreado }) {
   const [exp, setExp] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("datos");
@@ -549,6 +549,12 @@ function ExpedienteDetalle({ C, clienteId, expedienteId, usuarios, onVolver, onR
 
   // PDF analyzer states
   const [pdfModalOpen, setPdfModalOpen]       = useState(false);
+
+  // Plantilla picker states
+  const [plantPickerOpen, setPlantPickerOpen]   = useState(false);
+  const [plantillas, setPlantillas]             = useState([]);
+  const [loadingPlant, setLoadingPlant]         = useState(false);
+  const [creatingEscrito, setCreatingEscrito]   = useState(false);
   const [pdfFile, setPdfFile]                 = useState(null);
   const [pdfInstruccion, setPdfInstruccion]   = useState("");
   const [pdfOut, setPdfOut]                   = useState("");
@@ -618,6 +624,46 @@ function ExpedienteDetalle({ C, clienteId, expedienteId, usuarios, onVolver, onR
     setPdfModalOpen(false);
   };
 
+  // Plantilla picker: carga bajo demanda
+  const abrirPickerPlantilla = async () => {
+    setPlantPickerOpen(true);
+    if (plantillas.length === 0) {
+      setLoadingPlant(true);
+      const data = await fetch(
+        `${API}/api/doctor/plantillas?cliente_id=${clienteId}`,
+        { headers: aH() }
+      ).then(r => r.ok ? r.json() : []);
+      setPlantillas(data);
+      setLoadingPlant(false);
+    }
+  };
+
+  const usarPlantillaDesdeExp = async (p) => {
+    if (creatingEscrito) return;
+    setCreatingEscrito(true);
+    try {
+      const personas = exp?.personas || [];
+      const contenidoResuelto = resolverVariablesPreview(p.contenido, exp, personas);
+      const body = {
+        cliente_id:     clienteId,
+        expediente_id:  expedienteId,
+        plantilla_id:   p.id,
+        titulo:         p.titulo,
+        categoria:      p.categoria,
+        estado:         "borrador",
+        contenido:      contenidoResuelto,
+        contenido_html: contenidoResuelto,
+      };
+      const r = await fetch(`${API}/api/doctor/escritos`, {
+        method: "POST", headers: jH(), body: JSON.stringify(body),
+      });
+      if (!r.ok) throw new Error("Error al crear el escrito");
+      const escrito = await r.json();
+      setPlantPickerOpen(false);
+      onEscritoCreado?.(escrito);
+    } catch (_) {} finally { setCreatingEscrito(false); }
+  };
+
   const TABS = [
     { key: "datos",       label: "Datos" },
     { key: "movimientos", label: "Movimientos" },
@@ -646,6 +692,7 @@ function ExpedienteDetalle({ C, clienteId, expedienteId, usuarios, onVolver, onR
         {onResumirIA && (
           <Btn C={C} variant="ghost" onClick={onResumirIA} style={{ fontSize: 12 }}>✨ Resumir con IA</Btn>
         )}
+        <Btn C={C} variant="ghost" onClick={abrirPickerPlantilla} style={{ fontSize: 12 }}>📝 Nuevo escrito</Btn>
         <Btn C={C} variant="ghost" onClick={() => { setPdfModalOpen(true); setPdfOut(""); setPdfErr(""); }} style={{ fontSize: 12 }}>📄 Analizar PDF</Btn>
         {!editando
           ? <Btn C={C} variant="ghost" onClick={() => setEditando(true)} style={{ fontSize: 12 }}>✏ Editar</Btn>
@@ -817,6 +864,65 @@ function ExpedienteDetalle({ C, clienteId, expedienteId, usuarios, onVolver, onR
                 </Btn>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Nuevo escrito desde plantilla ── */}
+      {plantPickerOpen && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", zIndex: 2000,
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+          onClick={e => { if (e.target === e.currentTarget) setPlantPickerOpen(false); }}>
+          <div style={{ background: C.surface, borderRadius: 16, width: "100%", maxWidth: 480,
+            maxHeight: "80vh", display: "flex", flexDirection: "column",
+            boxShadow: "0 8px 40px rgba(0,0,0,.35)", overflow: "hidden" }}>
+            <div style={{ padding: "16px 20px", borderBottom: `1px solid ${C.border}`,
+              display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ flex: 1, fontSize: 15, fontWeight: 700, color: C.text }}>
+                📝 Nuevo escrito desde plantilla
+              </div>
+              <button onClick={() => setPlantPickerOpen(false)}
+                style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 22 }}>
+                ×
+              </button>
+            </div>
+            <div style={{ padding: "8px 20px", borderBottom: `1px solid ${C.border}`,
+              fontSize: 12, color: C.muted }}>
+              Las variables &#123;&#123;expediente.X&#125;&#125;, &#123;&#123;actor.X&#125;&#125; etc. se resuelven automáticamente con los datos de este expediente.
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: 16 }}>
+              {loadingPlant ? <Spinner C={C} /> :
+                plantillas.length === 0
+                  ? <EmptyState C={C} icon="📋" title="Sin plantillas"
+                      sub='Creá plantillas en la pestaña Escritos → Plantillas.' />
+                  : plantillas.map(p => (
+                      <div key={p.id}
+                        onClick={() => usarPlantillaDesdeExp(p)}
+                        style={{ padding: "12px 14px", borderRadius: 10, cursor: "pointer",
+                          border: `1px solid ${C.border}`, marginBottom: 8, background: C.bg,
+                          borderLeft: `3px solid ${p.publica ? "#10b981" : C.accent}`,
+                          opacity: creatingEscrito ? 0.5 : 1, transition: "background .12s" }}
+                        onMouseEnter={ev => ev.currentTarget.style.background = C.surface}
+                        onMouseLeave={ev => ev.currentTarget.style.background = C.bg}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 4 }}>
+                          {p.titulo}
+                        </div>
+                        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                          <Chip label={labelDe(CATEGORIAS_ESCRITO, p.categoria)} color={C.accent} />
+                          {p.publica && <Chip label="Pública" color="#10b981" />}
+                          {p.descripcion && (
+                            <span style={{ fontSize: 11, color: C.muted }}>{p.descripcion}</span>
+                          )}
+                        </div>
+                      </div>
+                    ))
+              }
+              {creatingEscrito && (
+                <div style={{ textAlign: "center", fontSize: 12, color: C.muted, padding: 12 }}>
+                  Creando escrito…
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -2615,7 +2721,7 @@ function RichTextEditor({ C, initialValue, onChange, placeholder, editorRef: ext
 // ── Editor de un escrito individual ───────────────────────────
 
 function EscritoEditor({ C, clienteId, escrito, expedientes, onGuardado, onEliminado, onVolver }) {
-  const isNew = !escrito;
+  const isNew = !escrito?.id;
   const [form, setForm] = useState({
     titulo:        escrito?.titulo        || "",
     categoria:     escrito?.categoria     || "nota",
@@ -2720,14 +2826,25 @@ function EscritoEditor({ C, clienteId, escrito, expedientes, onGuardado, onElimi
 
 // ── Módulo Escritos ────────────────────────────────────────────
 
-function EscritorModule({ C, clienteId }) {
+function EscritorModule({ C, clienteId, escritoPendiente, onEscritoPendienteConsumed }) {
   const [view, setView]               = useState("lista");
+  const [mainView, setMainView]       = useState("escritos"); // "escritos" | "plantillas"
   const [escritos, setEscritos]       = useState([]);
   const [expedientes, setExpedientes] = useState([]);
   const [loading, setLoading]         = useState(true);
   const [escritoActivo, setEscritoActivo] = useState(null);
   const [filCat, setFilCat]           = useState("");
   const [filEst, setFilEst]           = useState("");
+
+  // Navegación entrante desde ExpedienteDetalle
+  useEffect(() => {
+    if (escritoPendiente) {
+      setEscritoActivo(escritoPendiente);
+      setView("editor");
+      setMainView("escritos");
+      onEscritoPendienteConsumed?.();
+    }
+  }, [escritoPendiente]); // eslint-disable-line
 
   const cargar = useCallback(async () => {
     if (!clienteId) return;
@@ -2766,6 +2883,20 @@ function EscritorModule({ C, clienteId }) {
     setView("lista");
   };
 
+  // Usar plantilla desde PlantillasModule (sin contexto de expediente)
+  const usarPlantilla = (p) => {
+    setEscritoActivo({
+      titulo:         p.titulo,
+      categoria:      p.categoria,
+      estado:         "borrador",
+      plantilla_id:   p.id,
+      contenido_html: p.contenido,
+      contenido:      p.contenido,
+    });
+    setMainView("escritos");
+    setView("editor");
+  };
+
   if (view === "editor") {
     return (
       <EscritoEditor
@@ -2781,13 +2912,46 @@ function EscritorModule({ C, clienteId }) {
     );
   }
 
-  // ── Vista lista ──
+  if (mainView === "plantillas") {
+    return (
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
+        {/* Tab switcher compartido */}
+        <div style={{ padding: "0 24px", borderBottom: `1px solid ${C.border}`,
+          display: "flex", gap: 2, flexShrink: 0 }}>
+          {["escritos", "plantillas"].map(t => (
+            <button key={t} onClick={() => setMainView(t)}
+              style={{ padding: "12px 16px", background: "none", border: "none",
+                cursor: "pointer", fontSize: 13, fontFamily: "inherit",
+                fontWeight: mainView === t ? 700 : 400,
+                color: mainView === t ? C.accent : C.muted,
+                borderBottom: mainView === t ? `2px solid ${C.accent}` : "2px solid transparent" }}>
+              {t === "escritos" ? "📄 Escritos" : "📋 Plantillas"}
+            </button>
+          ))}
+        </div>
+        <PlantillasModule C={C} clienteId={clienteId} onUsarPlantilla={usarPlantilla} />
+      </div>
+    );
+  }
+
+  // ── Vista lista de escritos ──
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
-      {/* Header */}
-      <div style={{ padding: "16px 24px", borderBottom: `1px solid ${C.border}`,
+      {/* Header con tab switcher */}
+      <div style={{ padding: "0 24px", borderBottom: `1px solid ${C.border}`,
         display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: C.text, flex: 1 }}>Escritos</div>
+        <div style={{ display: "flex", gap: 2, flex: 1 }}>
+          {["escritos", "plantillas"].map(t => (
+            <button key={t} onClick={() => setMainView(t)}
+              style={{ padding: "12px 16px", background: "none", border: "none",
+                cursor: "pointer", fontSize: 13, fontFamily: "inherit",
+                fontWeight: mainView === t ? 700 : 400,
+                color: mainView === t ? C.accent : C.muted,
+                borderBottom: mainView === t ? `2px solid ${C.accent}` : "2px solid transparent" }}>
+              {t === "escritos" ? "📄 Escritos" : "📋 Plantillas"}
+            </button>
+          ))}
+        </div>
         <Btn C={C} onClick={() => abrirEditor(null)} style={{ fontSize: 12 }}>+ Nuevo escrito</Btn>
       </div>
       {/* Filtros */}
@@ -2840,6 +3004,278 @@ function EscritorModule({ C, clienteId }) {
   );
 }
 
+// ── Resolver de variables (frontend, preview) ─────────────────
+
+function resolverVariablesPreview(contenido = "", expediente = {}, personas = []) {
+  const actor     = personas.find(p => p.rol === "actor");
+  const demandado = personas.find(p => p.rol === "demandado");
+  const fechaHoy  = new Date().toLocaleDateString("es-AR", {
+    day: "2-digit", month: "2-digit", year: "numeric",
+  });
+  const montoFmt = expediente.monto_reclamado
+    ? Number(expediente.monto_reclamado).toLocaleString("es-AR")
+    : "[COMPLETAR]";
+  return contenido
+    .replace(/\{\{expediente\.caratula\}\}/g,    expediente.caratula                || "[COMPLETAR]")
+    .replace(/\{\{expediente\.num_judicial\}\}/g, expediente.num_expediente_judicial || "[COMPLETAR]")
+    .replace(/\{\{expediente\.fuero\}\}/g,        expediente.fuero                   || "[COMPLETAR]")
+    .replace(/\{\{expediente\.etapa\}\}/g,        expediente.etapa                   || "[COMPLETAR]")
+    .replace(/\{\{actor\.nombre\}\}/g,            actor?.nombre                      || "[COMPLETAR]")
+    .replace(/\{\{actor\.apellido\}\}/g,          actor?.apellido                    || "[COMPLETAR]")
+    .replace(/\{\{demandado\.nombre\}\}/g,        demandado?.nombre                  || "[COMPLETAR]")
+    .replace(/\{\{demandado\.apellido\}\}/g,      demandado?.apellido                || "[COMPLETAR]")
+    .replace(/\{\{juzgado\}\}/g,                  expediente.juzgado                 || "[COMPLETAR]")
+    .replace(/\{\{fecha_hoy\}\}/g,               fechaHoy)
+    .replace(/\{\{monto_reclamado\}\}/g,          montoFmt);
+}
+
+const VARIABLES_AYUDA = [
+  { var: "{{expediente.caratula}}",     desc: "Carátula del expediente" },
+  { var: "{{expediente.num_judicial}}", desc: "Número de expediente judicial" },
+  { var: "{{expediente.fuero}}",        desc: "Fuero" },
+  { var: "{{expediente.etapa}}",        desc: "Etapa procesal" },
+  { var: "{{actor.nombre}}",            desc: "Nombre del actor" },
+  { var: "{{actor.apellido}}",          desc: "Apellido del actor" },
+  { var: "{{demandado.nombre}}",        desc: "Nombre del demandado" },
+  { var: "{{demandado.apellido}}",      desc: "Apellido del demandado" },
+  { var: "{{juzgado}}",                 desc: "Juzgado interviniente" },
+  { var: "{{fecha_hoy}}",              desc: "Fecha de hoy (dd/mm/aaaa)" },
+  { var: "{{monto_reclamado}}",         desc: "Monto reclamado formateado" },
+];
+
+// ── PlantillaForm ─────────────────────────────────────────────
+
+function PlantillaForm({ C, clienteId, plantilla, onGuardado, onCancelar }) {
+  const isNew     = !plantilla?.id;
+  const editorRef = useRef(null);
+  const [form, setForm] = useState({
+    titulo:      plantilla?.titulo      || "",
+    categoria:   plantilla?.categoria   || "nota",
+    descripcion: plantilla?.descripcion || "",
+  });
+  const [saving, setSaving]       = useState(false);
+  const [err, setErr]             = useState("");
+  const [ayudaOpen, setAyudaOpen] = useState(false);
+  const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  const guardar = async () => {
+    if (!form.titulo.trim()) return setErr("El título es obligatorio.");
+    setSaving(true); setErr("");
+    try {
+      const body = {
+        cliente_id: clienteId,
+        ...form,
+        // Guardamos innerHTML para preservar el formato del rich-text
+        contenido: editorRef.current?.innerHTML || "",
+        publica: false, // los clientes solo crean plantillas privadas
+      };
+      const url = isNew
+        ? `${API}/api/doctor/plantillas`
+        : `${API}/api/doctor/plantillas/${plantilla.id}`;
+      const r = await fetch(url, {
+        method: isNew ? "POST" : "PUT",
+        headers: jH(), body: JSON.stringify(body),
+      });
+      if (!r.ok) throw new Error((await r.json()).error || "Error al guardar");
+      onGuardado(await r.json());
+    } catch (e) { setErr(e.message); } finally { setSaving(false); }
+  };
+
+  return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+      {/* Header */}
+      <div style={{ padding: "12px 20px", borderBottom: `1px solid ${C.border}`,
+        display: "flex", alignItems: "center", gap: 8, flexShrink: 0, flexWrap: "wrap" }}>
+        <button onClick={onCancelar}
+          style={{ background: "none", border: "none", cursor: "pointer",
+            color: C.muted, fontSize: 20, padding: 0, flexShrink: 0 }}>
+          ←
+        </button>
+        <Input C={C} value={form.titulo} onChange={e => set("titulo", e.target.value)}
+          placeholder="Título de la plantilla..."
+          style={{ flex: 1, minWidth: 180, fontWeight: 700, fontSize: 14 }} />
+        <Sel C={C} value={form.categoria} onChange={e => set("categoria", e.target.value)}
+          options={CATEGORIAS_ESCRITO} style={{ fontSize: 12 }} />
+        <Btn C={C} variant="ghost" onClick={() => setAyudaOpen(p => !p)} style={{ fontSize: 12 }}>
+          {ayudaOpen ? "× Variables" : "{ } Variables"}
+        </Btn>
+        <Btn C={C} onClick={guardar} disabled={saving} style={{ fontSize: 12 }}>
+          {saving ? "Guardando…" : "💾 Guardar"}
+        </Btn>
+      </div>
+      {/* Descripción */}
+      <div style={{ padding: "8px 20px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+        <Input C={C} value={form.descripcion}
+          onChange={e => set("descripcion", e.target.value)}
+          placeholder="Descripción breve (opcional)..."
+          style={{ fontSize: 12 }} />
+      </div>
+      {err && (
+        <div style={{ padding: "6px 20px", background: "#ef444422",
+          color: "#ef4444", fontSize: 12, flexShrink: 0 }}>{err}
+        </div>
+      )}
+      {/* Body: editor + panel de variables */}
+      <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, padding: 16 }}>
+          <RichTextEditor
+            C={C}
+            initialValue={plantilla?.contenido || ""}
+            editorRef={editorRef}
+            placeholder="Contenido de la plantilla. Usá {{expediente.caratula}}, {{actor.nombre}}, etc."
+          />
+        </div>
+        {ayudaOpen && (
+          <div style={{ width: 260, borderLeft: `1px solid ${C.border}`,
+            padding: "16px 12px", overflowY: "auto", flexShrink: 0, background: C.bg }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.text, marginBottom: 8 }}>
+              Variables disponibles
+            </div>
+            <div style={{ fontSize: 11, color: C.muted, marginBottom: 12, lineHeight: 1.4 }}>
+              Clic para copiar al portapapeles. Serán reemplazadas al generar el escrito.
+            </div>
+            {VARIABLES_AYUDA.map(v => (
+              <div key={v.var}
+                onClick={() => navigator.clipboard?.writeText(v.var)}
+                style={{ marginBottom: 6, cursor: "pointer", padding: "5px 8px",
+                  borderRadius: 6, background: C.surface, border: `1px solid ${C.border}` }}
+                title="Clic para copiar">
+                <div style={{ fontFamily: "monospace", fontSize: 11, color: C.accent, marginBottom: 2 }}>
+                  {v.var}
+                </div>
+                <div style={{ fontSize: 10, color: C.muted }}>{v.desc}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── PlantillasModule ──────────────────────────────────────────
+
+function PlantillasModule({ C, clienteId, onUsarPlantilla }) {
+  const [view, setView]             = useState("lista");
+  const [plantillas, setPlantillas] = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [activa, setActiva]         = useState(null);
+  const [filCat, setFilCat]         = useState("");
+
+  const cargar = useCallback(async () => {
+    if (!clienteId) return;
+    setLoading(true);
+    try {
+      let url = `${API}/api/doctor/plantillas?cliente_id=${clienteId}`;
+      if (filCat) url += `&categoria=${filCat}`;
+      const data = await fetch(url, { headers: aH() }).then(r => r.ok ? r.json() : []);
+      setPlantillas(data);
+    } catch (_) {} finally { setLoading(false); }
+  }, [clienteId, filCat]);
+
+  useEffect(() => { cargar(); }, [cargar]);
+
+  const onGuardado = (p) => {
+    setPlantillas(prev => {
+      const idx = prev.findIndex(x => x.id === p.id);
+      return idx >= 0 ? prev.map(x => x.id === p.id ? p : x) : [p, ...prev];
+    });
+    setView("lista");
+  };
+
+  const eliminar = async (p) => {
+    if (p.publica) return;
+    if (!window.confirm(`¿Eliminar "${p.titulo}"?`)) return;
+    await fetch(
+      `${API}/api/doctor/plantillas/${p.id}?cliente_id=${clienteId}`,
+      { method: "DELETE", headers: aH() }
+    );
+    setPlantillas(prev => prev.filter(x => x.id !== p.id));
+  };
+
+  if (view === "form") {
+    return (
+      <PlantillaForm
+        C={C} clienteId={clienteId}
+        plantilla={activa}
+        onGuardado={onGuardado}
+        onCancelar={() => setView("lista")}
+      />
+    );
+  }
+
+  return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
+      {/* Header */}
+      <div style={{ padding: "16px 24px", borderBottom: `1px solid ${C.border}`,
+        display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: C.text, flex: 1 }}>Plantillas</div>
+        <Btn C={C} onClick={() => { setActiva(null); setView("form"); }} style={{ fontSize: 12 }}>
+          + Nueva plantilla
+        </Btn>
+      </div>
+      {/* Filtro */}
+      <div style={{ padding: "10px 24px", borderBottom: `1px solid ${C.border}`,
+        display: "flex", gap: 10, flexShrink: 0 }}>
+        <Sel C={C} value={filCat} onChange={e => setFilCat(e.target.value)}
+          options={[{ value: "", label: "Todas las categorías" }, ...CATEGORIAS_ESCRITO]}
+          style={{ fontSize: 12, flex: 1 }} />
+      </div>
+      {/* Lista */}
+      <div style={{ flex: 1, overflowY: "auto", padding: 16 }}>
+        {loading ? <Spinner C={C} /> :
+          plantillas.length === 0
+            ? <EmptyState C={C} icon="📋" title="Sin plantillas"
+                sub="Creá tu primera plantilla con el botón de arriba." />
+            : plantillas.map(p => (
+                <div key={p.id}
+                  style={{ padding: "12px 16px", background: C.surface, borderRadius: 10,
+                    border: `1px solid ${C.border}`, marginBottom: 8,
+                    borderLeft: `4px solid ${p.publica ? "#10b981" : C.accent}`,
+                    display: "flex", gap: 12, alignItems: "center" }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>
+                        {p.titulo}
+                      </span>
+                      {p.publica && <Chip label="Pública" color="#10b981" />}
+                    </div>
+                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                      <Chip label={labelDe(CATEGORIAS_ESCRITO, p.categoria)} color={C.accent} />
+                      {p.descripcion && (
+                        <span style={{ fontSize: 11, color: C.muted }}>{p.descripcion}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                    {onUsarPlantilla && (
+                      <Btn C={C} onClick={() => onUsarPlantilla(p)} style={{ fontSize: 11 }}>
+                        Usar
+                      </Btn>
+                    )}
+                    {!p.publica && (
+                      <>
+                        <Btn C={C} variant="ghost"
+                          onClick={() => { setActiva(p); setView("form"); }}
+                          style={{ fontSize: 11 }}>
+                          ✏ Editar
+                        </Btn>
+                        <Btn C={C} variant="ghost"
+                          onClick={() => eliminar(p)}
+                          style={{ fontSize: 11, color: "#ef4444" }}>
+                          🗑
+                        </Btn>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))
+        }
+      </div>
+    </div>
+  );
+}
+
 // ── Sub-navegación Doctor ─────────────────────────────────────
 
 const SUB_NAV = [
@@ -2865,6 +3301,8 @@ export default function DoctorModule({ C, clienteId }) {
   const [iaOpen, setIaOpen]             = useState(false);
   const [triggerResumir, setTriggerResumir] = useState(0);
   const [agendaBadge, setAgendaBadge]   = useState(0);
+  // Navegación entrante Expediente → EscritorModule
+  const [escritoPendiente, setEscritoPendiente] = useState(null);
 
   // Cargar usuarios para selects de responsable
   useEffect(() => {
@@ -2981,7 +3419,11 @@ export default function DoctorModule({ C, clienteId }) {
 
         {/* Escritos */}
         {subTab === "escritos" && (
-          <EscritorModule C={C} clienteId={clienteId} />
+          <EscritorModule
+            C={C} clienteId={clienteId}
+            escritoPendiente={escritoPendiente}
+            onEscritoPendienteConsumed={() => setEscritoPendiente(null)}
+          />
         )}
 
         {/* Expedientes — con sub-vistas */}
@@ -2999,6 +3441,7 @@ export default function DoctorModule({ C, clienteId }) {
             usuarios={usuarios}
             onVolver={irALista}
             onResumirIA={() => { setIaOpen(true); setTriggerResumir((p) => p + 1); }}
+            onEscritoCreado={(e) => { setEscritoPendiente(e); setSubTab("escritos"); }}
           />
         )}
 

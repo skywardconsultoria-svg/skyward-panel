@@ -2728,32 +2728,117 @@ function EscritoEditor({ C, clienteId, escrito, expedientes, onGuardado, onElimi
     estado:        escrito?.estado        || "borrador",
     expediente_id: escrito?.expediente_id || "",
   });
-  const [saving, setSaving]   = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [err, setErr]         = useState("");
-  const editorRef             = useRef(null);
+  const [saving, setSaving]               = useState(false);
+  const [deleting, setDeleting]           = useState(false);
+  const [err, setErr]                     = useState("");
+  // Auto-save
+  const [autoSaveStatus, setAutoSaveStatus] = useState("idle"); // "idle"|"pending"|"saving"|"saved"
+  const debounceRef                         = useRef(null);
+  // Historial de versiones
+  const [historialOpen, setHistorialOpen] = useState(false);
+  const [versiones, setVersiones]         = useState([]);
+  const [loadingVers, setLoadingVers]     = useState(false);
+  // Modal guardar versión manual
+  const [versionModal, setVersionModal]   = useState(false);
+  const [versionComent, setVersionComent] = useState("");
+  const [savingVers, setSavingVers]       = useState(false);
+
+  const editorRef = useRef(null);
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  // Limpiar timer al desmontar
+  useEffect(() => () => clearTimeout(debounceRef.current), []);
+
+  // Cargar historial cuando se abre el panel
+  useEffect(() => {
+    if (!historialOpen || isNew) return;
+    cargarVersiones();
+  }, [historialOpen]); // eslint-disable-line
+
+  const cargarVersiones = async () => {
+    setLoadingVers(true);
+    const data = await fetch(
+      `${API}/api/doctor/escritos/${escrito.id}/versiones?cliente_id=${clienteId}`,
+      { headers: aH() }
+    ).then(r => r.ok ? r.json() : []);
+    setVersiones(data);
+    setLoadingVers(false);
+  };
+
+  // Auto-save debounce 30 s (solo en escritos ya persistidos)
+  const scheduleAutoSave = () => {
+    if (isNew) return;
+    clearTimeout(debounceRef.current);
+    setAutoSaveStatus("pending");
+    debounceRef.current = setTimeout(guardarSilencioso, 30_000);
+  };
+
+  const guardarSilencioso = async () => {
+    if (!form.titulo.trim() || isNew) return;
+    setAutoSaveStatus("saving");
+    try {
+      const html  = editorRef.current?.innerHTML || "";
+      const texto = editorRef.current?.innerText  || "";
+      const body  = {
+        cliente_id: clienteId, ...form,
+        expediente_id: form.expediente_id || null,
+        contenido: texto, contenido_html: html,
+      };
+      const r = await fetch(`${API}/api/doctor/escritos/${escrito.id}`, {
+        method: "PUT", headers: jH(), body: JSON.stringify(body),
+      });
+      if (r.ok) { onGuardado(await r.json()); setAutoSaveStatus("saved"); }
+      else setAutoSaveStatus("idle");
+    } catch (_) { setAutoSaveStatus("idle"); }
+  };
 
   const guardar = async () => {
     if (!form.titulo.trim()) return setErr("El título es obligatorio.");
+    clearTimeout(debounceRef.current);
     setSaving(true); setErr("");
     try {
       const html  = editorRef.current?.innerHTML || "";
       const texto = editorRef.current?.innerText  || "";
       const body  = {
-        cliente_id:    clienteId,
-        ...form,
-        expediente_id: form.expediente_id || null,
-        contenido:     texto,
-        contenido_html: html,
+        cliente_id:     clienteId, ...form,
+        expediente_id:  form.expediente_id || null,
+        contenido:      texto, contenido_html: html,
       };
-      const url    = isNew
+      const url = isNew
         ? `${API}/api/doctor/escritos`
         : `${API}/api/doctor/escritos/${escrito.id}`;
       const r = await fetch(url, { method: isNew ? "POST" : "PUT", headers: jH(), body: JSON.stringify(body) });
       if (!r.ok) throw new Error((await r.json()).error);
+      setAutoSaveStatus("saved");
       onGuardado(await r.json());
     } catch (e) { setErr(e.message); } finally { setSaving(false); }
+  };
+
+  // Guardar versión manual (snapshot nombrado)
+  const guardarVersion = async () => {
+    setSavingVers(true);
+    try {
+      const html  = editorRef.current?.innerHTML || "";
+      const texto = editorRef.current?.innerText  || "";
+      await fetch(`${API}/api/doctor/escritos/${escrito.id}/versiones`, {
+        method: "POST", headers: jH(),
+        body: JSON.stringify({
+          cliente_id: clienteId,
+          contenido: texto, contenido_html: html,
+          comentario: versionComent,
+        }),
+      });
+      setVersionModal(false);
+      setVersionComent("");
+      if (historialOpen) cargarVersiones();
+    } catch (_) {} finally { setSavingVers(false); }
+  };
+
+  // Restaurar una versión anterior en el editor
+  const restaurarVersion = (v) => {
+    if (!editorRef.current) return;
+    editorRef.current.innerHTML = v.contenido_html || v.contenido || "";
+    scheduleAutoSave();
   };
 
   const eliminar = async () => {
@@ -2769,9 +2854,16 @@ function EscritoEditor({ C, clienteId, escrito, expedientes, onGuardado, onElimi
     } catch (e) { setErr(e.message); } finally { setDeleting(false); }
   };
 
+  // Chip de estado del auto-save
+  const autoSaveLabel = isNew ? null
+    : autoSaveStatus === "pending" ? <span style={{ fontSize: 11, color: C.muted }}>cambios sin guardar</span>
+    : autoSaveStatus === "saving"  ? <span style={{ fontSize: 11, color: C.accent }}>guardando…</span>
+    : autoSaveStatus === "saved"   ? <span style={{ fontSize: 11, color: "#10b981" }}>✓ guardado</span>
+    : null;
+
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
-      {/* Header del editor */}
+      {/* Header */}
       <div style={{ padding: "12px 20px", borderBottom: `1px solid ${C.border}`,
         display: "flex", alignItems: "center", gap: 8, flexShrink: 0, flexWrap: "wrap" }}>
         <button onClick={onVolver}
@@ -2785,15 +2877,24 @@ function EscritoEditor({ C, clienteId, escrito, expedientes, onGuardado, onElimi
           options={CATEGORIAS_ESCRITO} style={{ fontSize: 12 }} />
         <Sel C={C} value={form.estado} onChange={e => set("estado", e.target.value)}
           options={ESTADOS_ESCRITO} style={{ fontSize: 12 }} />
+        {autoSaveLabel}
         {!isNew && (
-          <Btn C={C} variant="ghost" onClick={eliminar} disabled={deleting}
-            style={{ color: "#ef4444", fontSize: 12 }}>{deleting ? "…" : "🗑"}</Btn>
+          <>
+            <Btn C={C} variant="ghost" onClick={() => setHistorialOpen(p => !p)} style={{ fontSize: 12 }}>
+              🕐 Historial
+            </Btn>
+            <Btn C={C} variant="ghost" onClick={() => setVersionModal(true)} style={{ fontSize: 12 }}>
+              📌 Versión
+            </Btn>
+            <Btn C={C} variant="ghost" onClick={eliminar} disabled={deleting}
+              style={{ color: "#ef4444", fontSize: 12 }}>{deleting ? "…" : "🗑"}</Btn>
+          </>
         )}
         <Btn C={C} onClick={guardar} disabled={saving} style={{ fontSize: 12 }}>
           {saving ? "Guardando…" : "💾 Guardar"}
         </Btn>
       </div>
-      {/* Expediente vinculado */}
+      {/* Sub-header: expediente vinculado */}
       <div style={{ padding: "8px 20px", borderBottom: `1px solid ${C.border}`,
         display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
         <span style={{ fontSize: 12, color: C.muted, whiteSpace: "nowrap" }}>📁 Expediente:</span>
@@ -2811,14 +2912,255 @@ function EscritoEditor({ C, clienteId, escrito, expedientes, onGuardado, onElimi
         <div style={{ padding: "6px 20px", background: "#ef444422",
           color: "#ef4444", fontSize: 12, flexShrink: 0 }}>{err}</div>
       )}
-      {/* Editor */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, padding: 16 }}>
-        <RichTextEditor
-          C={C}
-          initialValue={escrito?.contenido_html || escrito?.contenido || ""}
-          editorRef={editorRef}
-          placeholder="Escribí el contenido del escrito..."
-        />
+      {/* Body: editor + panel historial */}
+      <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, padding: 16 }}>
+          <RichTextEditor
+            C={C}
+            initialValue={escrito?.contenido_html || escrito?.contenido || ""}
+            editorRef={editorRef}
+            onChange={!isNew ? scheduleAutoSave : undefined}
+            placeholder="Escribí el contenido del escrito..."
+          />
+        </div>
+        {/* Panel lateral: historial de versiones */}
+        {historialOpen && !isNew && (
+          <div style={{ width: 280, borderLeft: `1px solid ${C.border}`,
+            display: "flex", flexDirection: "column", minHeight: 0, flexShrink: 0 }}>
+            <div style={{ padding: "10px 14px", borderBottom: `1px solid ${C.border}`,
+              display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: C.text }}>Historial</span>
+              <button onClick={() => setHistorialOpen(false)}
+                style={{ background: "none", border: "none", cursor: "pointer",
+                  color: C.muted, fontSize: 18, lineHeight: 1 }}>×</button>
+            </div>
+            <div style={{ fontSize: 11, color: C.muted, padding: "6px 14px",
+              borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+              Clic en una versión para restaurarla en el editor.
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: 10 }}>
+              {loadingVers ? <Spinner C={C} /> :
+                versiones.length === 0
+                  ? <div style={{ fontSize: 12, color: C.muted, textAlign: "center", padding: 20 }}>
+                      Sin versiones guardadas.<br />Usá "📌 Versión" para crear una.
+                    </div>
+                  : versiones.map(v => (
+                      <div key={v.id} onClick={() => restaurarVersion(v)}
+                        style={{ padding: "8px 10px", borderRadius: 8, cursor: "pointer",
+                          border: `1px solid ${C.border}`, marginBottom: 6, background: C.bg,
+                          transition: "background .1s" }}
+                        onMouseEnter={ev => ev.currentTarget.style.background = C.surface}
+                        onMouseLeave={ev => ev.currentTarget.style.background = C.bg}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: C.text, marginBottom: 2 }}>
+                          v{v.version} — {fmtFecha(v.created_at)}
+                        </div>
+                        {v.comentario && (
+                          <div style={{ fontSize: 11, color: C.muted, wordBreak: "break-word" }}>
+                            {v.comentario}
+                          </div>
+                        )}
+                      </div>
+                    ))
+              }
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Modal: guardar versión manual */}
+      {versionModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", zIndex: 2100,
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+          onClick={e => { if (e.target === e.currentTarget) setVersionModal(false); }}>
+          <div style={{ background: C.surface, borderRadius: 14, width: "100%", maxWidth: 380,
+            padding: 24, boxShadow: "0 8px 40px rgba(0,0,0,.3)" }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 8 }}>
+              📌 Guardar versión
+            </div>
+            <div style={{ fontSize: 12, color: C.muted, marginBottom: 12, lineHeight: 1.5 }}>
+              Guarda una snapshot del estado actual. Podés restaurarla desde el historial.
+            </div>
+            <Input C={C} value={versionComent}
+              onChange={e => setVersionComent(e.target.value)}
+              placeholder="Comentario opcional (ej: antes de la audiencia)..." />
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 16 }}>
+              <Btn C={C} variant="ghost" onClick={() => setVersionModal(false)}>Cancelar</Btn>
+              <Btn C={C} onClick={guardarVersion} disabled={savingVers}>
+                {savingVers ? "Guardando…" : "📌 Guardar versión"}
+              </Btn>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── SeriadoModal ─────────────────────────────────────────────
+
+function SeriadoModal({ C, clienteId, expedientes, onClose, onGenerado }) {
+  const [plantillas, setPlantillas]   = useState([]);
+  const [plantillaId, setPlantillaId] = useState("");
+  const [selIds, setSelIds]           = useState(new Set());
+  const [generando, setGenerando]     = useState(false);
+  const [resultado, setResultado]     = useState(null);
+  const [err, setErr]                 = useState("");
+
+  useEffect(() => {
+    fetch(`${API}/api/doctor/plantillas?cliente_id=${clienteId}`, { headers: aH() })
+      .then(r => r.ok ? r.json() : [])
+      .then(setPlantillas);
+  }, [clienteId]); // eslint-disable-line
+
+  const toggle = (id) => setSelIds(prev => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+
+  const toggleTodos = () => {
+    if (selIds.size === expedientes.length) setSelIds(new Set());
+    else setSelIds(new Set(expedientes.map(e => e.id)));
+  };
+
+  const generar = async () => {
+    if (!plantillaId) return setErr("Seleccioná una plantilla.");
+    if (selIds.size === 0) return setErr("Seleccioná al menos un expediente.");
+    if (selIds.size > 50) return setErr("Máximo 50 expedientes por operación.");
+    setGenerando(true); setErr("");
+    try {
+      const r = await fetch(`${API}/api/doctor/escritos/seriado`, {
+        method: "POST", headers: jH(),
+        body: JSON.stringify({
+          cliente_id:     clienteId,
+          plantilla_id:   Number(plantillaId),
+          expediente_ids: [...selIds],
+        }),
+      });
+      if (!r.ok) throw new Error((await r.json()).error || "Error al generar");
+      const data = await r.json();
+      setResultado(Array.isArray(data) ? data : data.escritos || []);
+    } catch (e) { setErr(e.message); } finally { setGenerando(false); }
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", zIndex: 2000,
+      display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={{ background: C.surface, borderRadius: 16, width: "100%", maxWidth: 560,
+        maxHeight: "88vh", display: "flex", flexDirection: "column",
+        boxShadow: "0 8px 40px rgba(0,0,0,.35)", overflow: "hidden" }}>
+
+        {/* Header */}
+        <div style={{ padding: "16px 20px", borderBottom: `1px solid ${C.border}`,
+          display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+          <div style={{ flex: 1, fontSize: 15, fontWeight: 700, color: C.text }}>
+            ⚡ Generación seriada
+          </div>
+          <button onClick={onClose}
+            style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 22 }}>×</button>
+        </div>
+
+        {resultado ? (
+          /* ── Pantalla resultado ── */
+          <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#10b981", marginBottom: 16 }}>
+              ✓ {resultado.length} escritos creados
+            </div>
+            {resultado.map(e => (
+              <div key={e.id}
+                style={{ padding: "10px 14px", borderRadius: 8, border: `1px solid ${C.border}`,
+                  marginBottom: 8, background: C.bg }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{e.titulo}</div>
+                {e.expediente_caratula && (
+                  <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>
+                    📁 {e.expediente_caratula}
+                  </div>
+                )}
+              </div>
+            ))}
+            <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end", gap: 10 }}>
+              <Btn C={C} variant="ghost" onClick={onClose}>Cerrar</Btn>
+              <Btn C={C} onClick={() => { onGenerado(resultado); onClose(); }}>
+                Ver en escritos →
+              </Btn>
+            </div>
+          </div>
+        ) : (
+          /* ── Pantalla configuración ── */
+          <>
+            <div style={{ flex: 1, overflowY: "auto", padding: 20,
+              display: "flex", flexDirection: "column", gap: 16 }}>
+
+              {/* Selector plantilla */}
+              <div>
+                <div style={{ fontSize: 12, color: C.muted, marginBottom: 6, fontWeight: 600 }}>
+                  Plantilla *
+                </div>
+                <Sel C={C} value={plantillaId} onChange={e => setPlantillaId(e.target.value)}
+                  options={plantillas.map(p => ({
+                    value: p.id,
+                    label: `${p.titulo} (${labelDe(CATEGORIAS_ESCRITO, p.categoria)})`,
+                  }))} />
+                {plantillas.length === 0 && (
+                  <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>
+                    Cargando plantillas…
+                  </div>
+                )}
+              </div>
+
+              {/* Lista de expedientes */}
+              <div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+                  marginBottom: 6 }}>
+                  <span style={{ fontSize: 12, color: C.muted, fontWeight: 600 }}>
+                    Expedientes ({selIds.size}/{expedientes.length} seleccionados)
+                  </span>
+                  <button onClick={toggleTodos}
+                    style={{ background: "none", border: "none", cursor: "pointer",
+                      fontSize: 11, color: C.accent, fontFamily: "inherit" }}>
+                    {selIds.size === expedientes.length ? "Deseleccionar todos" : "Seleccionar todos"}
+                  </button>
+                </div>
+                <div style={{ maxHeight: 280, overflowY: "auto", border: `1px solid ${C.border}`,
+                  borderRadius: 8, background: C.bg }}>
+                  {expedientes.length === 0
+                    ? <div style={{ padding: 16, fontSize: 12, color: C.muted, textAlign: "center" }}>
+                        Sin expedientes disponibles.
+                      </div>
+                    : expedientes.map(exp => (
+                        <label key={exp.id}
+                          style={{ display: "flex", alignItems: "center", gap: 10,
+                            padding: "9px 12px", cursor: "pointer",
+                            borderBottom: `1px solid ${C.border}`,
+                            background: selIds.has(exp.id) ? `${C.accent}11` : "transparent",
+                            transition: "background .1s" }}>
+                          <input type="checkbox"
+                            checked={selIds.has(exp.id)}
+                            onChange={() => toggle(exp.id)}
+                            style={{ width: 15, height: 15, cursor: "pointer", flexShrink: 0 }} />
+                          <span style={{ fontSize: 13, color: C.text }}>{exp.caratula}</span>
+                        </label>
+                      ))
+                  }
+                </div>
+              </div>
+
+              {err && <div style={{ fontSize: 12, color: "#ef4444" }}>{err}</div>}
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding: "12px 20px", borderTop: `1px solid ${C.border}`,
+              display: "flex", justifyContent: "flex-end", gap: 10, flexShrink: 0 }}>
+              <Btn C={C} variant="ghost" onClick={onClose}>Cancelar</Btn>
+              <Btn C={C} onClick={generar} disabled={generando}>
+                {generando
+                  ? "Generando…"
+                  : `⚡ Generar${selIds.size > 0 ? ` ${selIds.size} escritos` : ""}`}
+              </Btn>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -2835,6 +3177,7 @@ function EscritorModule({ C, clienteId, escritoPendiente, onEscritoPendienteCons
   const [escritoActivo, setEscritoActivo] = useState(null);
   const [filCat, setFilCat]           = useState("");
   const [filEst, setFilEst]           = useState("");
+  const [seriadoOpen, setSeriadoOpen] = useState(false);
 
   // Navegación entrante desde ExpedienteDetalle
   useEffect(() => {
@@ -2952,6 +3295,9 @@ function EscritorModule({ C, clienteId, escritoPendiente, onEscritoPendienteCons
             </button>
           ))}
         </div>
+        <Btn C={C} variant="ghost" onClick={() => setSeriadoOpen(true)} style={{ fontSize: 12 }}>
+          ⚡ Serie
+        </Btn>
         <Btn C={C} onClick={() => abrirEditor(null)} style={{ fontSize: 12 }}>+ Nuevo escrito</Btn>
       </div>
       {/* Filtros */}
@@ -3000,6 +3346,20 @@ function EscritorModule({ C, clienteId, escritoPendiente, onEscritoPendienteCons
              ))
         }
       </div>
+
+      {/* Generación seriada */}
+      {seriadoOpen && (
+        <SeriadoModal
+          C={C}
+          clienteId={clienteId}
+          expedientes={expedientes}
+          onClose={() => setSeriadoOpen(false)}
+          onGenerado={(nuevos) => {
+            setEscritos(prev => [...nuevos, ...prev]);
+            setSeriadoOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }

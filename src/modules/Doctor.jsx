@@ -105,9 +105,9 @@ function Input({ C, ...props }) {
   return <input style={inputSt(C)} {...props} />;
 }
 
-function Sel({ C, options, ...props }) {
+function Sel({ C, options, style, ...props }) {
   return (
-    <select style={inputSt(C)} {...props}>
+    <select style={{ ...inputSt(C), ...style }} {...props}>
       <option value="">— seleccionar —</option>
       {options.map((o) => (
         <option key={o.value} value={o.value}>{o.label}</option>

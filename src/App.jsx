@@ -11427,10 +11427,14 @@ function EdgePanel({ token, user, onLogout }) {
 }
 
 function LoginForm({ onLogin }) {
-  const [email, setEmail] = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState(null);
+  const [loading, setLoading]   = useState(false);
+  const [err, setErr]           = useState(null);
+  // 2FA state
+  const [needs2FA, setNeeds2FA] = useState(false);
+  const [userId2FA, setUserId2FA] = useState(null);
+  const [code2FA, setCode2FA]   = useState('');
 
   const login = async () => {
     if (!email || !password) return setErr('Completá todos los campos');
@@ -11443,11 +11447,37 @@ function LoginForm({ onLogin }) {
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Credenciales inválidas');
+      if (d.needs_2fa) {
+        setUserId2FA(d.user_id);
+        setNeeds2FA(true);
+      } else {
+        localStorage.setItem('edge_token', d.token);
+        if (d.refresh_token) localStorage.setItem('edge_refresh_token', d.refresh_token);
+        onLogin(d.token, d.user);
+      }
+    } catch(e) { setErr(e.message); }
+    setLoading(false);
+  };
+
+  const verify2FA = async () => {
+    if (!code2FA || code2FA.length < 6) return setErr('Ingresá el código de 6 dígitos');
+    setLoading(true); setErr(null);
+    try {
+      const r = await fetch(`${API}/api/auth/verify-2fa`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId2FA, code: code2FA })
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Código inválido');
       localStorage.setItem('edge_token', d.token);
+      if (d.refresh_token) localStorage.setItem('edge_refresh_token', d.refresh_token);
       onLogin(d.token, d.user);
     } catch(e) { setErr(e.message); }
     setLoading(false);
   };
+
+  const inputStyle = { width:'100%',padding:'11px 14px',borderRadius:10,border:`1.5px solid ${C.border}`,background:C.bg,color:C.text,fontSize:14,outline:'none',fontFamily:'inherit',boxSizing:'border-box',transition:'border-color .2s' };
 
   return (
     <div style={{height:APP_H,overflowY:'auto',display:'flex',alignItems:'center',justifyContent:'center',background:C.bg,backgroundImage:'radial-gradient(ellipse at 60% 20%, rgba(232,78,15,0.06) 0%, transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(251,186,0,0.04) 0%, transparent 50%)'}}>
@@ -11460,25 +11490,48 @@ function LoginForm({ onLogin }) {
           <div style={{width:40,height:2,background:`linear-gradient(90deg, ${C.accent}, ${C.yellow})`,borderRadius:2,margin:'14px auto 0'}}/>
         </div>
 
-        <div style={{marginBottom:16}}>
-          <label style={{fontSize:10,color:C.muted,fontWeight:600,display:'block',marginBottom:6,letterSpacing:1.2,textTransform:'uppercase'}}>Email</label>
-          <input value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==='Enter'&&login()}
-            type="email" placeholder="tu@email.com" autoFocus
-            style={{width:'100%',padding:'11px 14px',borderRadius:10,border:`1.5px solid ${C.border}`,background:C.bg,color:C.text,fontSize:14,outline:'none',fontFamily:'inherit',boxSizing:'border-box',transition:'border-color .2s'}}
-            onFocus={e=>e.target.style.borderColor=C.accent} onBlur={e=>e.target.style.borderColor=C.border}/>
-        </div>
-        <div style={{marginBottom:24}}>
-          <label style={{fontSize:10,color:C.muted,fontWeight:600,display:'block',marginBottom:6,letterSpacing:1.2,textTransform:'uppercase'}}>Contraseña</label>
-          <input value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==='Enter'&&login()}
-            type="password" placeholder="••••••••"
-            style={{width:'100%',padding:'11px 14px',borderRadius:10,border:`1.5px solid ${C.border}`,background:C.bg,color:C.text,fontSize:14,outline:'none',fontFamily:'inherit',boxSizing:'border-box',transition:'border-color .2s'}}
-            onFocus={e=>e.target.style.borderColor=C.accent} onBlur={e=>e.target.style.borderColor=C.border}/>
-        </div>
-        {err && <div style={{background:'rgba(239,68,68,0.08)',border:'1px solid rgba(239,68,68,0.25)',borderRadius:10,padding:'10px 14px',fontSize:12,color:C.red,marginBottom:18}}>{err}</div>}
-        <button onClick={login} disabled={loading}
-          style={{width:'100%',padding:'13px',borderRadius:10,border:'none',background:`linear-gradient(135deg, ${C.accent} 0%, #c73d0a 100%)`,color:'white',fontSize:14,fontWeight:700,cursor:loading?'not-allowed':'pointer',opacity:loading?0.75:1,fontFamily:'inherit',letterSpacing:0.3,boxShadow:loading?'none':'0 4px 16px rgba(232,78,15,0.35)',transition:'all .2s'}}>
-          {loading ? 'Ingresando...' : 'Ingresar al CRM'}
-        </button>
+        {!needs2FA ? (
+          <>
+            <div style={{marginBottom:16}}>
+              <label style={{fontSize:10,color:C.muted,fontWeight:600,display:'block',marginBottom:6,letterSpacing:1.2,textTransform:'uppercase'}}>Email</label>
+              <input value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==='Enter'&&login()}
+                type="email" placeholder="tu@email.com" autoFocus style={inputStyle}
+                onFocus={e=>e.target.style.borderColor=C.accent} onBlur={e=>e.target.style.borderColor=C.border}/>
+            </div>
+            <div style={{marginBottom:24}}>
+              <label style={{fontSize:10,color:C.muted,fontWeight:600,display:'block',marginBottom:6,letterSpacing:1.2,textTransform:'uppercase'}}>Contraseña</label>
+              <input value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==='Enter'&&login()}
+                type="password" placeholder="••••••••" style={inputStyle}
+                onFocus={e=>e.target.style.borderColor=C.accent} onBlur={e=>e.target.style.borderColor=C.border}/>
+            </div>
+            {err && <div style={{background:'rgba(239,68,68,0.08)',border:'1px solid rgba(239,68,68,0.25)',borderRadius:10,padding:'10px 14px',fontSize:12,color:C.red,marginBottom:18}}>{err}</div>}
+            <button onClick={login} disabled={loading}
+              style={{width:'100%',padding:'13px',borderRadius:10,border:'none',background:`linear-gradient(135deg, ${C.accent} 0%, #c73d0a 100%)`,color:'white',fontSize:14,fontWeight:700,cursor:loading?'not-allowed':'pointer',opacity:loading?0.75:1,fontFamily:'inherit',letterSpacing:0.3,boxShadow:loading?'none':'0 4px 16px rgba(232,78,15,0.35)',transition:'all .2s'}}>
+              {loading ? 'Ingresando...' : 'Ingresar al CRM'}
+            </button>
+          </>
+        ) : (
+          <>
+            <div style={{textAlign:'center',marginBottom:20,color:C.muted,fontSize:13}}>
+              Se envió un código de verificación a tu email.
+            </div>
+            <div style={{marginBottom:24}}>
+              <label style={{fontSize:10,color:C.muted,fontWeight:600,display:'block',marginBottom:6,letterSpacing:1.2,textTransform:'uppercase'}}>Código 2FA (6 dígitos)</label>
+              <input value={code2FA} onChange={e=>setCode2FA(e.target.value.replace(/\D/,'').slice(0,6))}
+                onKeyDown={e=>e.key==='Enter'&&verify2FA()}
+                type="text" inputMode="numeric" maxLength={6} placeholder="123456" autoFocus style={inputStyle}
+                onFocus={e=>e.target.style.borderColor=C.accent} onBlur={e=>e.target.style.borderColor=C.border}/>
+            </div>
+            {err && <div style={{background:'rgba(239,68,68,0.08)',border:'1px solid rgba(239,68,68,0.25)',borderRadius:10,padding:'10px 14px',fontSize:12,color:C.red,marginBottom:18}}>{err}</div>}
+            <button onClick={verify2FA} disabled={loading}
+              style={{width:'100%',padding:'13px',borderRadius:10,border:'none',background:`linear-gradient(135deg, ${C.accent} 0%, #c73d0a 100%)`,color:'white',fontSize:14,fontWeight:700,cursor:loading?'not-allowed':'pointer',opacity:loading?0.75:1,fontFamily:'inherit',letterSpacing:0.3,boxShadow:loading?'none':'0 4px 16px rgba(232,78,15,0.35)',transition:'all .2s'}}>
+              {loading ? 'Verificando...' : 'Verificar código'}
+            </button>
+            <button onClick={()=>{setNeeds2FA(false);setCode2FA('');setErr(null);}} style={{width:'100%',marginTop:10,padding:'10px',borderRadius:10,border:`1px solid ${C.border}`,background:'transparent',color:C.muted,fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>
+              ← Volver al login
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
@@ -11514,7 +11567,17 @@ export default function App() {
 
   return (
     <EdgePanel token={token} user={user} onLogout={() => {
+      // Revoke refresh token server-side (best-effort)
+      const rt = localStorage.getItem('edge_refresh_token');
+      if (rt) {
+        fetch(`${API}/api/auth/logout`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ refresh_token: rt }),
+        }).catch(() => {});
+      }
       localStorage.removeItem('edge_token');
+      localStorage.removeItem('edge_refresh_token');
       setToken(''); setUser(null);
     }} />
   );

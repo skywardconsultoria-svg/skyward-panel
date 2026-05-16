@@ -84,9 +84,9 @@ function Chip({ label, color }) {
 
 // ── Input / Select helpers ────────────────────────────────────
 
-function Field({ C, label, required, children }) {
+function Field({ C, label, required, style = {}, children }) {
   return (
-    <div>
+    <div style={style}>
       <label style={{ display: "block", fontSize: 11, color: C.muted, marginBottom: 4, fontWeight: 500 }}>
         {label}{required && <span style={{ color: C.accent }}> *</span>}
       </label>

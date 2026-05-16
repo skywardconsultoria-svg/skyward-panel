@@ -4376,6 +4376,482 @@ function CuentasModule({ C, clienteId }) {
 
 // ── Sub-navegación Doctor ─────────────────────────────────────
 
+// ── ProcuracionModule ─────────────────────────────────────────
+function ProcuracionModule({ C, clienteId }) {
+  const TABS_PROC = [
+    { key: "config",      label: "⚙️ Credenciales" },
+    { key: "movimientos", label: "📋 Movimientos" },
+    { key: "matching",    label: "🔗 Matching" },
+    { key: "historial",   label: "🕐 Historial" },
+  ];
+
+  const [tab, setTab]               = React.useState("config");
+  const [configs, setConfigs]       = React.useState([]);
+  const [movimientos, setMovs]      = React.useState([]);
+  const [sinNumero, setSinNumero]   = React.useState([]);
+  const [jobs, setJobs]             = React.useState([]);
+  const [loading, setLoading]       = React.useState(false);
+  const [toast, setToast]           = React.useState(null);
+  const [editNum, setEditNum]       = React.useState({}); // { [expId]: valor }
+
+  // Config form
+  const [cfgJuris, setCfgJuris]     = React.useState("PJN");
+  const [cfgUser, setCfgUser]       = React.useState("");
+  const [cfgPass, setCfgPass]       = React.useState("");
+  const [cfgSaving, setCfgSaving]   = React.useState(false);
+
+  // Filtros movimientos
+  const [filExpId, setFilExpId]     = React.useState("");
+  const [filJuris, setFilJuris]     = React.useState("");
+  const [filDesde, setFilDesde]     = React.useState("");
+  const [filHasta, setFilHasta]     = React.useState("");
+
+  function showToast(msg, ok = true) {
+    setToast({ msg, ok });
+    setTimeout(() => setToast(null), 3500);
+  }
+
+  const loadConfigs = React.useCallback(async () => {
+    if (!clienteId) return;
+    try {
+      const r = await fetch(`${API}/api/doctor/procuracion/config?cliente_id=${clienteId}`, { headers: aH() });
+      if (r.ok) { const d = await r.json(); setConfigs(d.configs || []); }
+    } catch (_) {}
+  }, [clienteId]);
+
+  const loadMovimientos = React.useCallback(async () => {
+    if (!clienteId) return;
+    setLoading(true);
+    try {
+      let url = `${API}/api/doctor/procuracion/movimientos?cliente_id=${clienteId}`;
+      if (filExpId)  url += `&expediente_id=${filExpId}`;
+      if (filJuris)  url += `&jurisdiccion=${filJuris}`;
+      if (filDesde)  url += `&fecha_desde=${filDesde}`;
+      if (filHasta)  url += `&fecha_hasta=${filHasta}`;
+      const r = await fetch(url, { headers: aH() });
+      if (r.ok) { const d = await r.json(); setMovs(d.movimientos || []); }
+    } catch (_) {}
+    setLoading(false);
+  }, [clienteId, filExpId, filJuris, filDesde, filHasta]);
+
+  const loadSinNumero = React.useCallback(async () => {
+    if (!clienteId) return;
+    setLoading(true);
+    try {
+      const r = await fetch(`${API}/api/doctor/expedientes/sin-numero-judicial?cliente_id=${clienteId}`, { headers: aH() });
+      if (r.ok) { const d = await r.json(); setSinNumero(d.expedientes || []); }
+    } catch (_) {}
+    setLoading(false);
+  }, [clienteId]);
+
+  const loadJobs = React.useCallback(async () => {
+    if (!clienteId) return;
+    setLoading(true);
+    try {
+      const r = await fetch(`${API}/api/doctor/procuracion/jobs?cliente_id=${clienteId}`, { headers: aH() });
+      if (r.ok) { const d = await r.json(); setJobs(d.jobs || []); }
+    } catch (_) {}
+    setLoading(false);
+  }, [clienteId]);
+
+  React.useEffect(() => {
+    if (tab === "config")      loadConfigs();
+    if (tab === "movimientos") loadMovimientos();
+    if (tab === "matching")    loadSinNumero();
+    if (tab === "historial")   loadJobs();
+  }, [tab, clienteId]);
+
+  // ── Guardar credenciales ──────────────────────────────────────
+  async function guardarCred() {
+    if (!cfgUser.trim() || !cfgPass.trim()) { showToast("Usuario y contraseña requeridos.", false); return; }
+    setCfgSaving(true);
+    try {
+      const r = await fetch(`${API}/api/doctor/procuracion/config`, {
+        method: "POST", headers: jH(),
+        body: JSON.stringify({ cliente_id: clienteId, jurisdiccion: cfgJuris, usuario: cfgUser, password: cfgPass })
+      });
+      const d = await r.json();
+      if (r.ok) { showToast(d.mensaje || "Credenciales guardadas."); setCfgUser(""); setCfgPass(""); loadConfigs(); }
+      else showToast(d.error || "Error al guardar.", false);
+    } catch (_) { showToast("Error de conexión.", false); }
+    setCfgSaving(false);
+  }
+
+  async function eliminarCred(jurisdiccion) {
+    if (!window.confirm(`¿Eliminar credenciales ${jurisdiccion}?`)) return;
+    try {
+      const r = await fetch(`${API}/api/doctor/procuracion/config/${jurisdiccion}?cliente_id=${clienteId}`, { method: "DELETE", headers: aH() });
+      const d = await r.json();
+      if (r.ok) { showToast(d.mensaje); loadConfigs(); }
+      else showToast(d.error || "Error.", false);
+    } catch (_) { showToast("Error de conexión.", false); }
+  }
+
+  async function sincronizarAhora(jurisdiccion = "PJN") {
+    try {
+      const r = await fetch(`${API}/api/doctor/procuracion/sync`, {
+        method: "POST", headers: jH(),
+        body: JSON.stringify({ cliente_id: clienteId, jurisdiccion })
+      });
+      const d = await r.json();
+      showToast(d.mensaje || (r.ok ? "Sincronización iniciada." : "Error."), r.ok && d.ok !== false);
+      if (tab === "historial") loadJobs();
+    } catch (_) { showToast("Error de conexión.", false); }
+  }
+
+  async function guardarNumeroJudicial(expId) {
+    const num = (editNum[expId] || "").trim();
+    if (!num) { showToast("Ingresá el número judicial.", false); return; }
+    try {
+      const r = await fetch(`${API}/api/doctor/expedientes/${expId}`, {
+        method: "PUT", headers: jH(),
+        body: JSON.stringify({ num_expediente_judicial: num, cliente_id: clienteId })
+      });
+      if (r.ok) {
+        showToast("Número registrado correctamente.");
+        setEditNum(p => { const n = {...p}; delete n[expId]; return n; });
+        loadSinNumero();
+      } else { const d = await r.json(); showToast(d.error || "Error.", false); }
+    } catch (_) { showToast("Error de conexión.", false); }
+  }
+
+  const estadoConfig = (juris) => {
+    const c = configs.find(x => x.jurisdiccion === juris);
+    if (!c) return { label: "Sin configurar", color: C.muted, icon: "○" };
+    if (c.estado === "error") return { label: "Error de conexión", color: "#ef4444", icon: "✕" };
+    return { label: "Configurado", color: "#10b981", icon: "✓" };
+  };
+
+  const inpSt = { ...inputSt(C), width: "100%", marginBottom: 0 };
+
+  // ── Render ────────────────────────────────────────────────────
+  return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
+
+      {/* Header */}
+      <div style={{ padding: "16px 24px", borderBottom: `1px solid ${C.border}`,
+        display: "flex", alignItems: "center", gap: 12, flexShrink: 0, flexWrap: "wrap" }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: C.text, flex: 1 }}>⚖️ Procuración</div>
+        <Btn C={C} variant="ghost" style={{ fontSize: 12 }}
+          onClick={() => sincronizarAhora(cfgJuris)}>
+          🔄 Sincronizar ahora
+        </Btn>
+      </div>
+
+      {/* Sub-tabs */}
+      <div style={{ display: "flex", borderBottom: `1px solid ${C.border}`, flexShrink: 0, overflowX: "auto" }}>
+        {TABS_PROC.map(t => (
+          <button key={t.key} onClick={() => setTab(t.key)}
+            style={{ padding: "10px 16px", background: "none", border: "none", cursor: "pointer",
+              fontSize: 12, fontFamily: "inherit", whiteSpace: "nowrap",
+              fontWeight: tab === t.key ? 700 : 400,
+              color: tab === t.key ? C.accent : C.muted,
+              borderBottom: tab === t.key ? `2px solid ${C.accent}` : "2px solid transparent" }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Toast */}
+      {toast && (
+        <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 9999,
+          background: toast.ok ? "#10b981" : "#ef4444", color: "white",
+          padding: "10px 18px", borderRadius: 10, fontSize: 13, fontWeight: 600,
+          boxShadow: "0 4px 20px rgba(0,0,0,0.3)", maxWidth: 340 }}>
+          {toast.msg}
+        </div>
+      )}
+
+      {/* Contenido */}
+      <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
+
+        {/* ── CONFIG ── */}
+        {tab === "config" && (
+          <div style={{ maxWidth: 600 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 16 }}>
+              Credenciales de acceso al portal judicial
+            </div>
+
+            {/* Estado de cada jurisdicción */}
+            {["PJN", "SCBA"].map(juris => {
+              const st = estadoConfig(juris);
+              const cfg = configs.find(x => x.jurisdiccion === juris);
+              return (
+                <div key={juris} style={{ background: C.surface, border: `1px solid ${C.border}`,
+                  borderRadius: 10, padding: 16, marginBottom: 12, display: "flex",
+                  alignItems: "center", gap: 12 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: C.text, marginBottom: 2 }}>
+                      {juris === "PJN" ? "PJN — Poder Judicial de la Nación" : "SCBA — Provincia de Buenos Aires"}
+                    </div>
+                    <div style={{ fontSize: 11, color: st.color, fontWeight: 600 }}>
+                      {st.icon} {st.label}
+                      {cfg?.usuario_masked && <span style={{ color: C.muted, fontWeight: 400 }}> · Usuario: {cfg.usuario_masked}</span>}
+                      {cfg?.ultima_sincronizacion && (
+                        <span style={{ color: C.muted, fontWeight: 400 }}>
+                          {" "}· Última sync: {new Date(cfg.ultima_sincronizacion).toLocaleDateString("es-AR")}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {cfg && (
+                    <button onClick={() => eliminarCred(juris)}
+                      style={{ background: "none", border: `1px solid #ef444466`, borderRadius: 6,
+                        color: "#ef4444", padding: "4px 10px", fontSize: 11, cursor: "pointer" }}>
+                      Eliminar
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Formulario */}
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20, marginTop: 8 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.text, marginBottom: 14 }}>
+                Agregar / actualizar credenciales
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div>
+                  <label style={{ fontSize: 11, color: C.muted, display: "block", marginBottom: 4 }}>Jurisdicción</label>
+                  <select style={inpSt} value={cfgJuris} onChange={e => setCfgJuris(e.target.value)}>
+                    <option value="PJN">PJN — Poder Judicial de la Nación</option>
+                    <option value="SCBA">SCBA — Provincia de Buenos Aires</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, color: C.muted, display: "block", marginBottom: 4 }}>Usuario del portal</label>
+                  <input style={inpSt} type="text" value={cfgUser} onChange={e => setCfgUser(e.target.value)}
+                    placeholder="usuario@ejemplo.com" autoComplete="off" />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, color: C.muted, display: "block", marginBottom: 4 }}>Contraseña</label>
+                  <input style={inpSt} type="password" value={cfgPass} onChange={e => setCfgPass(e.target.value)}
+                    placeholder="••••••••" autoComplete="new-password" />
+                </div>
+                <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                  <Btn C={C} onClick={guardarCred} disabled={cfgSaving} style={{ fontSize: 12 }}>
+                    {cfgSaving ? "Guardando..." : "💾 Guardar credenciales"}
+                  </Btn>
+                  <Btn C={C} variant="ghost" style={{ fontSize: 12 }}
+                    onClick={() => showToast("Verificación disponible cuando se active el conector Playwright.", false)}>
+                    🔌 Verificar conexión
+                  </Btn>
+                </div>
+              </div>
+              <div style={{ marginTop: 14, padding: "10px 12px", background: `${C.accent}11`,
+                border: `1px solid ${C.accent}33`, borderRadius: 8, fontSize: 11, color: C.muted, lineHeight: 1.6 }}>
+                🔒 Las credenciales se guardan <strong>encriptadas con AES-256</strong> en la base de datos.
+                Nunca se transmiten en texto plano. La clave de encriptación se gestiona desde variables de entorno del servidor.
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── MOVIMIENTOS ── */}
+        {tab === "movimientos" && (
+          <div>
+            {/* Filtros */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", alignItems: "flex-end" }}>
+              <div style={{ flex: 1, minWidth: 160 }}>
+                <label style={{ fontSize: 11, color: C.muted, display: "block", marginBottom: 3 }}>Jurisdicción</label>
+                <select style={{ ...inputSt(C), width: "100%" }} value={filJuris} onChange={e => setFilJuris(e.target.value)}>
+                  <option value="">Todas</option>
+                  <option value="PJN">PJN</option>
+                  <option value="SCBA">SCBA</option>
+                </select>
+              </div>
+              <div style={{ flex: 1, minWidth: 120 }}>
+                <label style={{ fontSize: 11, color: C.muted, display: "block", marginBottom: 3 }}>Desde</label>
+                <input style={{ ...inputSt(C), width: "100%" }} type="date" value={filDesde} onChange={e => setFilDesde(e.target.value)} />
+              </div>
+              <div style={{ flex: 1, minWidth: 120 }}>
+                <label style={{ fontSize: 11, color: C.muted, display: "block", marginBottom: 3 }}>Hasta</label>
+                <input style={{ ...inputSt(C), width: "100%" }} type="date" value={filHasta} onChange={e => setFilHasta(e.target.value)} />
+              </div>
+              <Btn C={C} onClick={loadMovimientos} style={{ fontSize: 12, flexShrink: 0 }}>Filtrar</Btn>
+            </div>
+
+            {loading ? <Spinner C={C} /> : movimientos.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "40px 20px" }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: C.text, marginBottom: 8 }}>
+                  Sin movimientos descargados
+                </div>
+                <div style={{ fontSize: 12, color: C.muted, maxWidth: 400, margin: "0 auto", lineHeight: 1.6 }}>
+                  Los movimientos aparecen acá automáticamente una vez que configurés las credenciales
+                  del portal judicial y el conector Playwright esté activo.
+                  Mientras tanto, podés usar el botón <strong>"Sincronizar ahora"</strong> cuando el conector esté disponible.
+                </div>
+              </div>
+            ) : (
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                  <thead>
+                    <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                      {["Fecha","Expediente","Tipo","Descripción","Fuente","PDF"].map(h => (
+                        <th key={h} style={{ textAlign: "left", padding: "6px 10px", color: C.muted, fontWeight: 600, fontSize: 11 }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {movimientos.map(m => (
+                      <tr key={m.id} style={{ borderBottom: `1px solid ${C.border}` }}>
+                        <td style={{ padding: "8px 10px", whiteSpace: "nowrap", color: C.muted }}>
+                          {new Date((m.fecha+"").slice(0,10)+"T12:00:00").toLocaleDateString("es-AR")}
+                        </td>
+                        <td style={{ padding: "8px 10px", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {m.caratula || `Exp #${m.expediente_id}`}
+                        </td>
+                        <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>{m.tipo}</td>
+                        <td style={{ padding: "8px 10px", maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {m.descripcion || "—"}
+                        </td>
+                        <td style={{ padding: "8px 10px" }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 20,
+                            background: m.source === "scraping_pjn" ? "#6366f122" : "#f59e0b22",
+                            color: m.source === "scraping_pjn" ? "#6366f1" : "#f59e0b" }}>
+                            {m.source === "scraping_pjn" ? "PJN" : "SCBA"}
+                          </span>
+                        </td>
+                        <td style={{ padding: "8px 10px" }}>
+                          {m.proveido_pdf_url
+                            ? <a href={m.proveido_pdf_url} target="_blank" rel="noreferrer"
+                                style={{ color: C.accent, fontSize: 11 }}>📄 Ver PDF</a>
+                            : <span style={{ color: C.muted }}>—</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── MATCHING ── */}
+        {tab === "matching" && (
+          <div>
+            <div style={{ background: `${C.accent}11`, border: `1px solid ${C.accent}33`,
+              borderRadius: 10, padding: 14, marginBottom: 20, fontSize: 12, color: C.muted, lineHeight: 1.6 }}>
+              🔗 <strong style={{ color: C.text }}>¿Para qué sirve el matching?</strong><br />
+              Para que la procuración automática funcione, cada expediente debe tener su <strong>número judicial registrado</strong>
+              (el número que figura en el portal del tribunal, ej: "45678/2024").
+              Sin ese número, el sistema no puede buscar movimientos en el portal judicial.
+            </div>
+
+            {loading ? <Spinner C={C} /> : sinNumero.length === 0 ? (
+              <EmptyState C={C} icon="✅" title="Todos los expedientes vinculados"
+                sub="Cada expediente activo tiene su número judicial registrado. El matching está completo." />
+            ) : (
+              <>
+                <div style={{ fontSize: 12, color: C.muted, marginBottom: 12 }}>
+                  {sinNumero.length} expediente{sinNumero.length !== 1 ? "s" : ""} sin número judicial
+                </div>
+                {sinNumero.map(exp => (
+                  <div key={exp.id} style={{ background: C.surface, border: `1px solid ${C.border}`,
+                    borderRadius: 10, padding: "12px 16px", marginBottom: 8 }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+                      <div style={{ flex: 1, minWidth: 200 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 3 }}>
+                          {exp.caratula}
+                        </div>
+                        <div style={{ fontSize: 11, color: C.muted }}>
+                          {[exp.fuero, exp.jurisdiccion, exp.etapa].filter(Boolean).join(" · ")}
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
+                        <input
+                          style={{ ...inputSt(C), width: 180, fontSize: 12 }}
+                          type="text"
+                          placeholder="Ej: 45678/2024"
+                          value={editNum[exp.id] || ""}
+                          onChange={e => setEditNum(p => ({ ...p, [exp.id]: e.target.value }))}
+                          onKeyDown={e => e.key === "Enter" && guardarNumeroJudicial(exp.id)}
+                        />
+                        <Btn C={C} style={{ fontSize: 12 }} onClick={() => guardarNumeroJudicial(exp.id)}>
+                          Vincular
+                        </Btn>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ── HISTORIAL ── */}
+        {tab === "historial" && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+              <Btn C={C} variant="ghost" style={{ fontSize: 12 }} onClick={loadJobs}>↻ Actualizar</Btn>
+            </div>
+            {loading ? <Spinner C={C} /> : jobs.length === 0 ? (
+              <EmptyState C={C} icon="🕐" title="Sin sincronizaciones"
+                sub="El historial de jobs aparecerá acá una vez que se active el conector y se realice la primera sincronización." />
+            ) : (
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                  <thead>
+                    <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                      {["Fecha","Jurisdicción","Estado","Revisados","Nuevos","Duración","Error"].map(h => (
+                        <th key={h} style={{ textAlign: "left", padding: "6px 10px", color: C.muted, fontWeight: 600, fontSize: 11 }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {jobs.map(j => {
+                      const estadoColor = {
+                        pendiente:  "#f59e0b",
+                        corriendo:  "#6366f1",
+                        completado: "#10b981",
+                        error:      "#ef4444",
+                      }[j.estado] || C.muted;
+                      const estadoIcon = { pendiente:"○", corriendo:"◑", completado:"✓", error:"✕" }[j.estado] || "·";
+                      let duracion = "—";
+                      if (j.started_at && j.finished_at) {
+                        const ms = new Date(j.finished_at) - new Date(j.started_at);
+                        duracion = ms < 60000 ? `${(ms/1000).toFixed(0)}s` : `${(ms/60000).toFixed(1)}min`;
+                      }
+                      return (
+                        <tr key={j.id} style={{ borderBottom: `1px solid ${C.border}` }}>
+                          <td style={{ padding: "8px 10px", whiteSpace: "nowrap", color: C.muted, fontSize: 11 }}>
+                            {new Date(j.created_at).toLocaleDateString("es-AR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}
+                          </td>
+                          <td style={{ padding: "8px 10px" }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 20,
+                              background: j.jurisdiccion === "PJN" ? "#6366f122" : "#f59e0b22",
+                              color: j.jurisdiccion === "PJN" ? "#6366f1" : "#f59e0b" }}>
+                              {j.jurisdiccion}
+                            </span>
+                          </td>
+                          <td style={{ padding: "8px 10px", whiteSpace: "nowrap" }}>
+                            <span style={{ color: estadoColor, fontWeight: 600 }}>{estadoIcon} {j.estado}</span>
+                          </td>
+                          <td style={{ padding: "8px 10px", textAlign: "center" }}>{j.expedientes_revisados}</td>
+                          <td style={{ padding: "8px 10px", textAlign: "center" }}>{j.movimientos_nuevos}</td>
+                          <td style={{ padding: "8px 10px", color: C.muted }}>{duracion}</td>
+                          <td style={{ padding: "8px 10px", maxWidth: 220, overflow: "hidden",
+                            textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#ef4444", fontSize: 11 }}>
+                            {j.error_mensaje || "—"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+
 const SUB_NAV = [
   { key: "expedientes", label: "📁 Expedientes",  fase: null },
   { key: "agenda",      label: "📅 Agenda",        fase: null },
@@ -4383,7 +4859,7 @@ const SUB_NAV = [
   { key: "escritos",    label: "📄 Escritos",       fase: null },
   { key: "cuentas",     label: "💰 Cuentas",        fase: null },
   { key: "ia",          label: "🤖 Doctor IA",      fase: null },
-  { key: "procuracion", label: "⚖️ Procuración",    fase: "Fase 7" },
+  { key: "procuracion", label: "⚖️ Procuración",    fase: null },
   { key: "biblioteca",  label: "📚 Biblioteca",     fase: "Fase 8" },
   { key: "bandeja",     label: "🔔 Bandeja",        fase: "Fase 9" },
   { key: "config",      label: "⚙️ Config",         fase: "Fase 10" },
@@ -4518,6 +4994,11 @@ export default function DoctorModule({ C, clienteId }) {
         {/* Cuentas */}
         {subTab === "cuentas" && (
           <CuentasModule C={C} clienteId={clienteId} />
+        )}
+
+        {/* Procuración */}
+        {subTab === "procuracion" && (
+          <ProcuracionModule C={C} clienteId={clienteId} />
         )}
 
         {/* Escritos */}

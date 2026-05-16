@@ -537,7 +537,7 @@ function PlazosExpedienteTab({ C, clienteId, expedienteId }) {
 
 // ── Ficha del expediente ──────────────────────────────────────
 
-function ExpedienteDetalle({ C, clienteId, expedienteId, usuarios, onVolver, onResumirIA, onEscritoCreado }) {
+function ExpedienteDetalle({ C, clienteId, expedienteId, usuarios, onVolver, onResumirIA, onEscritoCreado, onBiblioteca }) {
   const [exp, setExp] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("datos");
@@ -691,6 +691,9 @@ function ExpedienteDetalle({ C, clienteId, expedienteId, usuarios, onVolver, onR
         </div>
         {onResumirIA && (
           <Btn C={C} variant="ghost" onClick={onResumirIA} style={{ fontSize: 12 }}>✨ Resumir con IA</Btn>
+        )}
+        {onBiblioteca && (
+          <Btn C={C} variant="ghost" onClick={() => onBiblioteca(exp?.caratula || "")} style={{ fontSize: 12 }}>📚 Biblioteca</Btn>
         )}
         <Btn C={C} variant="ghost" onClick={abrirPickerPlantilla} style={{ fontSize: 12 }}>📝 Nuevo escrito</Btn>
         <Btn C={C} variant="ghost" onClick={() => { setPdfModalOpen(true); setPdfOut(""); setPdfErr(""); }} style={{ fontSize: 12 }}>📄 Analizar PDF</Btn>
@@ -4851,6 +4854,728 @@ function ProcuracionModule({ C, clienteId }) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// FASE 8 — BIBLIOTECA LEGAL
+// ─────────────────────────────────────────────────────────────
+
+const TIPOS_BLIB = [
+  { v: "",        l: "Todos los tipos" },
+  { v: "fallo",   l: "Fallo" },
+  { v: "ley",     l: "Ley / Decreto" },
+  { v: "doctrina",l: "Doctrina" },
+  { v: "modelo",  l: "Modelo" },
+];
+
+function BibliotecaModule({ C, clienteId, initialQuery = "" }) {
+  const [docs,       setDocs]       = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [q,          setQ]          = useState(initialQuery);
+  const [tipo,       setTipo]       = useState("");
+  const [selDoc,     setSelDoc]     = useState(null);
+  const [formOpen,   setFormOpen]   = useState(false);
+  const [form,       setForm]       = useState({ titulo: "", tipo: "fallo", fuero: "", fuente: "", url_externa: "", cuerpo: "" });
+  const [saving,     setSaving]     = useState(false);
+  const [iaConsulta, setIaConsulta] = useState(initialQuery);
+  const [iaOut,      setIaOut]      = useState("");
+  const [iaStreaming,setIaStreaming] = useState(false);
+  const [iaErr,      setIaErr]      = useState("");
+  const [iaDocs,     setIaDocs]     = useState([]);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const p = new URLSearchParams({ cliente_id: clienteId });
+      if (q) p.append("q", q);
+      if (tipo) p.append("tipo", tipo);
+      const r = await fetch(`${API}/api/doctor/biblioteca?${p}`, { headers: aH() });
+      const data = await r.json();
+      setDocs(data.documentos || []);
+    } catch {}
+    setLoading(false);
+  }, [clienteId, q, tipo]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const buscarIA = async () => {
+    if (!iaConsulta.trim()) return;
+    setIaStreaming(true); setIaOut(""); setIaErr(""); setIaDocs([]);
+    try {
+      const resp = await fetch(`${API}/api/doctor/biblioteca/buscar-ia`, {
+        method: "POST",
+        headers: { ...aH(), "Content-Type": "application/json" },
+        body: JSON.stringify({ cliente_id: clienteId, consulta: iaConsulta }),
+      });
+      const reader = resp.body.getReader();
+      const dec = new TextDecoder();
+      let buf = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const lines = buf.split("\n");
+        buf = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const obj = JSON.parse(line.slice(6));
+            if (obj.text) setIaOut(p => p + obj.text);
+            if (obj.done) {
+              if (obj.error) setIaErr(obj.error);
+              if (obj.docs)  setIaDocs(obj.docs);
+            }
+          } catch {}
+        }
+      }
+    } catch (e) { setIaErr(e.message); }
+    setIaStreaming(false);
+  };
+
+  const guardar = async () => {
+    if (!form.titulo.trim()) return;
+    setSaving(true);
+    try {
+      const r = await fetch(`${API}/api/doctor/biblioteca`, {
+        method: "POST",
+        headers: { ...aH(), ...jH() },
+        body: JSON.stringify({ ...form, cliente_id: clienteId }),
+      });
+      if (r.ok) {
+        setFormOpen(false);
+        setForm({ titulo: "", tipo: "fallo", fuero: "", fuente: "", url_externa: "", cuerpo: "" });
+        load();
+      }
+    } catch {}
+    setSaving(false);
+  };
+
+  const eliminar = async (id) => {
+    if (!window.confirm("¿Eliminar este documento?")) return;
+    await fetch(`${API}/api/doctor/biblioteca/${id}?cliente_id=${clienteId}`, { method: "DELETE", headers: aH() });
+    if (selDoc?.id === id) setSelDoc(null);
+    load();
+  };
+
+  return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+      {/* Header */}
+      <div style={{ padding: "16px 24px", borderBottom: `1px solid ${C.border}`, display: "flex", gap: 12, alignItems: "center", flexShrink: 0 }}>
+        <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>📚 Biblioteca Legal</div>
+        <div style={{ flex: 1 }} />
+        <Btn C={C} onClick={() => setFormOpen(true)}>+ Nuevo documento</Btn>
+      </div>
+
+      <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
+        {/* Lista izquierda */}
+        <div style={{ width: 340, flexShrink: 0, borderRight: `1px solid ${C.border}`, display: "flex", flexDirection: "column" }}>
+          <div style={{ padding: "10px 12px", borderBottom: `1px solid ${C.border}`, display: "flex", gap: 6 }}>
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar…"
+              style={{ ...inputSt(C), flex: 1 }} />
+            <select value={tipo} onChange={e => setTipo(e.target.value)} style={{ ...inputSt(C), width: 110 }}>
+              {TIPOS_BLIB.map(t => <option key={t.v} value={t.v}>{t.l}</option>)}
+            </select>
+          </div>
+          <div style={{ flex: 1, overflowY: "auto" }}>
+            {loading ? <Spinner C={C} /> : docs.length === 0 ? (
+              <EmptyState C={C} icon="📚" title="Sin documentos" sub="Agregá fallos, leyes y doctrina" />
+            ) : docs.map(doc => (
+              <div key={doc.id} onClick={() => setSelDoc(doc)}
+                style={{ padding: "12px 16px", borderBottom: `1px solid ${C.border}`, cursor: "pointer",
+                  background: selDoc?.id === doc.id ? C.accent + "22" : "transparent", transition: "background .15s" }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 4 }}>{doc.titulo}</div>
+                <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                  <Chip label={doc.tipo} color="#6366f1" />
+                  {doc.fuero && <Chip label={doc.fuero} color="#059669" />}
+                  {doc.publica && <Chip label="Público" color="#6b7280" />}
+                </div>
+                {doc.resumen && (
+                  <div style={{ fontSize: 11, color: C.muted, marginTop: 4, overflow: "hidden",
+                    display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                    {doc.resumen}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Panel derecho */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflowY: "auto" }}>
+          {selDoc ? (
+            <div style={{ padding: 24 }}>
+              <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "flex-start" }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.text, marginBottom: 8 }}>{selDoc.titulo}</div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <Chip label={selDoc.tipo} color="#6366f1" />
+                    {selDoc.fuero  && <Chip label={selDoc.fuero}  color="#059669" />}
+                    {selDoc.fuente && <Chip label={selDoc.fuente} color="#6b7280" />}
+                  </div>
+                </div>
+                <Btn C={C} variant="ghost" onClick={() => setSelDoc(null)} style={{ fontSize: 12 }}>✕</Btn>
+                {!selDoc.publica && (
+                  <Btn C={C} variant="ghost" onClick={() => eliminar(selDoc.id)}
+                    style={{ fontSize: 12, color: "#ef4444" }}>🗑</Btn>
+                )}
+              </div>
+              {selDoc.url_externa && (
+                <a href={selDoc.url_externa} target="_blank" rel="noopener noreferrer"
+                  style={{ fontSize: 12, color: C.accent, display: "block", marginBottom: 12 }}>
+                  🔗 Ver fuente original
+                </a>
+              )}
+              <div style={{ fontSize: 13, color: C.text, lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
+                {selDoc.cuerpo || "(Sin contenido)"}
+              </div>
+            </div>
+          ) : (
+            <div style={{ padding: 24, flex: 1, display: "flex", flexDirection: "column" }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: C.text, marginBottom: 16 }}>✨ Buscar con Doctor IA</div>
+              <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+                <input value={iaConsulta} onChange={e => setIaConsulta(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && !e.shiftKey && buscarIA()}
+                  placeholder="Ej: jurisprudencia sobre daños en accidentes de tránsito…"
+                  style={{ ...inputSt(C), flex: 1 }} />
+                <Btn C={C} onClick={buscarIA} disabled={iaStreaming}>{iaStreaming ? "…" : "Buscar"}</Btn>
+              </div>
+              {(iaOut || iaStreaming) && (
+                <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: 16,
+                  fontSize: 13, lineHeight: 1.7, color: C.text, whiteSpace: "pre-wrap", maxHeight: 380, overflowY: "auto" }}>
+                  {iaOut}{iaStreaming && <span style={{ opacity: 0.5 }}>▍</span>}
+                </div>
+              )}
+              {iaErr && <div style={{ color: "#ef4444", fontSize: 12, marginTop: 8 }}>{iaErr}</div>}
+              {iaDocs.length > 0 && (
+                <div style={{ marginTop: 12 }}>
+                  <div style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>Fuentes consultadas:</div>
+                  {iaDocs.map((d, i) => (
+                    <div key={i} onClick={() => setSelDoc(d)}
+                      style={{ fontSize: 12, color: C.accent, marginBottom: 4, cursor: "pointer" }}>
+                      📄 {d.titulo}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {!iaOut && !iaStreaming && !iaErr && (
+                <div style={{ color: C.muted, fontSize: 13, textAlign: "center", marginTop: 40 }}>
+                  <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
+                  <div>Consultá la biblioteca con lenguaje natural</div>
+                  <div style={{ fontSize: 11, marginTop: 4 }}>O seleccioná un documento de la lista</div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Modal nuevo documento */}
+      {formOpen && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9000 }}>
+          <div style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24, width: 560, maxWidth: "95vw", maxHeight: "90vh", overflowY: "auto" }}>
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: C.text }}>Nuevo documento</div>
+            <Field C={C} label="Título" required>
+              <Input C={C} value={form.titulo} onChange={e => setForm(p => ({ ...p, titulo: e.target.value }))} placeholder="Ej: CSJN — Fallo XYZ" />
+            </Field>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <Field C={C} label="Tipo">
+                <Sel C={C} value={form.tipo} onChange={e => setForm(p => ({ ...p, tipo: e.target.value }))}>
+                  <option value="fallo">Fallo</option>
+                  <option value="ley">Ley / Decreto</option>
+                  <option value="doctrina">Doctrina</option>
+                  <option value="modelo">Modelo</option>
+                </Sel>
+              </Field>
+              <Field C={C} label="Fuero">
+                <Input C={C} value={form.fuero} onChange={e => setForm(p => ({ ...p, fuero: e.target.value }))} placeholder="Civil, Laboral…" />
+              </Field>
+            </div>
+            <Field C={C} label="Fuente">
+              <Input C={C} value={form.fuente} onChange={e => setForm(p => ({ ...p, fuente: e.target.value }))} placeholder="Infojus, La Ley…" />
+            </Field>
+            <Field C={C} label="URL externa">
+              <Input C={C} value={form.url_externa} onChange={e => setForm(p => ({ ...p, url_externa: e.target.value }))} placeholder="https://…" />
+            </Field>
+            <Field C={C} label="Contenido">
+              <textarea value={form.cuerpo} onChange={e => setForm(p => ({ ...p, cuerpo: e.target.value }))}
+                style={{ ...inputSt(C), width: "100%", minHeight: 200, resize: "vertical", fontFamily: "inherit", fontSize: 13 }}
+                placeholder="Pegá el texto del fallo, ley o documento…" />
+            </Field>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 16 }}>
+              <Btn C={C} variant="ghost" onClick={() => setFormOpen(false)}>Cancelar</Btn>
+              <Btn C={C} onClick={guardar} disabled={saving}>{saving ? "…" : "Guardar"}</Btn>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// FASE 9 — BANDEJA + TAREAS
+// ─────────────────────────────────────────────────────────────
+
+const PRIOR_COLOR = { urgente: "#ef4444", alta: "#f97316", media: "#eab308", baja: "#6b7280" };
+const KANBAN_COLS = [
+  { key: "pendiente",  label: "📋 Pendiente" },
+  { key: "en_curso",   label: "⚡ En curso" },
+  { key: "completada", label: "✅ Completada" },
+];
+
+function BandejaModule({ C, clienteId, onBadgeChange }) {
+  const [tab,      setTab]      = useState("inbox");
+  const [bandeja,  setBandeja]  = useState({ vencimientos: [], tareas: [], movimientos: [], escritos: [] });
+  const [tareas,   setTareas]   = useState([]);
+  const [loading,  setLoading]  = useState(true);
+  const [formOpen, setFormOpen] = useState(false);
+  const [form,     setForm]     = useState({ titulo: "", descripcion: "", prioridad: "media", estado: "pendiente", fecha_vence: "" });
+  const [saving,   setSaving]   = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [bR, tR] = await Promise.all([
+        fetch(`${API}/api/doctor/bandeja?cliente_id=${clienteId}`, { headers: aH() }).then(r => r.json()),
+        fetch(`${API}/api/doctor/tareas?cliente_id=${clienteId}`, { headers: aH() }).then(r => r.json()),
+      ]);
+      setBandeja(bR);
+      setTareas(tR.tareas || []);
+      if (onBadgeChange) onBadgeChange(bR.total || 0);
+    } catch {}
+    setLoading(false);
+  }, [clienteId, onBadgeChange]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const crearTarea = async () => {
+    if (!form.titulo.trim()) return;
+    setSaving(true);
+    try {
+      const r = await fetch(`${API}/api/doctor/tareas`, {
+        method: "POST",
+        headers: { ...aH(), ...jH() },
+        body: JSON.stringify({ ...form, cliente_id: clienteId }),
+      });
+      if (r.ok) {
+        setFormOpen(false);
+        setForm({ titulo: "", descripcion: "", prioridad: "media", estado: "pendiente", fecha_vence: "" });
+        load();
+      }
+    } catch {}
+    setSaving(false);
+  };
+
+  const moverTarea = async (id, nuevoEstado) => {
+    await fetch(`${API}/api/doctor/tareas/${id}`, {
+      method: "PATCH",
+      headers: { ...aH(), ...jH() },
+      body: JSON.stringify({ cliente_id: clienteId, estado: nuevoEstado }),
+    });
+    load();
+  };
+
+  const eliminarTarea = async (id) => {
+    await fetch(`${API}/api/doctor/tareas/${id}?cliente_id=${clienteId}`, { method: "DELETE", headers: aH() });
+    load();
+  };
+
+  const totalInbox = (bandeja.vencimientos?.length || 0) + (bandeja.tareas?.length || 0) +
+                     (bandeja.movimientos?.length || 0) + (bandeja.escritos?.length || 0);
+
+  return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+      {/* Sub-tabs */}
+      <div style={{ padding: "0 24px", borderBottom: `1px solid ${C.border}`, display: "flex", gap: 0, alignItems: "center", flexShrink: 0 }}>
+        {[{ k: "inbox", l: "🗂 Inbox" }, { k: "tareas", l: "✅ Kanban" }].map(t => (
+          <div key={t.k} onClick={() => setTab(t.k)}
+            style={{ padding: "12px 16px", cursor: "pointer", fontSize: 13,
+              fontWeight: tab === t.k ? 600 : 400, color: tab === t.k ? C.accent : C.muted,
+              borderBottom: tab === t.k ? `2px solid ${C.accent}` : "2px solid transparent" }}>
+            {t.l}
+          </div>
+        ))}
+        <div style={{ marginLeft: "auto" }}>
+          <Btn C={C} onClick={() => setFormOpen(true)} style={{ fontSize: 12 }}>+ Tarea</Btn>
+        </div>
+      </div>
+
+      {loading ? <Spinner C={C} /> : (
+        <div style={{ flex: 1, overflowY: "auto", padding: 24 }}>
+
+          {/* INBOX */}
+          {tab === "inbox" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 24, maxWidth: 720 }}>
+
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: C.muted, marginBottom: 10, textTransform: "uppercase", letterSpacing: 1 }}>⏰ Vencimientos próximos (≤3 días)</div>
+                {(bandeja.vencimientos?.length === 0) ? (
+                  <div style={{ fontSize: 13, color: C.muted }}>Sin vencimientos urgentes 🎉</div>
+                ) : bandeja.vencimientos.map(v => (
+                  <div key={v.id} style={{ padding: "12px 16px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, marginBottom: 8, display: "flex", gap: 12, alignItems: "center" }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{v.titulo}</div>
+                      <div style={{ fontSize: 11, color: C.muted }}>{v.expediente_caratula ? `${v.expediente_caratula} · ` : ""}Vence: {new Date(v.fecha_inicio).toLocaleDateString("es-AR")}</div>
+                    </div>
+                    <Chip label={v.tipo || v.estado} color="#ef4444" />
+                  </div>
+                ))}
+              </div>
+
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: C.muted, marginBottom: 10, textTransform: "uppercase", letterSpacing: 1 }}>✅ Tareas activas</div>
+                {(bandeja.tareas?.length === 0) ? (
+                  <div style={{ fontSize: 13, color: C.muted }}>Sin tareas pendientes</div>
+                ) : bandeja.tareas.map(t => (
+                  <div key={t.id} style={{ padding: "12px 16px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, marginBottom: 8, display: "flex", gap: 12, alignItems: "center" }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{t.titulo}</div>
+                      <div style={{ fontSize: 11, color: C.muted }}>{t.expediente_caratula ? `${t.expediente_caratula} · ` : ""}{t.fecha_vence ? `Vence: ${t.fecha_vence}` : "Sin fecha"}</div>
+                    </div>
+                    <Chip label={t.prioridad} color={PRIOR_COLOR[t.prioridad] || "#6b7280"} />
+                    <button onClick={() => moverTarea(t.id, "completada")}
+                      style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 4, cursor: "pointer", color: "#10b981", fontSize: 12, padding: "2px 8px" }}>
+                      ✓
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {(bandeja.movimientos?.length > 0) && (
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: C.muted, marginBottom: 10, textTransform: "uppercase", letterSpacing: 1 }}>⚖️ Movimientos judiciales (24hs)</div>
+                  {bandeja.movimientos.map(m => (
+                    <div key={m.id} style={{ padding: "12px 16px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, marginBottom: 8 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{m.titulo}</div>
+                      <div style={{ fontSize: 11, color: C.muted }}>{m.expediente_caratula} · {m.source}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {(bandeja.escritos?.length > 0) && (
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: C.muted, marginBottom: 10, textTransform: "uppercase", letterSpacing: 1 }}>📄 Escritos en borrador</div>
+                  {bandeja.escritos.map(e => (
+                    <div key={e.id} style={{ padding: "12px 16px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, marginBottom: 8 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{e.titulo}</div>
+                      <div style={{ fontSize: 11, color: C.muted }}>{e.expediente_caratula || "Sin expediente"}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {totalInbox === 0 && (
+                <EmptyState C={C} icon="🗂" title="Bandeja vacía" sub="Todo al día. Sin vencimientos ni tareas urgentes." />
+              )}
+            </div>
+          )}
+
+          {/* KANBAN */}
+          {tab === "tareas" && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+              {KANBAN_COLS.map(col => {
+                const colTareas = tareas.filter(t => t.estado === col.key);
+                return (
+                  <div key={col.key} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: 16, minHeight: 200 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 12 }}>
+                      {col.label} <span style={{ color: C.muted, fontWeight: 400 }}>({colTareas.length})</span>
+                    </div>
+                    {colTareas.length === 0 ? (
+                      <div style={{ fontSize: 12, color: C.muted, textAlign: "center", padding: "20px 0" }}>Vacío</div>
+                    ) : colTareas.map(t => (
+                      <div key={t.id} style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 6, padding: 12, marginBottom: 8 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 4 }}>{t.titulo}</div>
+                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 6 }}>
+                          <Chip label={t.prioridad} color={PRIOR_COLOR[t.prioridad] || "#6b7280"} />
+                          {t.fecha_vence && <Chip label={t.fecha_vence} color="#6b7280" />}
+                        </div>
+                        {t.expediente_caratula && <div style={{ fontSize: 11, color: C.muted, marginBottom: 6 }}>📁 {t.expediente_caratula}</div>}
+                        <div style={{ display: "flex", gap: 4 }}>
+                          {col.key !== "pendiente" && (
+                            <button onClick={() => moverTarea(t.id, col.key === "completada" ? "en_curso" : "pendiente")}
+                              style={{ fontSize: 10, padding: "2px 6px", background: "none", border: `1px solid ${C.border}`, borderRadius: 4, cursor: "pointer", color: C.muted }}>←</button>
+                          )}
+                          {col.key !== "completada" && (
+                            <button onClick={() => moverTarea(t.id, col.key === "pendiente" ? "en_curso" : "completada")}
+                              style={{ fontSize: 10, padding: "2px 6px", background: "none", border: `1px solid ${C.border}`, borderRadius: 4, cursor: "pointer", color: C.accent }}>→</button>
+                          )}
+                          <button onClick={() => eliminarTarea(t.id)}
+                            style={{ fontSize: 10, padding: "2px 6px", background: "none", border: `1px solid ${C.border}`, borderRadius: 4, cursor: "pointer", color: "#ef4444" }}>🗑</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Modal nueva tarea */}
+      {formOpen && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9000 }}>
+          <div style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24, width: 440, maxWidth: "95vw" }}>
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: C.text }}>Nueva tarea</div>
+            <Field C={C} label="Título" required>
+              <Input C={C} value={form.titulo} onChange={e => setForm(p => ({ ...p, titulo: e.target.value }))} placeholder="Ej: Preparar memorial de agravios…" />
+            </Field>
+            <Field C={C} label="Descripción">
+              <Input C={C} value={form.descripcion} onChange={e => setForm(p => ({ ...p, descripcion: e.target.value }))} placeholder="Detalles opcionales…" />
+            </Field>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <Field C={C} label="Prioridad">
+                <Sel C={C} value={form.prioridad} onChange={e => setForm(p => ({ ...p, prioridad: e.target.value }))}>
+                  <option value="baja">Baja</option>
+                  <option value="media">Media</option>
+                  <option value="alta">Alta</option>
+                  <option value="urgente">Urgente</option>
+                </Sel>
+              </Field>
+              <Field C={C} label="Fecha vencimiento">
+                <Input C={C} type="date" value={form.fecha_vence} onChange={e => setForm(p => ({ ...p, fecha_vence: e.target.value }))} />
+              </Field>
+            </div>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 16 }}>
+              <Btn C={C} variant="ghost" onClick={() => setFormOpen(false)}>Cancelar</Btn>
+              <Btn C={C} onClick={crearTarea} disabled={saving}>{saving ? "…" : "Crear"}</Btn>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// FASE 10 — CONFIG + ROLES + INTEGRACIONES
+// ─────────────────────────────────────────────────────────────
+
+const ROLES_DOC = [
+  { v: "admin",       l: "Admin" },
+  { v: "senior",      l: "Abogado Senior" },
+  { v: "junior",      l: "Abogado Junior" },
+  { v: "procurador",  l: "Procurador" },
+  { v: "secretaria",  l: "Secretaria" },
+  { v: "cliente",     l: "Cliente" },
+];
+
+function ConfigModule({ C, clienteId, usuarios = [] }) {
+  const [tab,          setTab]          = useState("preferencias");
+  const [config,       setConfig]       = useState({ nombre_estudio: "", email_contacto: "", telefono: "", direccion: "", cuit: "", logo_url: "" });
+  const [permisos,     setPermisos]     = useState([]);
+  const [integraciones,setIntegraciones]= useState({});
+  const [loading,      setLoading]      = useState(true);
+  const [saving,       setSaving]       = useState(false);
+  const [nuevoP,       setNuevoP]       = useState({ usuario_id: "", rol: "junior" });
+  const [savingP,      setSavingP]      = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [cfgR, permR, intR] = await Promise.all([
+        fetch(`${API}/api/doctor/config?cliente_id=${clienteId}`, { headers: aH() }).then(r => r.json()),
+        fetch(`${API}/api/doctor/permisos?cliente_id=${clienteId}`, { headers: aH() }).then(r => r.json()),
+        fetch(`${API}/api/doctor/integraciones/estado?cliente_id=${clienteId}`, { headers: aH() }).then(r => r.json()),
+      ]);
+      setConfig(cfgR);
+      setPermisos(permR.permisos || []);
+      setIntegraciones(intR);
+    } catch {}
+    setLoading(false);
+  }, [clienteId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const guardarConfig = async () => {
+    setSaving(true);
+    try {
+      await fetch(`${API}/api/doctor/config`, {
+        method: "PUT",
+        headers: { ...aH(), ...jH() },
+        body: JSON.stringify({ ...config, cliente_id: clienteId }),
+      });
+      load();
+    } catch {}
+    setSaving(false);
+  };
+
+  const asignarRol = async () => {
+    if (!nuevoP.usuario_id) return;
+    setSavingP(true);
+    try {
+      await fetch(`${API}/api/doctor/permisos`, {
+        method: "POST",
+        headers: { ...aH(), ...jH() },
+        body: JSON.stringify({ ...nuevoP, cliente_id: clienteId }),
+      });
+      setNuevoP({ usuario_id: "", rol: "junior" });
+      load();
+    } catch {}
+    setSavingP(false);
+  };
+
+  const eliminarPermiso = async (id) => {
+    await fetch(`${API}/api/doctor/permisos/${id}?cliente_id=${clienteId}`, { method: "DELETE", headers: aH() });
+    load();
+  };
+
+  const exportarCSV = (path) => {
+    const token = localStorage.getItem("token") || "";
+    window.open(`${API}/${path}?cliente_id=${clienteId}&token=${token}`, "_blank");
+  };
+
+  const CONFIG_TABS = [
+    { k: "preferencias",   l: "🏛 Preferencias" },
+    { k: "roles",          l: "👤 Roles & Permisos" },
+    { k: "integraciones",  l: "🔌 Integraciones" },
+    { k: "exportar",       l: "📥 Exportar" },
+  ];
+
+  return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+      <div style={{ padding: "16px 24px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+        <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>⚙️ Configuración del estudio</div>
+      </div>
+      <div style={{ padding: "0 24px", borderBottom: `1px solid ${C.border}`, display: "flex", flexShrink: 0 }}>
+        {CONFIG_TABS.map(t => (
+          <div key={t.k} onClick={() => setTab(t.k)}
+            style={{ padding: "10px 16px", cursor: "pointer", fontSize: 13, whiteSpace: "nowrap",
+              fontWeight: tab === t.k ? 600 : 400, color: tab === t.k ? C.accent : C.muted,
+              borderBottom: tab === t.k ? `2px solid ${C.accent}` : "2px solid transparent" }}>
+            {t.l}
+          </div>
+        ))}
+      </div>
+
+      {loading ? <Spinner C={C} /> : (
+        <div style={{ flex: 1, overflowY: "auto", padding: 24 }}>
+
+          {tab === "preferencias" && (
+            <div style={{ maxWidth: 560 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+                <Field C={C} label="Nombre del estudio">
+                  <Input C={C} value={config.nombre_estudio || ""} onChange={e => setConfig(p => ({ ...p, nombre_estudio: e.target.value }))} />
+                </Field>
+                <Field C={C} label="CUIT">
+                  <Input C={C} value={config.cuit || ""} onChange={e => setConfig(p => ({ ...p, cuit: e.target.value }))} placeholder="20-12345678-9" />
+                </Field>
+                <Field C={C} label="Email de contacto">
+                  <Input C={C} value={config.email_contacto || ""} onChange={e => setConfig(p => ({ ...p, email_contacto: e.target.value }))} placeholder="estudio@ejemplo.com" />
+                </Field>
+                <Field C={C} label="Teléfono">
+                  <Input C={C} value={config.telefono || ""} onChange={e => setConfig(p => ({ ...p, telefono: e.target.value }))} placeholder="+54 11 1234-5678" />
+                </Field>
+              </div>
+              <Field C={C} label="Dirección">
+                <Input C={C} value={config.direccion || ""} onChange={e => setConfig(p => ({ ...p, direccion: e.target.value }))} placeholder="Av. Corrientes 1234, CABA" />
+              </Field>
+              <Field C={C} label="URL del logo">
+                <Input C={C} value={config.logo_url || ""} onChange={e => setConfig(p => ({ ...p, logo_url: e.target.value }))} placeholder="https://…" />
+              </Field>
+              <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
+                <Btn C={C} onClick={guardarConfig} disabled={saving}>{saving ? "…" : "Guardar cambios"}</Btn>
+              </div>
+            </div>
+          )}
+
+          {tab === "roles" && (
+            <div style={{ maxWidth: 640 }}>
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 12 }}>Asignar rol a usuario</div>
+                <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
+                  <Field C={C} label="Usuario" style={{ flex: 1, minWidth: 160 }}>
+                    <Sel C={C} value={nuevoP.usuario_id} onChange={e => setNuevoP(p => ({ ...p, usuario_id: e.target.value }))}>
+                      <option value="">Seleccioná usuario…</option>
+                      {usuarios.map(u => <option key={u.id} value={u.id}>{u.nombre || u.email}</option>)}
+                    </Sel>
+                  </Field>
+                  <Field C={C} label="Rol">
+                    <Sel C={C} value={nuevoP.rol} onChange={e => setNuevoP(p => ({ ...p, rol: e.target.value }))}>
+                      {ROLES_DOC.map(r => <option key={r.v} value={r.v}>{r.l}</option>)}
+                    </Sel>
+                  </Field>
+                  <Btn C={C} onClick={asignarRol} disabled={savingP}>{savingP ? "…" : "Asignar"}</Btn>
+                </div>
+              </div>
+              {permisos.length === 0 ? (
+                <EmptyState C={C} icon="👤" title="Sin roles asignados" sub="Asigná roles a los usuarios del estudio" />
+              ) : (
+                <div style={{ border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr style={{ background: C.surface }}>
+                        {["Usuario","Rol","Asignado",""].map(h => (
+                          <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: 12, color: C.muted, fontWeight: 600 }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {permisos.map(p => (
+                        <tr key={p.id} style={{ borderTop: `1px solid ${C.border}` }}>
+                          <td style={{ padding: "10px 16px", fontSize: 13, color: C.text }}>{p.nombre || p.email || `Usuario ${p.usuario_id}`}</td>
+                          <td style={{ padding: "10px 16px" }}><Chip label={ROLES_DOC.find(r => r.v === p.rol)?.l || p.rol} color="#6366f1" /></td>
+                          <td style={{ padding: "10px 16px", fontSize: 12, color: C.muted }}>{new Date(p.created_at).toLocaleDateString("es-AR")}</td>
+                          <td style={{ padding: "10px 16px", textAlign: "right" }}>
+                            <button onClick={() => eliminarPermiso(p.id)}
+                              style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", fontSize: 13 }}>🗑</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {tab === "integraciones" && (
+            <div style={{ maxWidth: 560 }}>
+              {Object.entries(integraciones).map(([key, int]) => (
+                <div key={key} style={{ padding: 16, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, marginBottom: 12, display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: "50%", flexShrink: 0,
+                    background: int.activo ? "#10b981" : int.estado === "proximamente" ? "#eab308" : "#ef4444" }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{int.descripcion}</div>
+                    <div style={{ fontSize: 11, color: C.muted }}>
+                      {int.activo ? "✅ Conectado" : int.estado === "proximamente" ? "🔜 Próximamente" : int.estado === "no_configurado" ? "⚙️ Sin configurar" : int.estado === "error" ? "❌ Error" : "Desconectado"}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {Object.keys(integraciones).length === 0 && (
+                <EmptyState C={C} icon="🔌" title="Cargando integraciones…" sub="" />
+              )}
+            </div>
+          )}
+
+          {tab === "exportar" && (
+            <div style={{ maxWidth: 480 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: C.text, marginBottom: 16 }}>Exportar datos</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ padding: 16, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Expedientes (CSV)</div>
+                    <div style={{ fontSize: 11, color: C.muted }}>Todos los expedientes activos con sus datos</div>
+                  </div>
+                  <Btn C={C} onClick={() => exportarCSV("api/doctor/config/exportar-expedientes-csv")} style={{ fontSize: 12 }}>⬇ Descargar</Btn>
+                </div>
+                <div style={{ padding: 16, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Tareas (CSV)</div>
+                    <div style={{ fontSize: 11, color: C.muted }}>Todas las tareas con estado y prioridad</div>
+                  </div>
+                  <Btn C={C} onClick={() => exportarCSV("api/doctor/config/exportar-tareas-csv")} style={{ fontSize: 12 }}>⬇ Descargar</Btn>
+                </div>
+              </div>
+            </div>
+          )}
+
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 
 const SUB_NAV = [
   { key: "expedientes", label: "📁 Expedientes",  fase: null },
@@ -4860,9 +5585,9 @@ const SUB_NAV = [
   { key: "cuentas",     label: "💰 Cuentas",        fase: null },
   { key: "ia",          label: "🤖 Doctor IA",      fase: null },
   { key: "procuracion", label: "⚖️ Procuración",    fase: null },
-  { key: "biblioteca",  label: "📚 Biblioteca",     fase: "Fase 8" },
-  { key: "bandeja",     label: "🔔 Bandeja",        fase: "Fase 9" },
-  { key: "config",      label: "⚙️ Config",         fase: "Fase 10" },
+  { key: "biblioteca",  label: "📚 Biblioteca",     fase: null },
+  { key: "bandeja",     label: "🔔 Bandeja",        fase: null },
+  { key: "config",      label: "⚙️ Config",         fase: null },
 ];
 
 // ── Componente principal ──────────────────────────────────────
@@ -4874,7 +5599,9 @@ export default function DoctorModule({ C, clienteId }) {
   const [usuarios, setUsuarios]         = useState([]);
   const [iaOpen, setIaOpen]             = useState(false);
   const [triggerResumir, setTriggerResumir] = useState(0);
-  const [agendaBadge, setAgendaBadge]   = useState(0);
+  const [agendaBadge,  setAgendaBadge]  = useState(0);
+  const [bandejaBadge, setBandejaBadge] = useState(0);
+  const [biblioQuery,  setBiblioQuery]  = useState("");
   // Navegación entrante Expediente → EscritorModule
   const [escritoPendiente, setEscritoPendiente] = useState(null);
 
@@ -4951,6 +5678,16 @@ export default function DoctorModule({ C, clienteId }) {
                 borderBottom: active ? `2px solid ${C.accent}` : "2px solid transparent",
                 transition: "all .15s", flexShrink: 0, display: "flex", alignItems: "center", gap: 6 }}>
               {item.label}
+              {item.key === "bandeja" && bandejaBadge > 0 && (
+                <span style={{
+                  background: "#ef4444", color: "#fff", borderRadius: "999px",
+                  fontSize: 10, fontWeight: 700, minWidth: 16, height: 16,
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  padding: "0 4px", lineHeight: 1,
+                }}>
+                  {bandejaBadge > 9 ? "9+" : bandejaBadge}
+                </span>
+              )}
               {item.key === "agenda" && agendaBadge > 0 && (
                 <span style={{
                   background: "#ef4444", color: "#fff", borderRadius: "999px",
@@ -4968,13 +5705,6 @@ export default function DoctorModule({ C, clienteId }) {
 
       {/* Contenido del sub-tab activo */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
-
-        {/* Submódulos con placeholder (solo los que tienen fase asignada) */}
-        {SUB_NAV.filter((x) => x.fase !== null).map((item) =>
-          subTab === item.key
-            ? <Placeholder key={item.key} C={C} fase={item.fase} />
-            : null
-        )}
 
         {/* Doctor IA — página completa */}
         {subTab === "ia" && (
@@ -5010,6 +5740,21 @@ export default function DoctorModule({ C, clienteId }) {
           />
         )}
 
+        {/* Biblioteca */}
+        {subTab === "biblioteca" && (
+          <BibliotecaModule C={C} clienteId={clienteId} initialQuery={biblioQuery} />
+        )}
+
+        {/* Bandeja + Tareas */}
+        {subTab === "bandeja" && (
+          <BandejaModule C={C} clienteId={clienteId} onBadgeChange={setBandejaBadge} />
+        )}
+
+        {/* Config */}
+        {subTab === "config" && (
+          <ConfigModule C={C} clienteId={clienteId} usuarios={usuarios} />
+        )}
+
         {/* Expedientes — con sub-vistas */}
         {subTab === "expedientes" && view === "lista" && (
           <ExpedientesLista C={C} clienteId={clienteId} onNuevo={irANuevo} onVer={irADetalle} />
@@ -5026,6 +5771,7 @@ export default function DoctorModule({ C, clienteId }) {
             onVolver={irALista}
             onResumirIA={() => { setIaOpen(true); setTriggerResumir((p) => p + 1); }}
             onEscritoCreado={(e) => { setEscritoPendiente(e); setSubTab("escritos"); }}
+            onBiblioteca={(q) => { setBiblioQuery(q); setSubTab("biblioteca"); }}
           />
         )}
 

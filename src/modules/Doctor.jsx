@@ -4438,7 +4438,7 @@ function ProcuracionModule({ C, clienteId }) {
     if (!clienteId) return;
     setLoading(true);
     try {
-      const r = await fetch(`${API}/api/doctor/expedientes/sin-numero-judicial?cliente_id=${clienteId}`, { headers: aH() });
+      const r = await fetch(`${API}/api/doctor/procuracion/sin-numero-judicial?cliente_id=${clienteId}`, { headers: aH() });
       if (r.ok) { const d = await r.json(); setSinNumero(d.expedientes || []); }
     } catch (_) {}
     setLoading(false);

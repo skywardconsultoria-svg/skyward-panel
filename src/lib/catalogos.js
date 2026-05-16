@@ -168,6 +168,23 @@ export const MONEDAS = [
   { value: 'EUR', label: 'Euro (EUR)' },
 ];
 
+// ── Fase 6 — Rubros de cuenta corriente ──────────────────────
+export const RUBROS_CUENTA = [
+  { value: 'honorarios_pactados',  label: 'Honorarios pactados' },
+  { value: 'honorarios_regulados', label: 'Honorarios regulados' },
+  { value: 'gastos',               label: 'Gastos' },
+  { value: 'tasa_justicia',        label: 'Tasa de justicia' },
+  { value: 'peritos',              label: 'Peritos' },
+  { value: 'anticipo',             label: 'Anticipo' },
+  { value: 'otros',                label: 'Otros' },
+];
+
+// ── Fase 6 — Tipos de movimiento contable ────────────────────
+export const TIPOS_CUENTA_MOV = [
+  { value: 'credito', label: 'Crédito (cobro / ingreso)' },
+  { value: 'debito',  label: 'Débito (gasto / egreso)' },
+];
+
 // ── Helper: convertir lista a opciones de <select> ────────────
 /**
  * Filtra un catálogo y devuelve sólo los valores como array de strings.

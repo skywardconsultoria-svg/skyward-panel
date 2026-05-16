@@ -15,7 +15,7 @@ import { marked } from "marked";
 import {
   FUEROS, JURISDICCIONES, TIPOS_PROCESO, ETAPAS_EXPEDIENTE,
   ESTADOS_EXPEDIENTE, PRIORIDADES, ROLES_PERSONA, TIPOS_MOVIMIENTO,
-  DOC_TIPOS, CATEGORIAS_AFIP, MONEDAS,
+  DOC_TIPOS, CATEGORIAS_AFIP, MONEDAS, RUBROS_CUENTA, TIPOS_CUENTA_MOV, TIPOS_INDICE,
 } from "../lib/catalogos";
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -3833,6 +3833,496 @@ function PlantillasModule({ C, clienteId, onUsarPlantilla }) {
   );
 }
 
+// ── FASE 6: Módulo de Cuentas y Liquidaciones ─────────────────────────────────
+
+const RUBRO_COLOR = {
+  honorarios_pactados:  "#6366f1",
+  honorarios_regulados: "#8b5cf6",
+  gastos:               "#f59e0b",
+  tasa_justicia:        "#3b82f6",
+  peritos:              "#14b8a6",
+  anticipo:             "#10b981",
+  otros:                "#6b7280",
+};
+
+function fmtMonto(monto, moneda = "ARS") {
+  const n = parseFloat(monto) || 0;
+  return n.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " " + moneda;
+}
+
+// ── Modal: Nuevo / Editar Movimiento ──────────────────────────
+function MovimientoModal({ C, clienteId, expedientes, personas, movimiento, onClose, onGuardado }) {
+  const editando = !!movimiento;
+  const HOJA = movimiento || {};
+  const [f, setF] = useState({
+    expediente_id: HOJA.expediente_id || "",
+    persona_id:    HOJA.persona_id    || "",
+    rubro:         HOJA.rubro         || "otros",
+    descripcion:   HOJA.descripcion   || "",
+    monto:         HOJA.monto         || "",
+    moneda:        HOJA.moneda        || "ARS",
+    tipo_cambio:   HOJA.tipo_cambio   || "1",
+    fecha:         HOJA.fecha         ? HOJA.fecha.split("T")[0] : new Date().toISOString().split("T")[0],
+    tipo:          HOJA.tipo          || "credito",
+    facturado:     HOJA.facturado     || false,
+    notas:         HOJA.notas         || "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
+  const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
+
+  const guardar = async () => {
+    if (!f.monto || isNaN(parseFloat(f.monto))) return setErr("El monto es obligatorio");
+    if (!f.fecha) return setErr("La fecha es obligatoria");
+    setLoading(true); setErr("");
+    try {
+      const payload = {
+        ...f,
+        cliente_id:  clienteId,
+        monto:       parseFloat(f.monto),
+        tipo_cambio: parseFloat(f.tipo_cambio) || 1,
+        expediente_id: f.expediente_id || null,
+        persona_id:    f.persona_id    || null,
+      };
+      const url = editando
+        ? `${API}/api/doctor/cuentas/${movimiento.id}`
+        : `${API}/api/doctor/cuentas`;
+      const method = editando ? "PUT" : "POST";
+      const res = await fetch(url, { method, headers: jH(), body: JSON.stringify(payload) });
+      if (!res.ok) throw new Error((await res.json()).error);
+      onGuardado();
+    } catch (e) { setErr(e.message); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"#0009", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div style={{ background: C.surface, borderRadius:16, padding:28, width:"100%", maxWidth:560, maxHeight:"90vh", overflowY:"auto", boxShadow:"0 20px 60px #0006" }}>
+        <div style={{ fontSize:15, fontWeight:700, color:C.text, marginBottom:20 }}>
+          {editando ? "Editar movimiento" : "Nuevo movimiento"}
+        </div>
+
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
+          <Field C={C} label="Tipo *">
+            <Sel C={C} value={f.tipo} onChange={(e) => set("tipo", e.target.value)} options={TIPOS_CUENTA_MOV} />
+          </Field>
+          <Field C={C} label="Rubro *">
+            <Sel C={C} value={f.rubro} onChange={(e) => set("rubro", e.target.value)} options={RUBROS_CUENTA} />
+          </Field>
+          <Field C={C} label="Monto *">
+            <Input C={C} type="number" min="0" step="0.01" value={f.monto} onChange={(e) => set("monto", e.target.value)} placeholder="50000" />
+          </Field>
+          <Field C={C} label="Moneda">
+            <Sel C={C} value={f.moneda} onChange={(e) => set("moneda", e.target.value)} options={MONEDAS} />
+          </Field>
+          {f.moneda !== "ARS" && (
+            <Field C={C} label="Tipo de cambio (ARS por 1 unidad)">
+              <Input C={C} type="number" min="0" step="0.01" value={f.tipo_cambio} onChange={(e) => set("tipo_cambio", e.target.value)} placeholder="1200" />
+            </Field>
+          )}
+          <Field C={C} label="Fecha *">
+            <Input C={C} type="date" value={f.fecha} onChange={(e) => set("fecha", e.target.value)} />
+          </Field>
+          <Field C={C} label="Expediente vinculado" style={{ gridColumn:"span 2" }}>
+            <select style={inputSt(C)} value={f.expediente_id} onChange={(e) => set("expediente_id", e.target.value)}>
+              <option value="">— ninguno —</option>
+              {expedientes.map((e) => <option key={e.id} value={e.id}>{e.caratula}</option>)}
+            </select>
+          </Field>
+          <Field C={C} label="Persona vinculada" style={{ gridColumn:"span 2" }}>
+            <select style={inputSt(C)} value={f.persona_id} onChange={(e) => set("persona_id", e.target.value)}>
+              <option value="">— ninguna —</option>
+              {personas.map((p) => {
+                const label = p.tipo === "juridica" ? p.razon_social : `${p.nombre || ""} ${p.apellido || ""}`.trim();
+                return <option key={p.id} value={p.id}>{label}</option>;
+              })}
+            </select>
+          </Field>
+          <Field C={C} label="Descripción" style={{ gridColumn:"span 2" }}>
+            <Input C={C} value={f.descripcion} onChange={(e) => set("descripcion", e.target.value)} placeholder="Ej: Honorarios primera instancia" />
+          </Field>
+          <Field C={C} label="Notas internas" style={{ gridColumn:"span 2" }}>
+            <textarea style={{ ...inputSt(C), resize:"vertical", minHeight:60 }} value={f.notas} onChange={(e) => set("notas", e.target.value)} placeholder="Notas adicionales..." />
+          </Field>
+          <Field C={C} label="">
+            <label style={{ display:"flex", alignItems:"center", gap:8, cursor:"pointer", fontSize:13, color:C.text }}>
+              <input type="checkbox" checked={f.facturado} onChange={(e) => set("facturado", e.target.checked)} />
+              Facturado / Comprobante emitido
+            </label>
+          </Field>
+        </div>
+
+        {err && <div style={{ color:"#ef4444", fontSize:12, marginTop:10 }}>{err}</div>}
+
+        <div style={{ display:"flex", gap:10, marginTop:20, justifyContent:"flex-end" }}>
+          <Btn C={C} variant="ghost" onClick={onClose}>Cancelar</Btn>
+          <Btn C={C} onClick={guardar} disabled={loading}>{loading ? "Guardando…" : editando ? "Guardar cambios" : "Registrar movimiento"}</Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Modal: Calcular Liquidación ────────────────────────────────
+function LiquidarModal({ C, clienteId, montoBase, monedaBase, onClose }) {
+  const [f, setF] = useState({
+    monto:           montoBase || "",
+    moneda:          monedaBase || "ARS",
+    tipo_indice:     "tasa_activa_BNA",
+    fecha_desde:     "",
+    fecha_hasta:     new Date().toISOString().split("T")[0],
+    tasa_fija_anual: "",
+  });
+  const [resultado, setResultado] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
+  const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
+
+  const calcular = async () => {
+    if (!f.monto || isNaN(parseFloat(f.monto))) return setErr("Monto obligatorio");
+    if (!f.fecha_desde || !f.fecha_hasta) return setErr("Fechas obligatorias");
+    setLoading(true); setErr(""); setResultado(null);
+    try {
+      const payload = {
+        cliente_id:      clienteId,
+        monto:           parseFloat(f.monto),
+        moneda:          f.moneda,
+        tipo_indice:     f.tipo_indice || undefined,
+        fecha_desde:     f.fecha_desde,
+        fecha_hasta:     f.fecha_hasta,
+        tasa_fija_anual: f.tasa_fija_anual ? parseFloat(f.tasa_fija_anual) : undefined,
+      };
+      const res = await fetch(`${API}/api/doctor/cuentas/liquidar`, { method:"POST", headers:jH(), body:JSON.stringify(payload) });
+      if (!res.ok) throw new Error((await res.json()).error);
+      setResultado(await res.json());
+    } catch(e) { setErr(e.message); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"#0009", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div style={{ background:C.surface, borderRadius:16, padding:28, width:"100%", maxWidth:520, boxShadow:"0 20px 60px #0006", maxHeight:"90vh", overflowY:"auto" }}>
+        <div style={{ fontSize:15, fontWeight:700, color:C.text, marginBottom:20 }}>📊 Calcular liquidación</div>
+
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14, marginBottom:16 }}>
+          <Field C={C} label="Monto base *">
+            <Input C={C} type="number" min="0" step="0.01" value={f.monto} onChange={(e) => set("monto", e.target.value)} placeholder="50000" />
+          </Field>
+          <Field C={C} label="Moneda">
+            <Sel C={C} value={f.moneda} onChange={(e) => set("moneda", e.target.value)} options={MONEDAS} />
+          </Field>
+          <Field C={C} label="Índice de actualización">
+            <Sel C={C} value={f.tipo_indice} onChange={(e) => set("tipo_indice", e.target.value)}
+              options={[{ value:"", label:"— sin índice (solo tasa fija) —" }, ...TIPOS_INDICE]} />
+          </Field>
+          <Field C={C} label="Tasa fija anual % (fallback)">
+            <Input C={C} type="number" min="0" step="0.01" value={f.tasa_fija_anual} onChange={(e) => set("tasa_fija_anual", e.target.value)} placeholder="Ej: 40" />
+          </Field>
+          <Field C={C} label="Fecha desde *">
+            <Input C={C} type="date" value={f.fecha_desde} onChange={(e) => set("fecha_desde", e.target.value)} />
+          </Field>
+          <Field C={C} label="Fecha hasta *">
+            <Input C={C} type="date" value={f.fecha_hasta} onChange={(e) => set("fecha_hasta", e.target.value)} />
+          </Field>
+        </div>
+
+        {err && <div style={{ color:"#ef4444", fontSize:12, marginBottom:10 }}>{err}</div>}
+
+        {resultado && (
+          <div style={{ background:C.bg, border:`1px solid ${C.border}`, borderRadius:12, padding:16, marginBottom:16 }}>
+            <div style={{ fontSize:12, color:C.muted, marginBottom:8 }}>Resultado</div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+              <div>
+                <div style={{ fontSize:11, color:C.muted }}>Monto original</div>
+                <div style={{ fontSize:15, fontWeight:700, color:C.text }}>{fmtMonto(resultado.monto_original, resultado.moneda)}</div>
+              </div>
+              <div>
+                <div style={{ fontSize:11, color:C.muted }}>Monto actualizado</div>
+                <div style={{ fontSize:15, fontWeight:700, color:"#10b981" }}>{fmtMonto(resultado.monto_final, resultado.moneda)}</div>
+              </div>
+              <div>
+                <div style={{ fontSize:11, color:C.muted }}>Diferencia</div>
+                <div style={{ fontSize:13, fontWeight:600, color:"#6366f1" }}>+{fmtMonto(resultado.diferencia, resultado.moneda)}</div>
+              </div>
+              <div>
+                <div style={{ fontSize:11, color:C.muted }}>Coeficiente</div>
+                <div style={{ fontSize:13, fontWeight:600, color:C.text }}>{resultado.coeficiente}</div>
+              </div>
+            </div>
+            <div style={{ marginTop:12, fontSize:12, color:C.muted, lineHeight:1.5, background:C.surface, borderRadius:8, padding:"8px 10px" }}>
+              {resultado.explicacion}
+            </div>
+            {resultado.metodo === "sin_ajuste" && (
+              <div style={{ marginTop:8, fontSize:11, color:"#f59e0b", display:"flex", alignItems:"center", gap:4 }}>
+                ⚠️ Sin índices cargados para el período. Cargá datos en la tabla de índices o usá tasa fija anual.
+              </div>
+            )}
+          </div>
+        )}
+
+        <div style={{ display:"flex", gap:10, justifyContent:"flex-end" }}>
+          <Btn C={C} variant="ghost" onClick={onClose}>Cerrar</Btn>
+          <Btn C={C} onClick={calcular} disabled={loading}>{loading ? "Calculando…" : "Calcular"}</Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Panel de resumen financiero ────────────────────────────────
+function ResumenPanel({ C, resumen, onLiquidar, onNuevo }) {
+  if (!resumen) return null;
+  return (
+    <div style={{ padding:"16px 20px", background:C.surface, borderLeft:`1px solid ${C.border}`, width:240, flexShrink:0, display:"flex", flexDirection:"column", gap:16 }}>
+      <div style={{ fontSize:13, fontWeight:700, color:C.text }}>💰 Resumen</div>
+
+      <div style={{ background:C.bg, borderRadius:10, padding:12 }}>
+        <div style={{ fontSize:11, color:C.muted, marginBottom:4 }}>Saldo (ARS equiv.)</div>
+        <div style={{ fontSize:20, fontWeight:800, color: resumen.saldo_ars >= 0 ? "#10b981" : "#ef4444" }}>
+          {resumen.saldo_ars >= 0 ? "+" : ""}{fmtMonto(resumen.saldo_ars)}
+        </div>
+      </div>
+
+      <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", fontSize:12 }}>
+          <span style={{ color:C.muted }}>Créditos</span>
+          <span style={{ color:"#10b981", fontWeight:600 }}>{fmtMonto(resumen.creditos_ars)}</span>
+        </div>
+        <div style={{ display:"flex", justifyContent:"space-between", fontSize:12 }}>
+          <span style={{ color:C.muted }}>Débitos</span>
+          <span style={{ color:"#ef4444", fontWeight:600 }}>{fmtMonto(resumen.debitos_ars)}</span>
+        </div>
+        {resumen.movimientos_sin_factura > 0 && (
+          <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginTop:4, paddingTop:6, borderTop:`1px solid ${C.border}` }}>
+            <span style={{ color:"#f59e0b" }}>Sin facturar</span>
+            <span style={{ color:"#f59e0b", fontWeight:600 }}>{resumen.movimientos_sin_factura} mov.</span>
+          </div>
+        )}
+      </div>
+
+      {resumen.por_rubro?.length > 0 && (
+        <div>
+          <div style={{ fontSize:11, color:C.muted, marginBottom:8, fontWeight:600 }}>Por rubro</div>
+          {resumen.por_rubro.map((r) => (
+            <div key={r.rubro} style={{ display:"flex", justifyContent:"space-between", fontSize:11, marginBottom:4, alignItems:"center" }}>
+              <span style={{ display:"flex", alignItems:"center", gap:4 }}>
+                <span style={{ width:6, height:6, borderRadius:"50%", background: RUBRO_COLOR[r.rubro] || "#6b7280", flexShrink:0 }} />
+                <span style={{ color:C.text }}>{RUBROS_CUENTA.find((x) => x.value === r.rubro)?.label ?? r.rubro}</span>
+              </span>
+              <span style={{ color: parseFloat(r.saldo_ars) >= 0 ? "#10b981" : "#ef4444", fontWeight:600 }}>
+                {parseFloat(r.saldo_ars) >= 0 ? "+" : ""}{parseFloat(r.saldo_ars).toLocaleString("es-AR", { maximumFractionDigits:0 })}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div style={{ display:"flex", flexDirection:"column", gap:8, marginTop:"auto" }}>
+        <Btn C={C} onClick={onLiquidar} style={{ width:"100%", textAlign:"center" }}>📊 Liquidar</Btn>
+        <Btn C={C} variant="ghost" onClick={onNuevo} style={{ width:"100%", textAlign:"center" }}>➕ Nuevo mov.</Btn>
+      </div>
+    </div>
+  );
+}
+
+// ── Componente principal: CuentasModule ───────────────────────
+function CuentasModule({ C, clienteId }) {
+  const [movimientos, setMovimientos] = useState([]);
+  const [resumen,     setResumen]     = useState(null);
+  const [expedientes, setExpedientes] = useState([]);
+  const [personas,    setPersonas]    = useState([]);
+  const [loading,     setLoading]     = useState(true);
+  const [modalNuevo,  setModalNuevo]  = useState(false);
+  const [modalEdit,   setModalEdit]   = useState(null);   // movimiento a editar
+  const [modalLiquidar, setModalLiquidar] = useState(false);
+  const [confirmDel,  setConfirmDel]  = useState(null);   // id a eliminar
+
+  // Filtros
+  const [filtros, setFiltros] = useState({
+    expediente_id: "", persona_id: "", rubro: "", tipo: "",
+    fecha_desde: "", fecha_hasta: "",
+  });
+
+  const setFiltro = (k, v) => setFiltros((p) => ({ ...p, [k]: v }));
+
+  const loadAll = useCallback(async () => {
+    setLoading(true);
+    try {
+      const qs = new URLSearchParams({ cliente_id: clienteId });
+      Object.entries(filtros).forEach(([k, v]) => { if (v) qs.set(k, v); });
+
+      const [movRes, resRes, expRes, perRes] = await Promise.all([
+        fetch(`${API}/api/doctor/cuentas?${qs}`, { headers: aH() }),
+        fetch(`${API}/api/doctor/cuentas/resumen?cliente_id=${clienteId}`, { headers: aH() }),
+        fetch(`${API}/api/doctor/expedientes?cliente_id=${clienteId}`, { headers: aH() }),
+        fetch(`${API}/api/doctor/personas?cliente_id=${clienteId}`, { headers: aH() }),
+      ]);
+      if (movRes.ok) setMovimientos(await movRes.json());
+      if (resRes.ok) setResumen(await resRes.json());
+      if (expRes.ok) setExpedientes(await expRes.json());
+      if (perRes.ok) setPersonas(await perRes.json());
+    } catch (_) {}
+    finally { setLoading(false); }
+  }, [clienteId, filtros]);
+
+  useEffect(() => { loadAll(); }, [loadAll]);
+
+  const eliminar = async (id) => {
+    await fetch(`${API}/api/doctor/cuentas/${id}?cliente_id=${clienteId}`, { method:"DELETE", headers:aH() });
+    setConfirmDel(null);
+    loadAll();
+  };
+
+  // Saldo seleccionado para liquidar: suma de créditos ARS en pantalla
+  const montoParaLiquidar = movimientos
+    .filter((m) => m.tipo === "credito")
+    .reduce((acc, m) => acc + parseFloat(m.monto) * parseFloat(m.tipo_cambio), 0);
+
+  return (
+    <div style={{ flex:1, display:"flex", minHeight:0, overflow:"hidden" }}>
+
+      {/* Columna principal */}
+      <div style={{ flex:1, display:"flex", flexDirection:"column", minHeight:0, overflow:"hidden" }}>
+
+        {/* Barra de filtros */}
+        <div style={{ padding:"12px 16px", borderBottom:`1px solid ${C.border}`, background:C.surface, display:"flex", gap:8, flexWrap:"wrap", alignItems:"center", flexShrink:0 }}>
+          <select style={{ ...inputSt(C), width:"auto", fontSize:12 }} value={filtros.tipo} onChange={(e) => setFiltro("tipo", e.target.value)}>
+            <option value="">Todos los tipos</option>
+            {TIPOS_CUENTA_MOV.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          <select style={{ ...inputSt(C), width:"auto", fontSize:12 }} value={filtros.rubro} onChange={(e) => setFiltro("rubro", e.target.value)}>
+            <option value="">Todos los rubros</option>
+            {RUBROS_CUENTA.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          <select style={{ ...inputSt(C), width:"auto", fontSize:12 }} value={filtros.expediente_id} onChange={(e) => setFiltro("expediente_id", e.target.value)}>
+            <option value="">Todos los expedientes</option>
+            {expedientes.map((e) => <option key={e.id} value={e.id}>{e.caratula}</option>)}
+          </select>
+          <input type="date" style={{ ...inputSt(C), width:"auto", fontSize:12 }} value={filtros.fecha_desde} onChange={(e) => setFiltro("fecha_desde", e.target.value)} title="Desde" />
+          <input type="date" style={{ ...inputSt(C), width:"auto", fontSize:12 }} value={filtros.fecha_hasta} onChange={(e) => setFiltro("fecha_hasta", e.target.value)} title="Hasta" />
+          {Object.values(filtros).some(Boolean) && (
+            <Btn C={C} variant="ghost" onClick={() => setFiltros({ expediente_id:"", persona_id:"", rubro:"", tipo:"", fecha_desde:"", fecha_hasta:"" })}
+              style={{ fontSize:11, padding:"5px 10px" }}>✕ Limpiar</Btn>
+          )}
+        </div>
+
+        {/* Tabla de movimientos */}
+        <div style={{ flex:1, overflowY:"auto", padding:"0 16px 16px" }}>
+          {loading ? (
+            <Spinner C={C} />
+          ) : movimientos.length === 0 ? (
+            <EmptyState C={C} icon="💰" title="Sin movimientos" sub="Registrá honorarios, gastos, anticipos y más." />
+          ) : (
+            <table style={{ width:"100%", borderCollapse:"collapse", marginTop:12 }}>
+              <thead>
+                <tr style={{ borderBottom:`1px solid ${C.border}` }}>
+                  {["Fecha","Tipo","Rubro","Descripción","Monto","Expediente","Facturado",""].map((h) => (
+                    <th key={h} style={{ textAlign:"left", padding:"8px 10px", fontSize:11, color:C.muted, fontWeight:600, whiteSpace:"nowrap" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {movimientos.map((m) => (
+                  <tr key={m.id} style={{ borderBottom:`1px solid ${C.border}22`, cursor:"default" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = C.surface)}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                    <td style={{ padding:"10px 10px", fontSize:12, color:C.muted, whiteSpace:"nowrap" }}>{fmtFecha(m.fecha)}</td>
+                    <td style={{ padding:"10px 10px" }}>
+                      <span style={{
+                        fontSize:11, fontWeight:600, padding:"2px 8px", borderRadius:99,
+                        background: m.tipo === "credito" ? "#10b98122" : "#ef444422",
+                        color:       m.tipo === "credito" ? "#10b981"   : "#ef4444",
+                        border:     `1px solid ${m.tipo === "credito" ? "#10b98144" : "#ef444444"}`,
+                      }}>
+                        {m.tipo === "credito" ? "↑ Crédito" : "↓ Débito"}
+                      </span>
+                    </td>
+                    <td style={{ padding:"10px 10px" }}>
+                      <Chip label={RUBROS_CUENTA.find((r) => r.value === m.rubro)?.label ?? m.rubro} color={RUBRO_COLOR[m.rubro] || "#6b7280"} />
+                    </td>
+                    <td style={{ padding:"10px 10px", fontSize:13, color:C.text, maxWidth:220 }}>
+                      <div style={{ overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{m.descripcion || "—"}</div>
+                      {m.notas && <div style={{ fontSize:11, color:C.muted, marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{m.notas}</div>}
+                    </td>
+                    <td style={{ padding:"10px 10px", fontSize:13, fontWeight:700, whiteSpace:"nowrap",
+                      color: m.tipo === "credito" ? "#10b981" : "#ef4444" }}>
+                      {m.tipo === "credito" ? "+" : "-"}{fmtMonto(m.monto, m.moneda)}
+                      {m.moneda !== "ARS" && parseFloat(m.tipo_cambio) !== 1 && (
+                        <div style={{ fontSize:10, color:C.muted, fontWeight:400 }}>TC: {m.tipo_cambio}</div>
+                      )}
+                    </td>
+                    <td style={{ padding:"10px 10px", fontSize:12, color:C.muted }}>
+                      {m.expediente_caratula ? (
+                        <div style={{ maxWidth:140, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }} title={m.expediente_caratula}>{m.expediente_caratula}</div>
+                      ) : "—"}
+                    </td>
+                    <td style={{ padding:"10px 10px", textAlign:"center", fontSize:14 }}>
+                      {m.facturado ? "✅" : <span style={{ color:C.muted, fontSize:12 }}>—</span>}
+                    </td>
+                    <td style={{ padding:"10px 6px", whiteSpace:"nowrap" }}>
+                      <div style={{ display:"flex", gap:4 }}>
+                        <button onClick={() => setModalEdit(m)} style={{ background:"none", border:"none", cursor:"pointer", color:C.muted, fontSize:14, padding:"3px 6px", borderRadius:6 }} title="Editar">✏️</button>
+                        <button onClick={() => setConfirmDel(m.id)} style={{ background:"none", border:"none", cursor:"pointer", color:"#ef444488", fontSize:14, padding:"3px 6px", borderRadius:6 }} title="Eliminar">🗑</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+
+      {/* Panel lateral de resumen */}
+      <ResumenPanel
+        C={C}
+        resumen={resumen}
+        onLiquidar={() => setModalLiquidar(true)}
+        onNuevo={() => setModalNuevo(true)}
+      />
+
+      {/* Modales */}
+      {(modalNuevo || modalEdit) && (
+        <MovimientoModal
+          C={C}
+          clienteId={clienteId}
+          expedientes={expedientes}
+          personas={personas}
+          movimiento={modalEdit}
+          onClose={() => { setModalNuevo(false); setModalEdit(null); }}
+          onGuardado={() => { setModalNuevo(false); setModalEdit(null); loadAll(); }}
+        />
+      )}
+
+      {modalLiquidar && (
+        <LiquidarModal
+          C={C}
+          clienteId={clienteId}
+          montoBase={montoParaLiquidar.toFixed(2)}
+          monedaBase="ARS"
+          onClose={() => setModalLiquidar(false)}
+        />
+      )}
+
+      {/* Confirmar eliminación */}
+      {confirmDel && (
+        <div style={{ position:"fixed", inset:0, background:"#0009", zIndex:1100, display:"flex", alignItems:"center", justifyContent:"center" }}>
+          <div style={{ background:C.surface, borderRadius:14, padding:28, maxWidth:360, width:"90%", boxShadow:"0 20px 60px #0006" }}>
+            <div style={{ fontSize:15, fontWeight:700, color:C.text, marginBottom:8 }}>¿Eliminar movimiento?</div>
+            <div style={{ fontSize:13, color:C.muted, marginBottom:20 }}>Esta acción no se puede deshacer.</div>
+            <div style={{ display:"flex", gap:10, justifyContent:"flex-end" }}>
+              <Btn C={C} variant="ghost" onClick={() => setConfirmDel(null)}>Cancelar</Btn>
+              <Btn C={C} variant="danger" onClick={() => eliminar(confirmDel)}>Eliminar</Btn>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Sub-navegación Doctor ─────────────────────────────────────
 
 const SUB_NAV = [
@@ -3840,7 +4330,7 @@ const SUB_NAV = [
   { key: "agenda",      label: "📅 Agenda",        fase: null },
   { key: "personas",    label: "👥 Personas",       fase: null },
   { key: "escritos",    label: "📄 Escritos",       fase: null },
-  { key: "cuentas",     label: "💰 Cuentas",        fase: "Fase 6" },
+  { key: "cuentas",     label: "💰 Cuentas",        fase: null },
   { key: "ia",          label: "🤖 Doctor IA",      fase: null },
   { key: "procuracion", label: "⚖️ Procuración",    fase: "Fase 7" },
   { key: "biblioteca",  label: "📚 Biblioteca",     fase: "Fase 8" },
@@ -3972,6 +4462,11 @@ export default function DoctorModule({ C, clienteId }) {
         {/* Personas */}
         {subTab === "personas" && (
           <PersonasModule C={C} clienteId={clienteId} />
+        )}
+
+        {/* Cuentas */}
+        {subTab === "cuentas" && (
+          <CuentasModule C={C} clienteId={clienteId} />
         )}
 
         {/* Escritos */}

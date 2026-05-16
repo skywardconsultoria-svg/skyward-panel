@@ -4503,8 +4503,8 @@ function ProcuracionModule({ C, clienteId }) {
     const num = (editNum[expId] || "").trim();
     if (!num) { showToast("Ingresá el número judicial.", false); return; }
     try {
-      const r = await fetch(`${API}/api/doctor/expedientes/${expId}`, {
-        method: "PUT", headers: jH(),
+      const r = await fetch(`${API}/api/doctor/expedientes/${expId}/numero-judicial`, {
+        method: "PATCH", headers: jH(),
         body: JSON.stringify({ num_expediente_judicial: num, cliente_id: clienteId })
       });
       if (r.ok) {

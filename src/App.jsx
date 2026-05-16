@@ -3047,6 +3047,7 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
   const [logoOk, setLogoOk] = useState(false);
   const [dashboard, setDashboard] = useState(null);
   const [loadingDash, setLoadingDash] = useState(false);
+  const [docResumen, setDocResumen] = useState(null);
   const [horariosClinica, setHorariosClinica] = useState([]);
   const [solicitudes, setSolicitudes] = useState([]);
   const [botConfig, setBotConfig] = useState(null);
@@ -3299,6 +3300,11 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
       }
     } catch(e) { console.error('Dashboard fetch error:', e); }
     setLoadingDash(false);
+    // Cargar resumen de honorarios judiciales (Doctor — Fase 6)
+    try {
+      const rDoc = await fetch(`${API}/api/doctor/cuentas/resumen?cliente_id=${client.id}`, { headers:aH() });
+      if (rDoc.ok) setDocResumen(await rDoc.json());
+    } catch(_) {}
   };
 
   useEffect(() => {
@@ -5767,6 +5773,14 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                     sub={`${d.prospectos.convertidos} convertidos · ${d.prospectos.tasa_conversion}% conversión`} color="#f59e0b"/>
                   <Card icon="📁" label="Casos este mes" value={fmtNum(d.casos_nuevos_mes||d.pacientes_nuevos_mes)}
                     sub="Nuevos clientes" color="#8b5cf6"/>
+                  {/* Honorarios judiciales — Doctor Fase 6 */}
+                  <Card
+                    icon="⚖️"
+                    label="Honorarios judiciales"
+                    value={fmtMoney(docResumen?.saldo_ars ?? 0)}
+                    sub={`Ingresos: ${fmtMoney(docResumen?.creditos_ars ?? 0)} · Egresos: ${fmtMoney(docResumen?.debitos_ars ?? 0)}`}
+                    color="#6366f1"
+                  />
                 </div>
 
                 {/* Fila 2 - gráfico + próximos turnos */}

@@ -2666,19 +2666,38 @@ const ESTADO_ESCRITO_COLOR = {
 // TODO: reemplazar con librería de PDF real (jsPDF o similar) cuando haya demanda de usuarios.
 // window.print() no funciona bien en todos los contextos (mobile, algunas configuraciones de browser).
 
+// Elimina bloques vacíos al inicio/fin del HTML del editor
+function sanitizeEditorHtml(html) {
+  if (!html || !html.trim()) return "";
+  // Strip leading/trailing empty block elements (p, div with only optional br/whitespace)
+  const emptyBlock = /^\s*(<(p|div|h[1-6])[^>]*>\s*(<br\s*\/?>)?\s*<\/\2>\s*|<br\s*\/?>\s*)+/gi;
+  let s = html.replace(emptyBlock, "");
+  // trailing
+  const emptyBlockEnd = /(\s*<(p|div|h[1-6])[^>]*>\s*(<br\s*\/?>)?\s*<\/\2>\s*|<br\s*\/?>\s*)+$/gi;
+  s = s.replace(emptyBlockEnd, "");
+  return s.trim();
+}
+
 function RichTextEditor({ C, initialValue, onChange, placeholder, editorRef: extRef, style }) {
   const innerRef = useRef(null);
   const ref = extRef || innerRef;
+  const [isEmpty, setIsEmpty] = useState(!initialValue?.trim());
 
-  // Inicializar contenido una sola vez al montar
+  // Inicializar contenido una sola vez al montar (sanitizando nodos vacíos iniciales)
   useEffect(() => {
-    if (ref.current) ref.current.innerHTML = initialValue || "";
+    if (ref.current) {
+      const clean = sanitizeEditorHtml(initialValue || "");
+      ref.current.innerHTML = clean;
+      setIsEmpty(!clean);
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const exec = (cmd, val) => {
     ref.current?.focus();
     document.execCommand(cmd, false, val ?? null);
-    onChange?.(ref.current?.innerHTML || "");
+    const html = ref.current?.innerHTML || "";
+    setIsEmpty(!html || html === "<br>");
+    onChange?.(html);
   };
 
   const Sep = () => (
@@ -2720,19 +2739,35 @@ function RichTextEditor({ C, initialValue, onChange, placeholder, editorRef: ext
         <TBtn label="⇔" cmd="justifyCenter" title="Centrar" />
         <TBtn label="⇨" cmd="justifyRight"  title="Alinear derecha" />
       </div>
-      {/* Área editable */}
-      <div
-        ref={ref}
-        contentEditable
-        suppressContentEditableWarning
-        onInput={() => onChange?.(ref.current?.innerHTML || "")}
-        style={{
-          flex: 1, overflowY: "auto", padding: 20, outline: "none",
-          color: C.text, fontSize: 14, lineHeight: 1.7,
-          fontFamily: 'Georgia, "Times New Roman", serif',
-          minHeight: 300,
-        }}
-      />
+      {/* Área editable + placeholder */}
+      <div style={{ flex: 1, position: "relative", display: "flex", flexDirection: "column", minHeight: 0 }}>
+        {isEmpty && placeholder && (
+          <div style={{
+            position: "absolute", top: 20, left: 20, right: 20,
+            color: C.muted, fontSize: 14, lineHeight: 1.7, pointerEvents: "none",
+            userSelect: "none", fontFamily: 'Georgia, "Times New Roman", serif',
+            opacity: 0.6,
+          }}>
+            {placeholder}
+          </div>
+        )}
+        <div
+          ref={ref}
+          contentEditable
+          suppressContentEditableWarning
+          onInput={() => {
+            const html = ref.current?.innerHTML || "";
+            setIsEmpty(!html || html === "<br>");
+            onChange?.(html);
+          }}
+          style={{
+            flex: 1, overflowY: "auto", padding: 20, outline: "none",
+            color: C.text, fontSize: 14, lineHeight: 1.7,
+            fontFamily: 'Georgia, "Times New Roman", serif',
+            minHeight: 300,
+          }}
+        />
+      </div>
     </div>
   );
 }
@@ -3904,10 +3939,10 @@ function MovimientoModal({ C, clienteId, expedientes, personas, movimiento, onCl
         </div>
 
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
-          <Field C={C} label="Tipo *">
+          <Field C={C} label="Movimiento *">
             <Sel C={C} value={f.tipo} onChange={(e) => set("tipo", e.target.value)} options={TIPOS_CUENTA_MOV} />
           </Field>
-          <Field C={C} label="Rubro *">
+          <Field C={C} label="Categoría *">
             <Sel C={C} value={f.rubro} onChange={(e) => set("rubro", e.target.value)} options={RUBROS_CUENTA} />
           </Field>
           <Field C={C} label="Monto *">
@@ -3965,7 +4000,7 @@ function MovimientoModal({ C, clienteId, expedientes, personas, movimiento, onCl
 }
 
 // ── Modal: Calcular Liquidación ────────────────────────────────
-function LiquidarModal({ C, clienteId, montoBase, monedaBase, onClose }) {
+function LiquidarModal({ C, clienteId, montoBase, monedaBase, filtroExpedienteId, onClose }) {
   const [f, setF] = useState({
     monto:           montoBase || "",
     moneda:          monedaBase || "ARS",
@@ -3974,6 +4009,21 @@ function LiquidarModal({ C, clienteId, montoBase, monedaBase, onClose }) {
     fecha_hasta:     new Date().toISOString().split("T")[0],
     tasa_fija_anual: "",
   });
+
+  // Auto-fill fecha_desde con el movimiento más antiguo del expediente filtrado
+  useEffect(() => {
+    if (!filtroExpedienteId || !clienteId) return;
+    fetch(`${API}/api/doctor/cuentas?cliente_id=${clienteId}&expediente_id=${filtroExpedienteId}`, { headers: aH() })
+      .then((r) => r.ok ? r.json() : [])
+      .then((movs) => {
+        if (!movs.length) return;
+        // Ordenar por fecha ascendente → primer elemento = más antiguo
+        const sorted = [...movs].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+        const fechaMasAntigua = sorted[0].fecha?.split("T")[0] || sorted[0].fecha;
+        setF((p) => ({ ...p, fecha_desde: fechaMasAntigua }));
+      })
+      .catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [resultado, setResultado] = useState(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
@@ -4087,11 +4137,11 @@ function ResumenPanel({ C, resumen, onLiquidar, onNuevo }) {
 
       <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
         <div style={{ display:"flex", justifyContent:"space-between", fontSize:12 }}>
-          <span style={{ color:C.muted }}>Créditos</span>
+          <span style={{ color:C.muted }}>Ingresos</span>
           <span style={{ color:"#10b981", fontWeight:600 }}>{fmtMonto(resumen.creditos_ars)}</span>
         </div>
         <div style={{ display:"flex", justifyContent:"space-between", fontSize:12 }}>
-          <span style={{ color:C.muted }}>Débitos</span>
+          <span style={{ color:C.muted }}>Egresos</span>
           <span style={{ color:"#ef4444", fontWeight:600 }}>{fmtMonto(resumen.debitos_ars)}</span>
         </div>
         {resumen.movimientos_sin_factura > 0 && (
@@ -4218,7 +4268,7 @@ function CuentasModule({ C, clienteId }) {
             <table style={{ width:"100%", borderCollapse:"collapse", marginTop:12 }}>
               <thead>
                 <tr style={{ borderBottom:`1px solid ${C.border}` }}>
-                  {["Fecha","Tipo","Rubro","Descripción","Monto","Expediente","Facturado",""].map((h) => (
+                  {["Fecha","Movimiento","Categoría","Descripción","Monto","Expediente","Facturado",""].map((h) => (
                     <th key={h} style={{ textAlign:"left", padding:"8px 10px", fontSize:11, color:C.muted, fontWeight:600, whiteSpace:"nowrap" }}>{h}</th>
                   ))}
                 </tr>
@@ -4236,7 +4286,7 @@ function CuentasModule({ C, clienteId }) {
                         color:       m.tipo === "credito" ? "#10b981"   : "#ef4444",
                         border:     `1px solid ${m.tipo === "credito" ? "#10b98144" : "#ef444444"}`,
                       }}>
-                        {m.tipo === "credito" ? "↑ Crédito" : "↓ Débito"}
+                        {m.tipo === "credito" ? "↑ Ingreso" : "↓ Egreso"}
                       </span>
                     </td>
                     <td style={{ padding:"10px 10px" }}>
@@ -4302,6 +4352,7 @@ function CuentasModule({ C, clienteId }) {
           clienteId={clienteId}
           montoBase={montoParaLiquidar.toFixed(2)}
           monedaBase="ARS"
+          filtroExpedienteId={filtros.expediente_id || null}
           onClose={() => setModalLiquidar(false)}
         />
       )}

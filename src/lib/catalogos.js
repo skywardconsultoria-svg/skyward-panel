@@ -181,8 +181,8 @@ export const RUBROS_CUENTA = [
 
 // ── Fase 6 — Tipos de movimiento contable ────────────────────
 export const TIPOS_CUENTA_MOV = [
-  { value: 'credito', label: 'Crédito (cobro / ingreso)' },
-  { value: 'debito',  label: 'Débito (gasto / egreso)' },
+  { value: 'credito', label: 'Ingreso' },
+  { value: 'debito',  label: 'Egreso' },
 ];
 
 // ── Helper: convertir lista a opciones de <select> ────────────

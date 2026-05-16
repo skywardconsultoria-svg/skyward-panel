@@ -3047,7 +3047,6 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
   const [logoOk, setLogoOk] = useState(false);
   const [dashboard, setDashboard] = useState(null);
   const [loadingDash, setLoadingDash] = useState(false);
-  const [docResumen, setDocResumen] = useState(null);
   const [horariosClinica, setHorariosClinica] = useState([]);
   const [solicitudes, setSolicitudes] = useState([]);
   const [botConfig, setBotConfig] = useState(null);
@@ -3300,11 +3299,6 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
       }
     } catch(e) { console.error('Dashboard fetch error:', e); }
     setLoadingDash(false);
-    // Cargar resumen de honorarios judiciales (Doctor — Fase 6)
-    try {
-      const rDoc = await fetch(`${API}/api/doctor/cuentas/resumen?cliente_id=${client.id}`, { headers:aH() });
-      if (rDoc.ok) setDocResumen(await rDoc.json());
-    } catch(_) {}
   };
 
   useEffect(() => {
@@ -5767,20 +5761,16 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                       ))}
                     </div>
                   </div>
-                  <Card icon="💰" label="Facturado este mes" value={fmtMoney(d.facturacion.mes)} pct={d.facturacion.pct_cambio}
-                    sub={`Total acumulado: ${fmtMoney(d.facturacion.total)}`} color="#10b981"/>
+                  {/* Honorarios judiciales — Doctor */}
+                  <Card icon="⚖️" label="Honorarios judiciales" value={fmtMoney(d.docHonorarios?.saldo ?? 0)}
+                    sub={`Ingresos: ${fmtMoney(d.docHonorarios?.ingresos ?? 0)} · Egresos: ${fmtMoney(d.docHonorarios?.egresos ?? 0)}`}
+                    color="#6366f1"/>
+                  <Card icon="💰" label="Facturado este mes" value={fmtMoney(d.facturacion.facturadoTotal ?? d.facturacion.mes)} pct={d.facturacion.pct_cambio}
+                    sub={`Consultas: ${fmtMoney(d.facturacion.facturadoConsultas ?? d.facturacion.mes)} · Acum: ${fmtMoney(d.facturacion.total)}`} color="#10b981"/>
                   <Card icon="💬" label="Leads del bot" value={fmtNum(d.prospectos.mes)} pct={d.prospectos.pct_cambio}
                     sub={`${d.prospectos.convertidos} convertidos · ${d.prospectos.tasa_conversion}% conversión`} color="#f59e0b"/>
                   <Card icon="📁" label="Casos este mes" value={fmtNum(d.casos_nuevos_mes||d.pacientes_nuevos_mes)}
                     sub="Nuevos clientes" color="#8b5cf6"/>
-                  {/* Honorarios judiciales — Doctor Fase 6 */}
-                  <Card
-                    icon="⚖️"
-                    label="Honorarios judiciales"
-                    value={fmtMoney(docResumen?.saldo_ars ?? 0)}
-                    sub={`Ingresos: ${fmtMoney(docResumen?.creditos_ars ?? 0)} · Egresos: ${fmtMoney(docResumen?.debitos_ars ?? 0)}`}
-                    color="#6366f1"
-                  />
                 </div>
 
                 {/* Fila 2 - gráfico + próximos turnos */}
@@ -5868,8 +5858,8 @@ function ClientView({ client, campos: camposGlobal, rango, user, plan, prospecto
                           ))}
                         </div>
                         <div style={{display:"flex",gap:16}}>
-                          <div style={{fontSize:12,color:C.muted}}>Showrate: <span style={{color:"#f59e0b",fontWeight:600}}>{funnelNuevo.showrate}%</span></div>
                           <div style={{fontSize:12,color:C.muted}}>Conversión global: <span style={{color:"#8b5cf6",fontWeight:600}}>{funnelNuevo.conversiones.global}%</span></div>
+                          <div style={{fontSize:12,color:C.muted}}>Consultas → Honorarios: <span style={{color:"#6366f1",fontWeight:600}}>{d?.tasa_consultas_honorarios ?? 0}%</span></div>
                         </div>
                       </>
                     ) : (
